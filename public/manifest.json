@@ -1,0 +1,10 @@
+{
+  "name": "Maju Bersama 178",
+  "short_name": "Maju 178",
+  "description": "Marketplace multi-toko — Luxury Dark",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0d0d0d",
+  "theme_color": "#0d0d0d",
+  "orientation": "portrait-primary"
+}
