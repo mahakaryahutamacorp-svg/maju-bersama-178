@@ -205,18 +205,18 @@ values (
 on conflict (slug) do nothing;
 
 -- ============================================================
--- Seed owner user (password: 112233)
+-- Seed owner user: mama01 / 223344
 -- Hash: scrypt (N=16384, r=8, p=1, keylen=32)
 -- store_id diambil dari uuid toko 'pupuk-maju'
 -- ============================================================
-delete from mb178.app_users where user_id = 'owner';
+delete from mb178.app_users where user_id = 'mama01';
 
 insert into mb178.app_users (user_id, password_hash, password_salt, name, role, store_id)
 values (
-  'owner',
-  '5iobioHZfbGSqbkeeegV9UWvgbGMoEJ965HMX5+2yFM=',
-  'vHNNvtghTkgOZ/WKIREzhQ==',
-  'Owner',
+  'mama01',
+  'rY9IskvR/IljIIAISyUUyqvrR/NElCgH9xmOYwjZaRM=',
+  'gfko9yEEHp3E8mWTirxpew==',
+  'Mama',
   'owner',
   (select id from mb178.stores where slug = 'pupuk-maju' limit 1)
 );

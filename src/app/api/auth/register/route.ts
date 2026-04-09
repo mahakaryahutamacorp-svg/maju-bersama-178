@@ -4,8 +4,11 @@ import { hashPassword } from "@/lib/auth/password";
 import { hintForSupabaseError } from "@/lib/supabase/error-hints";
 
 function validUserId(v: string) {
-  // sederhana: huruf/angka/underscore/dot, 3-24 char
   return /^[a-zA-Z0-9._]{3,24}$/.test(v);
+}
+
+function validPassword(v: string) {
+  return /^\d{6}$/.test(v);
 }
 
 export async function POST(request: Request) {
@@ -24,19 +27,19 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "JSON tidak valid" }, { status: 400 });
   }
 
-  const userId = String(body.userId ?? "").trim();
+  const userId = String(body.userId ?? "").trim().toLowerCase();
   const password = String(body.password ?? "");
   const name = typeof body.name === "string" ? body.name.trim() : null;
 
   if (!validUserId(userId)) {
     return NextResponse.json(
-      { error: "User ID tidak valid (3-24, huruf/angka/._)" },
+      { error: "Username tidak valid (3-24 karakter, huruf/angka/._)" },
       { status: 400 }
     );
   }
-  if (password.length < 4) {
+  if (!validPassword(password)) {
     return NextResponse.json(
-      { error: "Password minimal 4 karakter" },
+      { error: "Password harus 6 digit angka" },
       { status: 400 }
     );
   }

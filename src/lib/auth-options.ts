@@ -17,26 +17,12 @@ type MockUser = {
 const mockUsers: MockUser[] = [
   {
     id: "1",
-    email: "husni@maju.id",
-    password: "demo",
-    name: "Pak Husni",
-    role: "super_admin",
-  },
-  {
-    id: "2",
-    email: "owner@maju.id",
-    password: "demo",
-    name: "Rocell Gadget",
+    email: "mama01",
+    password: "223344",
+    name: "Mama",
     role: "owner",
-    storeInitials: "RG",
+    storeInitials: "MA",
     storeId: "pupuk-maju",
-  },
-  {
-    id: "3",
-    email: "customer@maju.id",
-    password: "demo",
-    name: "Pelanggan",
-    role: "customer",
   },
 ];
 
@@ -50,7 +36,7 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
-        const identifier = String(credentials.email).trim();
+        const identifier = String(credentials.email).trim().toLowerCase();
         const password = String(credentials.password);
 
         const supabase = createMb178ServiceClient();
