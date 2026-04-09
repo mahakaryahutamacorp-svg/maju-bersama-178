@@ -16,9 +16,43 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-## Deploy trigger
+## Konfigurasi Vercel ke GitHub
 
-If Vercel is stuck on an older commit, pushing a tiny change to `master` should trigger a fresh deployment.
+Repo ini sekarang memakai GitHub Actions untuk deploy ke Vercel, jadi tidak tergantung auto-deploy bawaan Git integration.
+
+### 1) Tambahkan GitHub Secrets
+
+Di GitHub repo: **Settings → Secrets and variables → Actions**, buat 3 secret berikut:
+
+- `VERCEL_TOKEN`
+- `VERCEL_ORG_ID`
+- `VERCEL_PROJECT_ID`
+
+Cara mendapatkan nilai:
+
+1. Buat token di Vercel: **Settings → Tokens**
+2. Jalankan `npx vercel link` di lokal project ini
+3. Ambil `orgId` dan `projectId` dari file `.vercel/project.json` (jangan commit folder `.vercel`)
+
+### 2) Tambahkan Environment Variables di Vercel
+
+Isi environment variables di dashboard Vercel sesuai `.env.example`:
+
+- `NEXTAUTH_URL`
+- `NEXTAUTH_SECRET`
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN`
+
+### 3) Alur Deploy
+
+- **Pull Request ke `master`**: membuat **Preview Deployment**
+- **Push/Merge ke `master`**: membuat **Production Deployment**
+
+Workflow file: `.github/workflows/vercel.yml`
+
+> Jika sebelumnya memakai auto-deploy dari Vercel Git Integration, sebaiknya nonaktifkan salah satu metode agar tidak terjadi deploy ganda.
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
