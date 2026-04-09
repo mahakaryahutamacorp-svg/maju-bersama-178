@@ -1,5 +1,5 @@
 -- Seed user "owner" dengan password "112233" untuk login NextAuth.
--- Jalankan di Supabase SQL Editor setelah mb178-schema.sql dan rls-example.sql.
+-- Jalankan di Supabase SQL Editor setelah mb178-schema.sql.
 --
 -- Password di-hash menggunakan scrypt (N=16384, r=8, p=1, keylen=32).
 
@@ -13,5 +13,5 @@ values (
   'vHNNvtghTkgOZ/WKIREzhQ==',
   'Owner',
   'owner',
-  'pupuk-maju'
+  (select id from mb178.stores where slug = 'pupuk-maju' limit 1)
 );

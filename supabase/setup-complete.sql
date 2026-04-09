@@ -2,10 +2,10 @@
 -- Setup lengkap untuk database Maju Bersama 178
 -- Jalankan di Supabase SQL Editor (satu kali).
 --
--- File ini menggabungkan:
---   1. Schema + tabel (mb178-schema.sql)
---   2. RLS policies (rls-example.sql)
---   3. Seed owner user (seed-owner.sql)
+-- PENTING: Jika schema mb178 sudah ada dengan tabel lama,
+-- jalankan dulu:
+--   drop schema if exists mb178 cascade;
+-- lalu jalankan file ini dari awal.
 --
 -- Pastikan Anda juga:
 --   - Expose schema `mb178` di Supabase Dashboard → Settings → API → Exposed schemas
@@ -15,9 +15,9 @@
 -- 1) Schema
 create schema if not exists mb178;
 
--- 2) Tabel stores
+-- 2) Tabel stores (id = uuid)
 create table if not exists mb178.stores (
-  id text primary key,
+  id uuid primary key default gen_random_uuid(),
   slug text not null unique,
   name text not null,
   profile_image_url text,
@@ -33,7 +33,7 @@ create table if not exists mb178.stores (
 -- 3) Tabel products
 create table if not exists mb178.products (
   id uuid primary key default gen_random_uuid(),
-  store_id text not null references mb178.stores (id) on delete cascade,
+  store_id uuid not null references mb178.stores (id) on delete cascade,
   name text not null,
   price numeric(14, 2) not null check (price >= 0),
   stock integer not null default 0 check (stock >= 0),
@@ -50,14 +50,14 @@ create table if not exists mb178.app_users (
   password_salt text not null,
   name text,
   role text not null default 'customer',
-  store_id text references mb178.stores (id) on delete set null,
+  store_id uuid references mb178.stores (id) on delete set null,
   created_at timestamptz not null default now()
 );
 
 -- 5) Tabel orders
 create table if not exists mb178.orders (
   id uuid primary key default gen_random_uuid(),
-  store_id text not null references mb178.stores (id) on delete cascade,
+  store_id uuid not null references mb178.stores (id) on delete cascade,
   channel text not null default 'online',
   payment_method text not null default 'transfer',
   status text not null default 'pending',
@@ -182,11 +182,10 @@ on mb178.order_items for delete to anon, authenticated
 using (false);
 
 -- ============================================================
--- Seed toko demo
+-- Seed toko demo (stores.id = uuid, pakai slug untuk conflict)
 -- ============================================================
-insert into mb178.stores (id, slug, name, address, whatsapp_link, lat, lng)
+insert into mb178.stores (slug, name, address, whatsapp_link, lat, lng)
 values (
-  'pupuk-maju',
   'pupuk-maju',
   'Toko Pupuk MAJU BERSAMA',
   'Jl. Contoh No. 178, Jakarta',
@@ -194,21 +193,21 @@ values (
   -6.2088,
   106.8456
 )
-on conflict (id) do nothing;
+on conflict (slug) do nothing;
 
-insert into mb178.stores (id, slug, name, address, whatsapp_link)
+insert into mb178.stores (slug, name, address, whatsapp_link)
 values (
-  'majubersamagrup',
   'majubersamagrup',
   'MAJUBERSAMAGRUP',
   null,
   'https://wa.me/6281211172228'
 )
-on conflict (id) do nothing;
+on conflict (slug) do nothing;
 
 -- ============================================================
 -- Seed owner user (password: 112233)
 -- Hash: scrypt (N=16384, r=8, p=1, keylen=32)
+-- store_id diambil dari uuid toko 'pupuk-maju'
 -- ============================================================
 delete from mb178.app_users where user_id = 'owner';
 
@@ -219,5 +218,5 @@ values (
   'vHNNvtghTkgOZ/WKIREzhQ==',
   'Owner',
   'owner',
-  'pupuk-maju'
+  (select id from mb178.stores where slug = 'pupuk-maju' limit 1)
 );
