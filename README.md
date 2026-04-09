@@ -1,74 +1,52 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Maju Bersama 178
 
-## Getting Started
+Marketplace multi-toko (Next.js App Router, NextAuth, Supabase). Font: Inter + Playfair Display (`src/app/layout.tsx`).
 
-First, run the development server:
+## Menjalankan lokal
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Buka [http://localhost:3000](http://localhost:3000). Salin variabel dari [`.env.example`](.env.example) ke `.env.local`.
+
+## Setup database (Supabase)
+
+Satu skrip untuk schema, RLS, dan data awal (8 toko + owner + master admin):
+
+1. Di [Supabase SQL Editor](https://supabase.com/dashboard), jalankan isi file [`supabase/setup-complete.sql`](supabase/setup-complete.sql).
+2. Untuk reset penuh: `drop schema if exists mb178 cascade;` lalu jalankan skrip lagi.
+3. Di project Supabase: **Settings → Data API** — expose schema `mb178`.
+4. Buat bucket Storage `mb178_assets` (detail komentar di bagian STORAGE dalam skrip SQL).
 
 ## Konfigurasi Vercel ke GitHub
 
-Repo ini sekarang memakai GitHub Actions untuk deploy ke Vercel, jadi tidak tergantung auto-deploy bawaan Git integration.
+Repo memakai GitHub Actions untuk deploy ke Vercel.
 
-### 1) Tambahkan GitHub Secrets
+### GitHub Secrets
 
-Di GitHub repo: **Settings → Secrets and variables → Actions**, buat 3 secret berikut:
+Di **Settings → Secrets and variables → Actions**:
 
 - `VERCEL_TOKEN`
 - `VERCEL_ORG_ID`
 - `VERCEL_PROJECT_ID`
 
-Cara mendapatkan nilai:
+Cara mendapatkan nilai: token di Vercel **Settings → Tokens**; `orgId` dan `projectId` dari `npx vercel link` → `.vercel/project.json` (jangan commit folder `.vercel`).
 
-1. Buat token di Vercel: **Settings → Tokens**
-2. Jalankan `npx vercel link` di lokal project ini
-3. Ambil `orgId` dan `projectId` dari file `.vercel/project.json` (jangan commit folder `.vercel`)
+### Environment variables di Vercel
 
-### 2) Tambahkan Environment Variables di Vercel
+Sesuai `.env.example`:
 
-Isi environment variables di dashboard Vercel sesuai `.env.example`:
-
-- `NEXTAUTH_URL`
-- `NEXTAUTH_SECRET`
-- `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- `SUPABASE_SERVICE_ROLE_KEY`
+- `NEXTAUTH_URL`, `NEXTAUTH_SECRET`
+- `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
 - `NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN`
 
-### 3) Alur Deploy
+### Alur deploy
 
-- **Pull Request ke `master`**: membuat **Preview Deployment**
-- **Push/Merge ke `master`**: membuat **Production Deployment**
+- **Pull request ke `master`**: Preview Deployment
+- **Push/merge ke `master`**: Production Deployment
 
-Workflow file: `.github/workflows/vercel.yml`
+Workflow: [`.github/workflows/vercel.yml`](.github/workflows/vercel.yml)
 
-> Jika sebelumnya memakai auto-deploy dari Vercel Git Integration, sebaiknya nonaktifkan salah satu metode agar tidak terjadi deploy ganda.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+> Jika Vercel Git Integration juga aktif, nonaktifkan salah satu agar tidak deploy ganda.
