@@ -113,9 +113,18 @@ create table if not exists mb178.app_users (
   password_salt text not null,
   name text,
   role text not null default 'customer', -- customer | owner | super_admin
-  store_id text, -- isi jika role = owner
+  store_id text references mb178.stores (id) on delete set null,
   created_at timestamptz not null default now()
 );
+
+-- Tambah kolom jika tabel sudah ada tapi belum lengkap
+alter table mb178.app_users
+  add column if not exists password_hash text,
+  add column if not exists password_salt text,
+  add column if not exists name text,
+  add column if not exists role text default 'customer',
+  add column if not exists store_id text,
+  add column if not exists created_at timestamptz default now();
 
 create table if not exists mb178.orders (
   id uuid primary key default gen_random_uuid(),

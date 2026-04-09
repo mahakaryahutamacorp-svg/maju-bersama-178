@@ -13,10 +13,25 @@
 -- Enable RLS
 alter table mb178.stores enable row level security;
 alter table mb178.products enable row level security;
+alter table mb178.app_users enable row level security;
 alter table mb178.orders enable row level security;
 alter table mb178.order_items enable row level security;
 
--- Public read katalog
+-- ============================================================
+-- app_users: semua operasi hanya via service role (bypass RLS).
+-- Anon/authenticated tidak boleh baca password hash.
+-- ============================================================
+drop policy if exists "app_users_deny_all" on mb178.app_users;
+create policy "app_users_deny_all"
+on mb178.app_users
+for all
+to anon, authenticated
+using (false)
+with check (false);
+
+-- ============================================================
+-- stores & products: public read, write via service role only.
+-- ============================================================
 drop policy if exists "stores_select_all" on mb178.stores;
 create policy "stores_select_all"
 on mb178.stores
@@ -31,38 +46,110 @@ for select
 to anon, authenticated
 using (true);
 
--- Writes ditolak untuk anon/authenticated (write hanya via service role).
 drop policy if exists "stores_block_writes" on mb178.stores;
 create policy "stores_block_writes"
 on mb178.stores
-for all
+for insert
+to anon, authenticated
+with check (false);
+
+drop policy if exists "stores_block_update" on mb178.stores;
+create policy "stores_block_update"
+on mb178.stores
+for update
 to anon, authenticated
 using (false)
 with check (false);
+
+drop policy if exists "stores_block_delete" on mb178.stores;
+create policy "stores_block_delete"
+on mb178.stores
+for delete
+to anon, authenticated
+using (false);
 
 drop policy if exists "products_block_writes" on mb178.products;
 create policy "products_block_writes"
 on mb178.products
-for all
+for insert
+to anon, authenticated
+with check (false);
+
+drop policy if exists "products_block_update" on mb178.products;
+create policy "products_block_update"
+on mb178.products
+for update
 to anon, authenticated
 using (false)
 with check (false);
+
+drop policy if exists "products_block_delete" on mb178.products;
+create policy "products_block_delete"
+on mb178.products
+for delete
+to anon, authenticated
+using (false);
+
+-- ============================================================
+-- orders & order_items: read via service role, write via service role.
+-- ============================================================
+drop policy if exists "orders_select_all" on mb178.orders;
+create policy "orders_select_all"
+on mb178.orders
+for select
+to anon, authenticated
+using (true);
 
 drop policy if exists "orders_block_writes" on mb178.orders;
 create policy "orders_block_writes"
 on mb178.orders
-for all
+for insert
+to anon, authenticated
+with check (false);
+
+drop policy if exists "orders_block_update" on mb178.orders;
+create policy "orders_block_update"
+on mb178.orders
+for update
 to anon, authenticated
 using (false)
 with check (false);
 
+drop policy if exists "orders_block_delete" on mb178.orders;
+create policy "orders_block_delete"
+on mb178.orders
+for delete
+to anon, authenticated
+using (false);
+
+drop policy if exists "order_items_select_all" on mb178.order_items;
+create policy "order_items_select_all"
+on mb178.order_items
+for select
+to anon, authenticated
+using (true);
+
 drop policy if exists "order_items_block_writes" on mb178.order_items;
 create policy "order_items_block_writes"
 on mb178.order_items
-for all
+for insert
+to anon, authenticated
+with check (false);
+
+drop policy if exists "order_items_block_update" on mb178.order_items;
+create policy "order_items_block_update"
+on mb178.order_items
+for update
 to anon, authenticated
 using (false)
 with check (false);
+
+drop policy if exists "order_items_block_delete" on mb178.order_items;
+create policy "order_items_block_delete"
+on mb178.order_items
+for delete
+to anon, authenticated
+using (false);
 
 -- Storage bucket `mb178_assets`
 -- Rekomendasi: bucket public read (untuk gambar katalog), tapi upload via server.

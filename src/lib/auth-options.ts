@@ -53,35 +53,35 @@ export const authOptions: NextAuthOptions = {
         const identifier = String(credentials.email).trim();
         const password = String(credentials.password);
 
-        // 1) Coba user dari database (mb178.app_users) jika Supabase tersedia.
         const supabase = createMb178ServiceClient();
         if (supabase) {
-          const { data, error } = await supabase
-            .from("app_users")
-            .select("id, user_id, password_hash, password_salt, name, role, store_id")
-            .eq("user_id", identifier)
-            .maybeSingle();
+          try {
+            const { data, error } = await supabase
+              .from("app_users")
+              .select("id, user_id, password_hash, password_salt, name, role, store_id")
+              .eq("user_id", identifier)
+              .maybeSingle();
 
-          if (error) {
-            // jangan bocorkan detail error ke client (NextAuth akan tampilkan generic)
-            return null;
-          }
-
-          if (data) {
-            const ok = verifyPassword(password, data.password_salt, data.password_hash);
-            if (!ok) return null;
-            return {
-              id: data.id,
-              email: `${data.user_id}@local.mb178`, // placeholder email untuk NextAuth
-              name: data.name ?? data.user_id,
-              role: (data.role as UserRole) ?? "customer",
-              storeId: data.store_id ?? undefined,
-              storeInitials: (data.name ?? data.user_id).slice(0, 2).toUpperCase(),
-            };
+            if (error) {
+              console.error("[auth] Supabase query error:", error.message);
+              // Fall through to mock users instead of blocking login entirely
+            } else if (data) {
+              const ok = verifyPassword(password, data.password_salt, data.password_hash);
+              if (!ok) return null;
+              return {
+                id: data.id,
+                email: `${data.user_id}@local.mb178`,
+                name: data.name ?? data.user_id,
+                role: (data.role as UserRole) ?? "customer",
+                storeId: data.store_id ?? undefined,
+                storeInitials: (data.name ?? data.user_id).slice(0, 2).toUpperCase(),
+              };
+            }
+          } catch (e) {
+            console.error("[auth] Unexpected error querying app_users:", e);
           }
         }
 
-        // 2) Fallback mock demo.
         const user = mockUsers.find(
           (u) => u.email === identifier && u.password === password
         );
@@ -121,4 +121,12 @@ export const authOptions: NextAuthOptions = {
   },
   session: { strategy: "jwt", maxAge: 30 * 24 * 60 * 60 },
   secret: process.env.NEXTAUTH_SECRET,
+  logger: {
+    error(code, metadata) {
+      console.error("[next-auth][error]", code, metadata);
+    },
+    warn(code) {
+      console.warn("[next-auth][warn]", code);
+    },
+  },
 };
