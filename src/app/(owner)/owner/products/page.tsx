@@ -220,26 +220,34 @@ export default function OwnerProductsPage() {
               <span className="text-zinc-400">0</span> dari halaman pelanggan.
             </p>
           </div>
-          <button
-            type="button"
-            role="switch"
-            aria-checked={hideZero ? "true" : "false"}
-            aria-label="Sembunyikan produk stok habis dari katalog pelanggan"
-            title={hideZero ? "Aktif: stok 0 disembunyikan" : "Nonaktif: stok 0 tetap tampil"}
-            disabled={savingVisibility || !connected}
-            onClick={() => void toggleHideZeroStock(!hideZero)}
+          <label
             className={`relative h-9 w-[3.25rem] shrink-0 rounded-full border-2 transition ${
               hideZero
                 ? "border-amber-400 bg-gradient-to-r from-amber-600 to-yellow-500 shadow-[0_0_20px_rgba(250,204,21,0.45)]"
                 : "border-zinc-600 bg-zinc-800"
-            } disabled:opacity-50`}
+            } ${savingVisibility || !connected ? "opacity-50" : ""}`}
+            title={
+              hideZero
+                ? "Aktif: stok 0 disembunyikan"
+                : "Nonaktif: stok 0 tetap tampil"
+            }
           >
+            <input
+              type="checkbox"
+              role="switch"
+              className="sr-only"
+              aria-label="Sembunyikan produk stok habis dari katalog pelanggan"
+              checked={hideZero}
+              disabled={savingVisibility || !connected}
+              onChange={() => void toggleHideZeroStock(!hideZero)}
+            />
             <span
+              aria-hidden
               className={`absolute top-1/2 block h-6 w-6 -translate-y-1/2 rounded-full bg-zinc-950 shadow-md transition-all ${
                 hideZero ? "left-[calc(100%-1.65rem)] bg-amber-50" : "left-1"
               }`}
             />
-          </button>
+          </label>
         </div>
       </section>
 
