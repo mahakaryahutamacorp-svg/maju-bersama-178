@@ -12,12 +12,15 @@ declare module "next-auth" {
       image?: string | null;
       role: UserRole;
       storeInitials?: string | null;
+      /** `mb178.stores.id` untuk peran owner */
+      storeId?: string | null;
     };
   }
 
   interface User {
     role: UserRole;
     storeInitials?: string | null;
+    storeId?: string | null;
   }
 }
 
@@ -25,5 +28,6 @@ declare module "next-auth/jwt" {
   interface JWT {
     role: UserRole;
     storeInitials?: string | null;
+    storeId?: string | null;
   }
 }

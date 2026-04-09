@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useSession } from "next-auth/react";
+import { useEffect, useState } from "react";
 import {
   CubeIcon,
   WalletIcon,
@@ -29,8 +30,58 @@ const menuItems = [
   },
 ];
 
+type Stats = {
+  connected: boolean;
+  totalProducts: number;
+  totalStock: number;
+  orderCount: number;
+  revenue: number;
+  rating05: number;
+  radar: { stok: number; pesanan: number; rating: number };
+};
+
+function formatRp(n: number) {
+  return new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    maximumFractionDigits: 0,
+  }).format(n);
+}
+
 export default function OwnerDashboardPage() {
   const { data: session, status } = useSession();
+  const [stats, setStats] = useState<Stats | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (status !== "authenticated") return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/owner/dashboard-stats");
+        const json = (await res.json()) as Stats & {
+          error?: string;
+          hint?: string | null;
+        };
+        if (!res.ok) {
+          const msg =
+            [json.error, json.hint].filter(Boolean).join(" — ") ||
+            "Gagal memuat statistik";
+          if (!cancelled) setLoadError(msg);
+          return;
+        }
+        if (!cancelled) {
+          setLoadError(null);
+          setStats(json);
+        }
+      } catch {
+        if (!cancelled) setLoadError("Gagal memuat statistik");
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [status]);
 
   if (status === "loading") {
     return (
@@ -45,6 +96,10 @@ export default function OwnerDashboardPage() {
   }
 
   const initials = session.user.storeInitials ?? "RG";
+  const radar = stats?.radar;
+  const totalProducts = stats?.totalProducts;
+  const revenue = stats?.revenue;
+  const metricsReady = stats !== null && stats.connected;
 
   return (
     <div className="px-4 md:mx-auto md:max-w-lg">
@@ -61,23 +116,47 @@ export default function OwnerDashboardPage() {
         </div>
       </header>
 
+      {loadError ? (
+        <p className="mb-4 rounded-2xl border border-red-500/30 bg-red-950/30 px-4 py-3 text-sm text-red-200/90">
+          {loadError}
+        </p>
+      ) : null}
+
+      {stats && !stats.connected ? (
+        <p className="mb-4 text-center text-xs text-zinc-500">
+          Supabase belum terhubung — radar memakai contoh. Isi env & jalankan{" "}
+          <code className="text-zinc-400">supabase/mb178-schema.sql</code>.
+        </p>
+      ) : null}
+
       <section className="rounded-3xl border border-yellow-600/15 bg-white/5 p-4 backdrop-blur-md">
         <h2 className="mb-2 text-center font-serif text-sm font-medium text-zinc-400">
-          Ability Radar
+          Profil performa
         </h2>
-        <OwnerRadar />
+        <OwnerRadar
+          stok={radar?.stok}
+          pesanan={radar?.pesanan}
+          rating={radar?.rating}
+        />
+        <p className="mt-2 text-center text-[11px] text-zinc-600">
+          Sumbu: total stok, jumlah pesanan, rating toko (0–5 → skor radar)
+        </p>
       </section>
 
       <section className="mt-6 grid grid-cols-2 gap-3">
         <div className="rounded-2xl border border-yellow-600/15 bg-zinc-900/50 p-4">
           <CubeIcon className="h-8 w-8 text-amber-400" aria-hidden />
-          <p className="mt-2 text-2xl font-semibold text-zinc-100">128</p>
+          <p className="mt-2 text-2xl font-semibold text-zinc-100">
+            {metricsReady && totalProducts !== undefined ? totalProducts : "—"}
+          </p>
           <p className="text-xs text-zinc-500">Total Produk</p>
         </div>
         <div className="rounded-2xl border border-yellow-600/15 bg-zinc-900/50 p-4">
           <WalletIcon className="h-8 w-8 text-amber-400" aria-hidden />
-          <p className="mt-2 text-2xl font-semibold text-zinc-100">Rp 12,4jt</p>
-          <p className="text-xs text-zinc-500">Laporan Pendapatan</p>
+          <p className="mt-2 text-2xl font-semibold text-zinc-100">
+            {metricsReady && revenue !== undefined ? formatRp(revenue) : "—"}
+          </p>
+          <p className="text-xs text-zinc-500">Pendapatan (non-batal)</p>
         </div>
       </section>
 
