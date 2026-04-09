@@ -125,7 +125,7 @@ export default function OwnerDashboardPage() {
       {stats && !stats.connected ? (
         <p className="mb-4 text-center text-xs text-zinc-500">
           Supabase belum terhubung — radar memakai contoh. Isi env & jalankan{" "}
-          <code className="text-zinc-400">supabase/mb178-schema.sql</code>.
+          <code className="text-zinc-400">supabase/setup-complete.sql</code>.
         </p>
       ) : null}
 

@@ -203,7 +203,7 @@ export default function OwnerProductsPage() {
       {!connected ? (
         <p className="mt-4 text-sm text-amber-200/70">
           Supabase belum lengkap: pastikan env terisi, jalankan{" "}
-          <code className="text-zinc-400">supabase/mb178-schema.sql</code>, dan
+          <code className="text-zinc-400">supabase/setup-complete.sql</code>, dan
           isi <code className="text-zinc-400">SUPABASE_SERVICE_ROLE_KEY</code>{" "}
           dari Vercel bila perlu.
         </p>

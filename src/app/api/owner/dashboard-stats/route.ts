@@ -53,7 +53,7 @@ export async function GET(request: Request) {
         error: raw,
         hint:
           hintForSupabaseError(raw) ??
-          "Pastikan schema `mb178` & tabelnya sudah dibuat (lihat `supabase/mb178-schema.sql`).",
+          "Pastikan schema `mb178` & tabelnya sudah dibuat (lihat `supabase/setup-complete.sql`).",
       },
       { status: 503 }
     );

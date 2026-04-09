@@ -3,10 +3,9 @@ import { Card } from "@/components/ui/Card";
 import { buttonClass } from "@/components/ui/Button";
 import { createMb178Client } from "@/lib/supabase/admin";
 import type { Mb178StoreRow } from "@/lib/mb178/types";
-import { mockStores } from "@/lib/mock-stores";
 
 export default async function CustomerHomePage() {
-  let stores: { slug: string; name: string; whatsapp: string; image: string | null }[] = [];
+  const stores: { slug: string; name: string; whatsapp: string; image: string | null }[] = [];
 
   const supabase = createMb178Client();
   if (supabase) {
@@ -16,22 +15,15 @@ export default async function CustomerHomePage() {
       .order("created_at", { ascending: true });
 
     if (data && data.length > 0) {
-      stores = (data as Pick<Mb178StoreRow, "slug" | "name" | "whatsapp_link" | "profile_image_url">[]).map((s) => ({
-        slug: s.slug,
-        name: s.name,
-        whatsapp: s.whatsapp_link?.replace(/\D/g, "") ?? "",
-        image: s.profile_image_url,
-      }));
+      stores.push(
+        ...(data as Pick<Mb178StoreRow, "slug" | "name" | "whatsapp_link" | "profile_image_url">[]).map((s) => ({
+          slug: s.slug,
+          name: s.name,
+          whatsapp: s.whatsapp_link?.replace(/\D/g, "") ?? "",
+          image: s.profile_image_url,
+        }))
+      );
     }
-  }
-
-  if (stores.length === 0) {
-    stores = mockStores.map((s) => ({
-      slug: s.storePath.replace("/store/", ""),
-      name: s.name,
-      whatsapp: s.whatsappE164,
-      image: s.imageSrc,
-    }));
   }
 
   return (
@@ -78,36 +70,43 @@ export default async function CustomerHomePage() {
         </Link>
       </section>
 
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-        {stores.map((store) => (
-          <Card
-            key={store.slug}
-            title={store.name}
-            imageSrc={store.image ?? "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1200&q=80"}
-            imageAlt={`Toko ${store.name}`}
-            darkened={false}
-          >
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <Link
-                href={`/store/${store.slug}`}
-                className={`${buttonClass("toko")} flex-1 text-center`}
-              >
-                Toko
-              </Link>
-              {store.whatsapp && (
-                <a
-                  className={`${buttonClass("whatsapp")} flex-1 text-center`}
-                  href={`https://wa.me/${store.whatsapp}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
+      {stores.length === 0 ? (
+        <p className="rounded-3xl border border-white/10 bg-white/5 px-5 py-8 text-center text-sm text-zinc-400">
+          Belum ada toko di katalog. Pastikan variabel lingkungan Supabase terisi, lalu jalankan skrip{" "}
+          <code className="text-zinc-300">supabase/setup-complete.sql</code> di Supabase SQL Editor.
+        </p>
+      ) : (
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+          {stores.map((store) => (
+            <Card
+              key={store.slug}
+              title={store.name}
+              imageSrc={store.image ?? "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1200&q=80"}
+              imageAlt={`Toko ${store.name}`}
+              darkened={false}
+            >
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <Link
+                  href={`/store/${store.slug}`}
+                  className={`${buttonClass("toko")} flex-1 text-center`}
                 >
-                  WhatsApp
-                </a>
-              )}
-            </div>
-          </Card>
-        ))}
-      </div>
+                  Toko
+                </Link>
+                {store.whatsapp && (
+                  <a
+                    className={`${buttonClass("whatsapp")} flex-1 text-center`}
+                    href={`https://wa.me/${store.whatsapp}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    WhatsApp
+                  </a>
+                )}
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

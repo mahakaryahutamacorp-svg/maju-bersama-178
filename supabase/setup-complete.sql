@@ -1,24 +1,25 @@
 -- ============================================================
--- Setup lengkap Maju Bersama 178
--- 8 toko + 8 owner + 1 master admin
+-- Setup lengkap Maju Bersama 178 (satu-satunya entrypoint SQL)
+-- Schema + RLS idempoten + seed: 8 toko + 8 owner + 1 master admin
 --
 -- PENTING: Jalankan di Supabase SQL Editor.
--- Jika schema mb178 sudah ada, jalankan dulu:
+-- Reset penuh / ulang seed demo resmi:
 --   drop schema if exists mb178 cascade;
--- lalu jalankan file ini.
+-- lalu jalankan file ini dari awal.
 --
 -- Setelah itu:
 --   - Expose schema `mb178` di Settings → Data API → Exposed schemas
---   - Buat bucket `mb178_assets` di Storage (public read)
+--   - Buat bucket `mb178_assets` di Storage (baca publik untuk katalog;
+--     upload hanya lewat server / service role — lihat komentar STORAGE di bawah)
 -- ============================================================
 
 create schema if not exists mb178;
 
 -- ============================================================
--- TABEL
+-- TABEL (IF NOT EXISTS — aman jika schema sudah ada tanpa drop)
 -- ============================================================
 
-create table mb178.stores (
+create table if not exists mb178.stores (
   id uuid primary key default gen_random_uuid(),
   slug text not null unique,
   name text not null,
@@ -33,7 +34,7 @@ create table mb178.stores (
   created_at timestamptz not null default now()
 );
 
-create table mb178.products (
+create table if not exists mb178.products (
   id uuid primary key default gen_random_uuid(),
   store_id uuid not null references mb178.stores (id) on delete cascade,
   name text not null,
@@ -44,7 +45,7 @@ create table mb178.products (
   created_at timestamptz not null default now()
 );
 
-create table mb178.app_users (
+create table if not exists mb178.app_users (
   id uuid primary key default gen_random_uuid(),
   user_id text not null unique,
   password_hash text not null,
@@ -55,7 +56,7 @@ create table mb178.app_users (
   created_at timestamptz not null default now()
 );
 
-create table mb178.orders (
+create table if not exists mb178.orders (
   id uuid primary key default gen_random_uuid(),
   store_id uuid not null references mb178.stores (id) on delete cascade,
   channel text not null default 'online',
@@ -68,7 +69,7 @@ create table mb178.orders (
   created_at timestamptz not null default now()
 );
 
-create table mb178.order_items (
+create table if not exists mb178.order_items (
   id uuid primary key default gen_random_uuid(),
   order_id uuid not null references mb178.orders (id) on delete cascade,
   product_id uuid not null references mb178.products (id) on delete restrict,
@@ -81,7 +82,11 @@ create table mb178.order_items (
 );
 
 -- ============================================================
--- RLS
+-- RLS (idempoten — drop policy if exists)
+--
+-- Login memakai NextAuth (bukan Supabase Auth): PostgREST tidak punya
+-- auth.uid() untuk owner per-toko. Strategi: SELECT katalog untuk publik;
+-- INSERT/UPDATE/DELETE via server + SERVICE ROLE (bypass RLS).
 -- ============================================================
 
 alter table mb178.stores enable row level security;
@@ -90,50 +95,178 @@ alter table mb178.app_users enable row level security;
 alter table mb178.orders enable row level security;
 alter table mb178.order_items enable row level security;
 
--- app_users: semua akses via service role saja
-create policy "app_users_deny_all" on mb178.app_users
-  for all to anon, authenticated using (false) with check (false);
+-- Hapus nama policy lama (versi skrip sebelum penyatuan)
+drop policy if exists "stores_read" on mb178.stores;
+drop policy if exists "stores_no_insert" on mb178.stores;
+drop policy if exists "stores_no_update" on mb178.stores;
+drop policy if exists "stores_no_delete" on mb178.stores;
+drop policy if exists "products_read" on mb178.products;
+drop policy if exists "products_no_insert" on mb178.products;
+drop policy if exists "products_no_update" on mb178.products;
+drop policy if exists "products_no_delete" on mb178.products;
+drop policy if exists "orders_read" on mb178.orders;
+drop policy if exists "orders_no_insert" on mb178.orders;
+drop policy if exists "orders_no_update" on mb178.orders;
+drop policy if exists "orders_no_delete" on mb178.orders;
+drop policy if exists "order_items_read" on mb178.order_items;
+drop policy if exists "order_items_no_insert" on mb178.order_items;
+drop policy if exists "order_items_no_update" on mb178.order_items;
+drop policy if exists "order_items_no_delete" on mb178.order_items;
 
--- stores & products: public read
-create policy "stores_read" on mb178.stores
-  for select to anon, authenticated using (true);
-create policy "stores_no_insert" on mb178.stores
-  for insert to anon, authenticated with check (false);
-create policy "stores_no_update" on mb178.stores
-  for update to anon, authenticated using (false) with check (false);
-create policy "stores_no_delete" on mb178.stores
-  for delete to anon, authenticated using (false);
+drop policy if exists "app_users_deny_all" on mb178.app_users;
+create policy "app_users_deny_all"
+on mb178.app_users
+for all
+to anon, authenticated
+using (false)
+with check (false);
 
-create policy "products_read" on mb178.products
-  for select to anon, authenticated using (true);
-create policy "products_no_insert" on mb178.products
-  for insert to anon, authenticated with check (false);
-create policy "products_no_update" on mb178.products
-  for update to anon, authenticated using (false) with check (false);
-create policy "products_no_delete" on mb178.products
-  for delete to anon, authenticated using (false);
+drop policy if exists "stores_select_all" on mb178.stores;
+create policy "stores_select_all"
+on mb178.stores
+for select
+to anon, authenticated
+using (true);
 
--- orders & order_items: public read
-create policy "orders_read" on mb178.orders
-  for select to anon, authenticated using (true);
-create policy "orders_no_insert" on mb178.orders
-  for insert to anon, authenticated with check (false);
-create policy "orders_no_update" on mb178.orders
-  for update to anon, authenticated using (false) with check (false);
-create policy "orders_no_delete" on mb178.orders
-  for delete to anon, authenticated using (false);
+drop policy if exists "products_select_all" on mb178.products;
+create policy "products_select_all"
+on mb178.products
+for select
+to anon, authenticated
+using (true);
 
-create policy "order_items_read" on mb178.order_items
-  for select to anon, authenticated using (true);
-create policy "order_items_no_insert" on mb178.order_items
-  for insert to anon, authenticated with check (false);
-create policy "order_items_no_update" on mb178.order_items
-  for update to anon, authenticated using (false) with check (false);
-create policy "order_items_no_delete" on mb178.order_items
-  for delete to anon, authenticated using (false);
+drop policy if exists "stores_block_writes" on mb178.stores;
+create policy "stores_block_writes"
+on mb178.stores
+for insert
+to anon, authenticated
+with check (false);
+
+drop policy if exists "stores_block_update" on mb178.stores;
+create policy "stores_block_update"
+on mb178.stores
+for update
+to anon, authenticated
+using (false)
+with check (false);
+
+drop policy if exists "stores_block_delete" on mb178.stores;
+create policy "stores_block_delete"
+on mb178.stores
+for delete
+to anon, authenticated
+using (false);
+
+drop policy if exists "products_block_writes" on mb178.products;
+create policy "products_block_writes"
+on mb178.products
+for insert
+to anon, authenticated
+with check (false);
+
+drop policy if exists "products_block_update" on mb178.products;
+create policy "products_block_update"
+on mb178.products
+for update
+to anon, authenticated
+using (false)
+with check (false);
+
+drop policy if exists "products_block_delete" on mb178.products;
+create policy "products_block_delete"
+on mb178.products
+for delete
+to anon, authenticated
+using (false);
+
+drop policy if exists "orders_select_all" on mb178.orders;
+create policy "orders_select_all"
+on mb178.orders
+for select
+to anon, authenticated
+using (true);
+
+drop policy if exists "orders_block_writes" on mb178.orders;
+create policy "orders_block_writes"
+on mb178.orders
+for insert
+to anon, authenticated
+with check (false);
+
+drop policy if exists "orders_block_update" on mb178.orders;
+create policy "orders_block_update"
+on mb178.orders
+for update
+to anon, authenticated
+using (false)
+with check (false);
+
+drop policy if exists "orders_block_delete" on mb178.orders;
+create policy "orders_block_delete"
+on mb178.orders
+for delete
+to anon, authenticated
+using (false);
+
+drop policy if exists "order_items_select_all" on mb178.order_items;
+create policy "order_items_select_all"
+on mb178.order_items
+for select
+to anon, authenticated
+using (true);
+
+drop policy if exists "order_items_block_writes" on mb178.order_items;
+create policy "order_items_block_writes"
+on mb178.order_items
+for insert
+to anon, authenticated
+with check (false);
+
+drop policy if exists "order_items_block_update" on mb178.order_items;
+create policy "order_items_block_update"
+on mb178.order_items
+for update
+to anon, authenticated
+using (false)
+with check (false);
+
+drop policy if exists "order_items_block_delete" on mb178.order_items;
+create policy "order_items_block_delete"
+on mb178.order_items
+for delete
+to anon, authenticated
+using (false);
+
+-- ------------------------------------------------------------
+-- STORAGE — bucket `mb178_assets`
+-- Rekomendasi: bucket public read (gambar katalog); upload via server.
+-- Blokir write langsung dari anon/authenticated.
+-- Catatan: user SQL Editor sering bukan owner `storage.objects`, sehingga
+-- ALTER/POLICY bisa gagal ("must be owner of table objects"). Kalau begitu,
+-- atur lewat Dashboard: Storage → Policies → storage.objects:
+--   SELECT: bucket_id = 'mb178_assets'
+--   INSERT/UPDATE/DELETE: tolak anon/authenticated
+-- Jika punya akses superuser, bisa uncomment blok SQL berikut:
+-- ------------------------------------------------------------
+-- alter table storage.objects enable row level security;
+--
+-- drop policy if exists "mb178_assets_public_read" on storage.objects;
+-- create policy "mb178_assets_public_read"
+-- on storage.objects
+-- for select
+-- to anon, authenticated
+-- using (bucket_id = 'mb178_assets');
+--
+-- drop policy if exists "mb178_assets_block_writes" on storage.objects;
+-- create policy "mb178_assets_block_writes"
+-- on storage.objects
+-- for all
+-- to anon, authenticated
+-- using (false)
+-- with check (false);
 
 -- ============================================================
--- SEED: 8 Toko
+-- SEED: 8 Toko (gagal jika slug sudah ada — gunakan drop schema untuk reset)
 -- ============================================================
 
 insert into mb178.stores (slug, name, address, whatsapp_link, phone, lat, lng) values
@@ -161,11 +294,9 @@ insert into mb178.stores (slug, name, address, whatsapp_link, phone, lat, lng) v
 -- toko08   / 223344  → toko-kosmetik
 -- ============================================================
 
--- Master admin (no store)
 insert into mb178.app_users (user_id, password_hash, password_salt, name, role, store_id) values
 ('master', 'EmURxzBC2gMeaZQ4t2V+7eILygDmI5Fsaf8lCzEksRs=', '/0cjlahTrXN20aTslXtkAg==', 'Master Admin', 'super_admin', null);
 
--- 8 Owners
 insert into mb178.app_users (user_id, password_hash, password_salt, name, role, store_id) values
 ('mama01', 'tNOLF2klvZkMjpWPdQOigeM04vkdolCie4Gx3H8eDaI=', '0U72bPhSp4a5ipnBCvcsBA==', 'Mama',            'owner', (select id from mb178.stores where slug='pupuk-maju')),
 ('toko02', 'UXDaoFY9O1kbIUimG1bf3onTitVj39iNrNQlA5DPN5k=', 'J+rJK6ID9HBNEgtf53t5nw==', 'Owner MBG',       'owner', (select id from mb178.stores where slug='majubersamagrup')),
