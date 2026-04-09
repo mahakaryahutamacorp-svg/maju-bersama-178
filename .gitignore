@@ -38,7 +38,7 @@ yarn-error.log*
 .env*
 !.env.example
 
-# vercel
+# vercel (local link — jangan commit)
 .vercel
 
 # typescript
