@@ -1,19 +1,49 @@
 import Link from "next/link";
 import { Card } from "@/components/ui/Card";
 import { buttonClass } from "@/components/ui/Button";
+import { createMb178Client } from "@/lib/supabase/admin";
+import type { Mb178StoreRow } from "@/lib/mb178/types";
 import { mockStores } from "@/lib/mock-stores";
 
-export default function CustomerHomePage() {
+export default async function CustomerHomePage() {
+  let stores: { slug: string; name: string; whatsapp: string; image: string | null }[] = [];
+
+  const supabase = createMb178Client();
+  if (supabase) {
+    const { data } = await supabase
+      .from("stores")
+      .select("slug, name, whatsapp_link, profile_image_url")
+      .order("created_at", { ascending: true });
+
+    if (data && data.length > 0) {
+      stores = (data as Pick<Mb178StoreRow, "slug" | "name" | "whatsapp_link" | "profile_image_url">[]).map((s) => ({
+        slug: s.slug,
+        name: s.name,
+        whatsapp: s.whatsapp_link?.replace(/\D/g, "") ?? "",
+        image: s.profile_image_url,
+      }));
+    }
+  }
+
+  if (stores.length === 0) {
+    stores = mockStores.map((s) => ({
+      slug: s.storePath.replace("/store/", ""),
+      name: s.name,
+      whatsapp: s.whatsappE164,
+      image: s.imageSrc,
+    }));
+  }
+
   return (
     <div className="px-4 pb-8 pt-8 md:mx-auto md:max-w-4xl">
       <header className="mb-8">
         <div className="text-center">
-        <p className="font-serif text-3xl font-semibold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-400 to-amber-600 md:text-4xl">
-          Maju Bersama 178
-        </p>
-        <p className="mt-2 font-serif text-lg text-zinc-400 md:text-xl">
-          Pilih Toko
-        </p>
+          <p className="font-serif text-3xl font-semibold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-400 to-amber-600 md:text-4xl">
+            Maju Bersama 178
+          </p>
+          <p className="mt-2 font-serif text-lg text-zinc-400 md:text-xl">
+            Pilih Toko
+          </p>
         </div>
       </header>
 
@@ -49,29 +79,31 @@ export default function CustomerHomePage() {
       </section>
 
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-        {mockStores.map((store) => (
+        {stores.map((store) => (
           <Card
-            key={store.id}
+            key={store.slug}
             title={store.name}
-            imageSrc={store.imageSrc}
-            imageAlt={store.imageAlt}
-            darkened={store.darkened}
+            imageSrc={store.image ?? "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1200&q=80"}
+            imageAlt={`Toko ${store.name}`}
+            darkened={false}
           >
             <div className="flex flex-col gap-2 sm:flex-row">
               <Link
-                href={store.storePath}
+                href={`/store/${store.slug}`}
                 className={`${buttonClass("toko")} flex-1 text-center`}
               >
                 Toko
               </Link>
-              <a
-                className={`${buttonClass("whatsapp")} flex-1 text-center`}
-                href={`https://wa.me/${store.whatsappE164}`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                WhatsApp
-              </a>
+              {store.whatsapp && (
+                <a
+                  className={`${buttonClass("whatsapp")} flex-1 text-center`}
+                  href={`https://wa.me/${store.whatsapp}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  WhatsApp
+                </a>
+              )}
             </div>
           </Card>
         ))}

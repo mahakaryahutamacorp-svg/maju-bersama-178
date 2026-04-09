@@ -13,7 +13,7 @@ function safeFileName(name: string) {
 type Ctx = { params: Promise<{ id: string }> };
 
 export async function PATCH(request: Request, ctx: Ctx) {
-  const session = await requireOwnerSession();
+  const session = await requireOwnerSession(request);
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -98,8 +98,8 @@ export async function PATCH(request: Request, ctx: Ctx) {
   return NextResponse.json({ product: data as Mb178ProductRow });
 }
 
-export async function DELETE(_request: Request, ctx: Ctx) {
-  const session = await requireOwnerSession();
+export async function DELETE(request: Request, ctx: Ctx) {
+  const session = await requireOwnerSession(request);
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

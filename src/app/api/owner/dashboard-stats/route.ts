@@ -4,8 +4,8 @@ import { createMb178Client } from "@/lib/supabase/admin";
 import { computeRadarAxes } from "@/lib/mb178/radar";
 import { hintForSupabaseError } from "@/lib/supabase/error-hints";
 
-export async function GET() {
-  const session = await requireOwnerSession();
+export async function GET(request: Request) {
+  const session = await requireOwnerSession(request);
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

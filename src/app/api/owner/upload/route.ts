@@ -9,7 +9,7 @@ function safeFileName(name: string) {
 }
 
 export async function POST(request: Request) {
-  const session = await requireOwnerSession();
+  const session = await requireOwnerSession(request);
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

@@ -5,6 +5,7 @@ export type Mb178StoreRow = {
   profile_image_url: string | null;
   address: string | null;
   whatsapp_link: string | null;
+  phone: string | null;
   lat: number | null;
   lng: number | null;
   average_rating: number | null;

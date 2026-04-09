@@ -4,8 +4,8 @@ import { createMb178Client } from "@/lib/supabase/admin";
 import type { Mb178StoreRow } from "@/lib/mb178/types";
 import { hintForSupabaseError } from "@/lib/supabase/error-hints";
 
-export async function GET() {
-  const session = await requireOwnerSession();
+export async function GET(request: Request) {
+  const session = await requireOwnerSession(request);
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -15,10 +15,14 @@ export async function GET() {
     return NextResponse.json({ connected: false, store: null });
   }
 
+  if (!session.user.storeId) {
+    return NextResponse.json({ connected: true, store: null });
+  }
+
   const { data, error } = await supabase
     .from("stores")
     .select("*")
-    .eq("id", session.user.storeId!)
+    .eq("id", session.user.storeId)
     .maybeSingle();
 
   if (error) {
@@ -35,7 +39,7 @@ export async function GET() {
 }
 
 export async function PATCH(request: Request) {
-  const session = await requireOwnerSession();
+  const session = await requireOwnerSession(request);
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -46,6 +50,10 @@ export async function PATCH(request: Request) {
       { error: "Supabase tidak dikonfigurasi" },
       { status: 503 }
     );
+  }
+
+  if (!session.user.storeId) {
+    return NextResponse.json({ error: "Tidak ada toko yang dipilih" }, { status: 400 });
   }
 
   let body: Record<string, unknown>;
@@ -67,6 +75,7 @@ export async function PATCH(request: Request) {
 
   const name = str("name");
   const address = str("address");
+  const phone = str("phone");
   const whatsapp_link = str("whatsapp_link");
   const lat = num("lat");
   const lng = num("lng");
@@ -75,6 +84,7 @@ export async function PATCH(request: Request) {
 
   if (name !== undefined) patch.name = name;
   if (address !== undefined) patch.address = address || null;
+  if (phone !== undefined) patch.phone = phone || null;
   if (whatsapp_link !== undefined) patch.whatsapp_link = whatsapp_link || null;
   if (lat !== undefined) patch.lat = lat;
   if (lng !== undefined) patch.lng = lng;
@@ -92,7 +102,7 @@ export async function PATCH(request: Request) {
   const { data, error } = await supabase
     .from("stores")
     .update(patch)
-    .eq("id", session.user.storeId!)
+    .eq("id", session.user.storeId)
     .select("*")
     .maybeSingle();
 

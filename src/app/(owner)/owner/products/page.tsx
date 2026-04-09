@@ -168,7 +168,7 @@ export default function OwnerProductsPage() {
     );
   }
 
-  if (!session?.user || session.user.role !== "owner") {
+  if (!session?.user || (session.user.role !== "owner" && session.user.role !== "super_admin")) {
     return null;
   }
 

@@ -119,7 +119,7 @@ export default function OwnerSettingsPage() {
     );
   }
 
-  if (!session?.user || session.user.role !== "owner") {
+  if (!session?.user || (session.user.role !== "owner" && session.user.role !== "super_admin")) {
     return null;
   }
 

@@ -10,8 +10,8 @@ function safeFileName(name: string) {
   return name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 120) || "file";
 }
 
-export async function GET() {
-  const session = await requireOwnerSession();
+export async function GET(request: Request) {
+  const session = await requireOwnerSession(request);
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -41,7 +41,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const session = await requireOwnerSession();
+  const session = await requireOwnerSession(request);
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

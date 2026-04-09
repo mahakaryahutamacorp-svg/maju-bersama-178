@@ -36,7 +36,7 @@ export default async function ProfilePage() {
           >
             Masuk
           </Link>{" "}
-          untuk melihat akun (demo: owner@maju.id / demo).
+          untuk melihat akun.
         </p>
       )}
     </div>

@@ -4,34 +4,12 @@ import type { UserRole } from "@/types/next-auth";
 import { createMb178ServiceClient } from "@/lib/supabase/admin";
 import { verifyPassword } from "@/lib/auth/password";
 
-type MockUser = {
-  id: string;
-  email: string;
-  password: string;
-  name: string;
-  role: UserRole;
-  storeInitials?: string;
-  storeId?: string;
-};
-
-const mockUsers: MockUser[] = [
-  {
-    id: "1",
-    email: "mama01",
-    password: "223344",
-    name: "Mama",
-    role: "owner",
-    storeInitials: "MA",
-    storeId: "pupuk-maju",
-  },
-];
-
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
       name: "credentials",
       credentials: {
-        email: { label: "User ID / Email", type: "text" },
+        email: { label: "Username", type: "text" },
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
@@ -40,46 +18,40 @@ export const authOptions: NextAuthOptions = {
         const password = String(credentials.password);
 
         const supabase = createMb178ServiceClient();
-        if (supabase) {
-          try {
-            const { data, error } = await supabase
-              .from("app_users")
-              .select("id, user_id, password_hash, password_salt, name, role, store_id")
-              .eq("user_id", identifier)
-              .maybeSingle();
-
-            if (error) {
-              console.error("[auth] Supabase query error:", error.message);
-              // Fall through to mock users instead of blocking login entirely
-            } else if (data) {
-              const ok = verifyPassword(password, data.password_salt, data.password_hash);
-              if (!ok) return null;
-              return {
-                id: data.id,
-                email: `${data.user_id}@local.mb178`,
-                name: data.name ?? data.user_id,
-                role: (data.role as UserRole) ?? "customer",
-                storeId: data.store_id ?? undefined,
-                storeInitials: (data.name ?? data.user_id).slice(0, 2).toUpperCase(),
-              };
-            }
-          } catch (e) {
-            console.error("[auth] Unexpected error querying app_users:", e);
-          }
+        if (!supabase) {
+          console.error("[auth] Supabase service client not available");
+          return null;
         }
 
-        const user = mockUsers.find(
-          (u) => u.email === identifier && u.password === password
-        );
-        if (!user) return null;
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role,
-          storeInitials: user.storeInitials,
-          storeId: user.storeId,
-        };
+        try {
+          const { data, error } = await supabase
+            .from("app_users")
+            .select("id, user_id, password_hash, password_salt, name, role, store_id")
+            .eq("user_id", identifier)
+            .maybeSingle();
+
+          if (error) {
+            console.error("[auth] Supabase query error:", error.message);
+            return null;
+          }
+
+          if (!data) return null;
+
+          const ok = verifyPassword(password, data.password_salt, data.password_hash);
+          if (!ok) return null;
+
+          return {
+            id: data.id,
+            email: `${data.user_id}@local.mb178`,
+            name: data.name ?? data.user_id,
+            role: (data.role as UserRole) ?? "customer",
+            storeId: data.store_id ?? undefined,
+            storeInitials: (data.name ?? data.user_id).slice(0, 2).toUpperCase(),
+          };
+        } catch (e) {
+          console.error("[auth] Unexpected error:", e);
+          return null;
+        }
       },
     }),
   ],
