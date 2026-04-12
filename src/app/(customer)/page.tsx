@@ -32,11 +32,15 @@ export default async function CustomerHomePage() {
 
   const bannerSlides: { id: string; imageUrl: string; title: string | null }[] = [];
   if (supabase) {
-    const { data: bannerRows } = await supabase
+    const { data: bannerRows, error: bannersError } = await supabase
       .from("banners")
       .select("id, image_url, title, is_active, created_at")
       .eq("is_active", true)
       .order("created_at", { ascending: true });
+
+    if (bannersError) {
+      console.error("[CustomerHomePage] banners query failed:", bannersError.message);
+    }
 
     for (const row of (bannerRows ?? []) as Mb178BannerRow[]) {
       const normalized = normalizeBannerImageUrl(row.image_url, supabaseOrigin);
