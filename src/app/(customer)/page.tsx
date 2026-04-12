@@ -1,11 +1,15 @@
 import Link from "next/link";
+import { BannerSlider } from "@/components/customer/banner-slider";
 import { Card } from "@/components/ui/Card";
 import { buttonClass } from "@/components/ui/Button";
+import { normalizeBannerImageUrl } from "@/lib/mb178/banner-url";
+import { safeCatalogImageUrl } from "@/lib/mb178/safe-remote-image";
+import type { Mb178BannerRow, Mb178StoreRow } from "@/lib/mb178/types";
 import { createMb178Client } from "@/lib/supabase/admin";
-import type { Mb178StoreRow } from "@/lib/mb178/types";
 
 export default async function CustomerHomePage() {
   const stores: { slug: string; name: string; whatsapp: string; image: string | null }[] = [];
+  const supabaseOrigin = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
 
   const supabase = createMb178Client();
   if (supabase) {
@@ -26,6 +30,22 @@ export default async function CustomerHomePage() {
     }
   }
 
+  const bannerSlides: { id: string; imageUrl: string; title: string | null }[] = [];
+  if (supabase) {
+    const { data: bannerRows } = await supabase
+      .from("banners")
+      .select("id, image_url, title, is_active, created_at")
+      .eq("is_active", true)
+      .order("created_at", { ascending: true });
+
+    for (const row of (bannerRows ?? []) as Mb178BannerRow[]) {
+      const normalized = normalizeBannerImageUrl(row.image_url, supabaseOrigin);
+      if (!normalized) continue;
+      const imageUrl = safeCatalogImageUrl(normalized, supabaseOrigin);
+      bannerSlides.push({ id: row.id, imageUrl, title: row.title });
+    }
+  }
+
   return (
     <div className="px-4 pb-8 pt-8 md:mx-auto md:max-w-4xl">
       <header className="mb-8">
@@ -39,36 +59,7 @@ export default async function CustomerHomePage() {
         </div>
       </header>
 
-      <section className="mb-8 grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <Link
-          href="/login?mode=customer"
-          className="rounded-3xl border border-white/10 bg-white/5 p-5 backdrop-blur-md transition hover:bg-white/10"
-        >
-          <p className="font-serif text-lg text-amber-200/90">Pengunjung</p>
-          <p className="mt-1 text-sm text-zinc-500">
-            Masuk / Daftar cepat tanpa email.
-          </p>
-          <div className="mt-4">
-            <span className={`${buttonClass("toko")} inline-flex w-auto px-5`}>
-              Masuk / Daftar
-            </span>
-          </div>
-        </Link>
-        <Link
-          href="/login?mode=owner"
-          className="rounded-3xl border border-amber-500/20 bg-gradient-to-br from-zinc-900/70 to-zinc-950/90 p-5 shadow-[0_0_40px_rgba(212,175,55,0.10)] transition hover:border-amber-400/40"
-        >
-          <p className="font-serif text-lg text-amber-200/90">Admin Toko</p>
-          <p className="mt-1 text-sm text-zinc-500">
-            Masuk untuk kelola produk, pesanan, dan pengaturan toko.
-          </p>
-          <div className="mt-4">
-            <span className={`${buttonClass("ghost")} inline-flex w-auto px-5`}>
-              Masuk Admin
-            </span>
-          </div>
-        </Link>
-      </section>
+      <BannerSlider items={bannerSlides} />
 
       {stores.length === 0 ? (
         <p className="rounded-3xl border border-white/10 bg-white/5 px-5 py-8 text-center text-sm text-zinc-400">
@@ -81,7 +72,7 @@ export default async function CustomerHomePage() {
             <Card
               key={store.slug}
               title={store.name}
-              imageSrc={store.image ?? "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1200&q=80"}
+              imageSrc={safeCatalogImageUrl(store.image, supabaseOrigin)}
               imageAlt={`Toko ${store.name}`}
               darkened={false}
             >

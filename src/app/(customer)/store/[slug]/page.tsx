@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { buttonClass } from "@/components/ui/Button";
+import { safeCatalogImageUrl } from "@/lib/mb178/safe-remote-image";
 import { createMb178Client } from "@/lib/supabase/admin";
 import type { Mb178ProductRow } from "@/lib/mb178/types";
 import type { Mb178StoreRow } from "@/lib/mb178/types";
@@ -18,6 +19,7 @@ function formatRp(n: number) {
 
 export default async function StoreCatalogPage({ params }: Props) {
   const { slug } = await params;
+  const supabaseOrigin = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
   const supabase = createMb178Client();
 
   if (!supabase) {
@@ -114,7 +116,7 @@ export default async function StoreCatalogPage({ params }: Props) {
                 <div className="relative h-28 w-28 shrink-0 overflow-hidden rounded-xl border border-amber-500/15 bg-zinc-800">
                   {p.image_url ? (
                     <Image
-                      src={p.image_url}
+                      src={safeCatalogImageUrl(p.image_url, supabaseOrigin)}
                       alt={p.name}
                       fill
                       className="object-cover"
