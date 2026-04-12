@@ -39,6 +39,7 @@ export async function PATCH(request: Request, ctx: Ctx) {
     const n = form.get("name");
     const p = form.get("price");
     const s = form.get("stock");
+    const d = form.get("description");
     if (typeof n === "string" && n.trim()) patch.name = n.trim();
     if (p !== null && p !== "") {
       const price = Number(p);
@@ -47,6 +48,12 @@ export async function PATCH(request: Request, ctx: Ctx) {
     if (s !== null && s !== "") {
       const stock = Number(s);
       if (!Number.isNaN(stock) && stock >= 0) patch.stock = stock;
+    }
+    if (d !== null && d !== undefined) {
+      if (typeof d === "string") {
+        const t = d.trim();
+        patch.description = t.length > 0 ? t : null;
+      }
     }
     const f = form.get("image");
     if (f && f instanceof File && f.size > 0) {
@@ -74,6 +81,12 @@ export async function PATCH(request: Request, ctx: Ctx) {
     if (typeof body.price === "number" && body.price >= 0) patch.price = body.price;
     if (typeof body.stock === "number" && body.stock >= 0) patch.stock = body.stock;
     if (typeof body.image_url === "string") patch.image_url = body.image_url;
+    if (typeof body.description === "string") {
+      const t = body.description.trim();
+      patch.description = t.length > 0 ? t : null;
+    } else if (body.description === null) {
+      patch.description = null;
+    }
   }
 
   if (Object.keys(patch).length === 0) {

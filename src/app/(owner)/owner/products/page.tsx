@@ -31,8 +31,16 @@ export default function OwnerProductsPage() {
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
   const [stock, setStock] = useState("");
+  const [description, setDescription] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editPrice, setEditPrice] = useState("");
+  const [editStock, setEditStock] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [savingEditId, setSavingEditId] = useState<string | null>(null);
 
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -103,6 +111,7 @@ export default function OwnerProductsPage() {
       fd.set("name", name.trim());
       fd.set("price", price);
       fd.set("stock", stock);
+      fd.set("description", description);
       if (imageFile) fd.set("image", imageFile);
       const res = await fetch(appendApiUrl("/api/owner/products"), {
         method: "POST",
@@ -116,6 +125,7 @@ export default function OwnerProductsPage() {
       setName("");
       setPrice("");
       setStock("");
+      setDescription("");
       setImageFile(null);
       if (fileRef.current) fileRef.current.value = "";
       await refresh();
@@ -141,6 +151,59 @@ export default function OwnerProductsPage() {
       await refresh();
     } catch {
       setError("Gagal menghapus");
+    }
+  }
+
+  function beginEdit(p: Mb178ProductRow) {
+    setEditingId(p.id);
+    setEditName(p.name);
+    setEditPrice(String(p.price));
+    setEditStock(String(p.stock));
+    setEditDescription(p.description ?? "");
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+  }
+
+  async function onSaveEdit(id: string) {
+    const priceNum = Number(editPrice);
+    const stockNum = Number(editStock);
+    if (
+      !editName.trim() ||
+      Number.isNaN(priceNum) ||
+      priceNum < 0 ||
+      Number.isNaN(stockNum) ||
+      stockNum < 0
+    ) {
+      setError("Nama, harga, dan stok harus valid");
+      return;
+    }
+    setSavingEditId(id);
+    setError(null);
+    try {
+      const res = await fetch(appendApiUrl(`/api/owner/products/${id}`), {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: editName.trim(),
+          price: priceNum,
+          stock: stockNum,
+          description:
+            editDescription.trim() === "" ? null : editDescription.trim(),
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        setError(json.error ?? "Gagal menyimpan");
+        return;
+      }
+      setEditingId(null);
+      await refresh();
+    } catch {
+      setError("Gagal menyimpan");
+    } finally {
+      setSavingEditId(null);
     }
   }
 
@@ -242,8 +305,8 @@ export default function OwnerProductsPage() {
           </div>
           <label
             className={`relative h-9 w-[3.25rem] shrink-0 rounded-full border-2 transition ${hideZero
-                ? "border-amber-400 bg-gradient-to-r from-amber-600 to-yellow-500 shadow-[0_0_20px_rgba(250,204,21,0.45)]"
-                : "border-zinc-600 bg-zinc-800"
+              ? "border-amber-400 bg-gradient-to-r from-amber-600 to-yellow-500 shadow-[0_0_20px_rgba(250,204,21,0.45)]"
+              : "border-zinc-600 bg-zinc-800"
               } ${savingVisibility || !connected ? "opacity-50" : ""}`}
             title={
               hideZero
@@ -306,6 +369,23 @@ export default function OwnerProductsPage() {
         />
         <div>
           <label
+            htmlFor="p-description"
+            className="mb-2 block text-xs font-medium uppercase tracking-wider text-zinc-500"
+          >
+            Deskripsi (opsional)
+          </label>
+          <textarea
+            id="p-description"
+            name="description"
+            rows={3}
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            className="w-full rounded-xl border border-zinc-600 bg-zinc-900/60 px-3 py-2 text-sm text-zinc-100 outline-none transition focus:border-amber-500"
+            placeholder="Tampil di katalog saat pelanggan mengetuk foto produk"
+          />
+        </div>
+        <div>
+          <label
             htmlFor="p-image"
             className="mb-2 block text-xs font-medium uppercase tracking-wider text-zinc-500"
           >
@@ -338,48 +418,129 @@ export default function OwnerProductsPage() {
             products.map((p) => (
               <li
                 key={p.id}
-                className="flex gap-4 rounded-2xl border border-yellow-600/10 bg-zinc-900/40 p-4"
+                className="rounded-2xl border border-yellow-600/10 bg-zinc-900/40 p-4"
               >
-                <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-xl border border-amber-500/20 bg-zinc-800">
-                  {p.image_url ? (
-                    <Image
-                      src={p.image_url}
-                      alt={p.name}
-                      fill
-                      className="object-cover"
-                      sizes="96px"
-                    />
-                  ) : (
-                    <span className="flex h-full items-center justify-center text-xs text-zinc-600">
-                      Tanpa foto
-                    </span>
-                  )}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="font-medium text-zinc-100">{p.name}</p>
-                  <p className="text-sm text-amber-200/80">{formatRp(p.price)}</p>
-                  <p className="text-xs text-zinc-500">Stok: {p.stock}</p>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <label className="cursor-pointer text-xs text-amber-500/90 underline-offset-2 hover:underline">
-                      Ganti foto
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="sr-only"
-                        onChange={(e) => {
-                          const f = e.target.files?.[0];
-                          e.target.value = "";
-                          if (f) void onReplaceImage(p.id, f);
-                        }}
+                <div className="flex gap-4">
+                  <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-xl border border-amber-500/20 bg-zinc-800">
+                    {p.image_url ? (
+                      <Image
+                        src={p.image_url}
+                        alt={p.name}
+                        fill
+                        className="object-cover"
+                        sizes="96px"
                       />
-                    </label>
-                    <button
-                      type="button"
-                      onClick={() => void onDeleteProduct(p.id)}
-                      className="text-xs text-red-400/90 hover:underline"
-                    >
-                      Hapus
-                    </button>
+                    ) : (
+                      <span className="flex h-full items-center justify-center text-xs text-zinc-600">
+                        Tanpa foto
+                      </span>
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    {editingId === p.id ? (
+                      <div className="space-y-3">
+                        <FloatingLabelInput
+                          id={`edit-name-${p.id}`}
+                          label="Nama produk"
+                          value={editName}
+                          onChange={(e) => setEditName(e.target.value)}
+                        />
+                        <FloatingLabelInput
+                          id={`edit-price-${p.id}`}
+                          label="Harga (IDR)"
+                          type="number"
+                          min={0}
+                          step={1}
+                          value={editPrice}
+                          onChange={(e) => setEditPrice(e.target.value)}
+                        />
+                        <FloatingLabelInput
+                          id={`edit-stock-${p.id}`}
+                          label="Stok"
+                          type="number"
+                          min={0}
+                          step={1}
+                          value={editStock}
+                          onChange={(e) => setEditStock(e.target.value)}
+                        />
+                        <div>
+                          <label
+                            htmlFor={`edit-desc-${p.id}`}
+                            className="mb-1 block text-xs text-zinc-500"
+                          >
+                            Deskripsi
+                          </label>
+                          <textarea
+                            id={`edit-desc-${p.id}`}
+                            rows={3}
+                            value={editDescription}
+                            onChange={(e) => setEditDescription(e.target.value)}
+                            className="w-full rounded-xl border border-zinc-600 bg-zinc-900/60 px-3 py-2 text-sm text-zinc-100 outline-none focus:border-amber-500"
+                          />
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          <Button
+                            type="button"
+                            disabled={
+                              savingEditId === p.id || !connected
+                            }
+                            onClick={() => void onSaveEdit(p.id)}
+                          >
+                            {savingEditId === p.id ? "Menyimpan…" : "Simpan"}
+                          </Button>
+                          <button
+                            type="button"
+                            disabled={savingEditId === p.id}
+                            onClick={cancelEdit}
+                            className="rounded-xl border border-zinc-600 px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800"
+                          >
+                            Batal
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <p className="font-medium text-zinc-100">{p.name}</p>
+                        <p className="text-sm text-amber-200/80">
+                          {formatRp(p.price)}
+                        </p>
+                        <p className="text-xs text-zinc-500">Stok: {p.stock}</p>
+                        {p.description ? (
+                          <p className="mt-2 line-clamp-2 text-xs text-zinc-500">
+                            {p.description}
+                          </p>
+                        ) : null}
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={() => beginEdit(p)}
+                            className="text-xs text-amber-500/90 underline-offset-2 hover:underline"
+                          >
+                            Edit
+                          </button>
+                          <label className="cursor-pointer text-xs text-amber-500/90 underline-offset-2 hover:underline">
+                            Ganti foto
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="sr-only"
+                              onChange={(e) => {
+                                const f = e.target.files?.[0];
+                                e.target.value = "";
+                                if (f) void onReplaceImage(p.id, f);
+                              }}
+                            />
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() => void onDeleteProduct(p.id)}
+                            className="text-xs text-red-400/90 hover:underline"
+                          >
+                            Hapus
+                          </button>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
               </li>

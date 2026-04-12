@@ -11,7 +11,6 @@ const STORE_SLUG_TO_IMAGE_FILE: Record<string, string> = {
   "rosaura-skin-clinic": "rosauraskinclinic.jpg",
   "drg-sona": "klinik drg.Sona.jpg",
   "raniah-travel": "Raniah travel umroh dan haji.jpg",
-  "maju-bersama": "maju bersama pupuk&alat pertanian.jpg",
   "pupuk-maju": "maju bersama pupuk&alat pertanian.jpg",
   "dapurku-seafood": "restoran seafood dapurku by cheff HENDRA.jpg",
 };

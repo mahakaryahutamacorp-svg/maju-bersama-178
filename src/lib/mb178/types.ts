@@ -21,6 +21,8 @@ export type Mb178ProductRow = {
   stock: number;
   unit: string;
   image_url: string | null;
+  /** Kolom DB; bisa tidak ada sebelum migrasi `add-product-description.sql`. */
+  description?: string | null;
   created_at: string;
 };
 
