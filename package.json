@@ -4,9 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "prebuild": "node -e \"const fs=require('fs');if(fs.existsSync('.next'))fs.rmSync('.next',{recursive:true});\"",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "npm run lint && npm run build"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",

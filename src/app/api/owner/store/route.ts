@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireOwnerSession } from "@/app/api/owner/_session";
+import { requireResolvedStoreId } from "@/app/api/owner/_store-id";
 import { createMb178Client } from "@/lib/supabase/admin";
 import type { Mb178StoreRow } from "@/lib/mb178/types";
 import { hintForSupabaseError } from "@/lib/supabase/error-hints";
@@ -10,19 +11,18 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const storeIdOrErr = requireResolvedStoreId(session);
+  if (storeIdOrErr instanceof NextResponse) return storeIdOrErr;
+
   const supabase = createMb178Client();
   if (!supabase) {
     return NextResponse.json({ connected: false, store: null });
   }
 
-  if (!session.user.storeId) {
-    return NextResponse.json({ connected: true, store: null });
-  }
-
   const { data, error } = await supabase
     .from("stores")
     .select("*")
-    .eq("id", session.user.storeId)
+    .eq("id", storeIdOrErr)
     .maybeSingle();
 
   if (error) {
@@ -44,16 +44,15 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const storeIdOrErr = requireResolvedStoreId(session);
+  if (storeIdOrErr instanceof NextResponse) return storeIdOrErr;
+
   const supabase = createMb178Client();
   if (!supabase) {
     return NextResponse.json(
       { error: "Supabase tidak dikonfigurasi" },
       { status: 503 }
     );
-  }
-
-  if (!session.user.storeId) {
-    return NextResponse.json({ error: "Tidak ada toko yang dipilih" }, { status: 400 });
   }
 
   let body: Record<string, unknown>;
@@ -102,7 +101,7 @@ export async function PATCH(request: Request) {
   const { data, error } = await supabase
     .from("stores")
     .update(patch)
-    .eq("id", session.user.storeId)
+    .eq("id", storeIdOrErr)
     .select("*")
     .maybeSingle();
 

@@ -30,19 +30,27 @@ export type Mb178OrderRow = {
   channel: "online" | "offline";
   payment_method: "transfer" | "cod" | "offline";
   status:
-    | "pending"
-    | "pending_payment"
-    | "pending_cod"
-    | "booked"
-    | "paid"
-    | "cancelled"
-    | "completed";
+  | "pending"
+  | "pending_payment"
+  | "pending_cod"
+  | "booked"
+  | "paid"
+  | "cancelled"
+  | "completed";
   customer_name: string | null;
   customer_phone: string | null;
   notes: string | null;
   total: number;
   created_at: string;
 };
+
+export interface Mb178BannerRow {
+  id: string;
+  image_url: string;
+  title: string | null;
+  is_active: boolean;
+  created_at: string;
+}
 
 export type Mb178OrderItemRow = {
   id: string;

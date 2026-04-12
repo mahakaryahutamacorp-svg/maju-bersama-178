@@ -3,10 +3,10 @@ name: Vercel Deploy
 on:
   pull_request:
     branches:
-      - master
+      - main  # Ubah dari master ke main
   push:
     branches:
-      - master
+      - main  # Ubah dari master ke main
   workflow_dispatch:
 
 permissions:

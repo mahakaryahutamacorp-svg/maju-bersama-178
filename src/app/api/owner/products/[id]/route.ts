@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireOwnerSession } from "@/app/api/owner/_session";
+import { requireResolvedStoreId } from "@/app/api/owner/_store-id";
 import { createMb178Client } from "@/lib/supabase/admin";
 import type { Mb178ProductRow } from "@/lib/mb178/types";
 import { hintForSupabaseError } from "@/lib/supabase/error-hints";
@@ -17,6 +18,9 @@ export async function PATCH(request: Request, ctx: Ctx) {
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  const storeIdOrErr = requireResolvedStoreId(session);
+  if (storeIdOrErr instanceof NextResponse) return storeIdOrErr;
 
   const { id } = await ctx.params;
   const supabase = createMb178Client();
@@ -53,7 +57,7 @@ export async function PATCH(request: Request, ctx: Ctx) {
           { status: 400 }
         );
       }
-      const path = `${session.user.storeId}/${Date.now()}-${safeFileName(f.name)}`;
+      const path = `${storeIdOrErr}/${Date.now()}-${safeFileName(f.name)}`;
       const buffer = Buffer.from(await f.arrayBuffer());
       const { error: upErr } = await supabase.storage
         .from(BUCKET)
@@ -80,7 +84,7 @@ export async function PATCH(request: Request, ctx: Ctx) {
     .from("products")
     .update(patch)
     .eq("id", id)
-    .eq("store_id", session.user.storeId!)
+    .eq("store_id", storeIdOrErr)
     .select("*")
     .maybeSingle();
 
@@ -104,6 +108,9 @@ export async function DELETE(request: Request, ctx: Ctx) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const storeIdOrErr = requireResolvedStoreId(session);
+  if (storeIdOrErr instanceof NextResponse) return storeIdOrErr;
+
   const { id } = await ctx.params;
   const supabase = createMb178Client();
   if (!supabase) {
@@ -117,7 +124,7 @@ export async function DELETE(request: Request, ctx: Ctx) {
     .from("products")
     .delete()
     .eq("id", id)
-    .eq("store_id", session.user.storeId!)
+    .eq("store_id", storeIdOrErr)
     .select("id");
 
   if (error) {

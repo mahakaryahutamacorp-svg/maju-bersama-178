@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireOwnerSession } from "@/app/api/owner/_session";
+import { requireResolvedStoreId } from "@/app/api/owner/_store-id";
 import { createMb178Client } from "@/lib/supabase/admin";
 import { computeRadarAxes } from "@/lib/mb178/radar";
 import { hintForSupabaseError } from "@/lib/supabase/error-hints";
@@ -27,7 +28,9 @@ export async function GET(request: Request) {
     });
   }
 
-  const storeId = session.user.storeId!;
+  const storeIdOrErr = requireResolvedStoreId(session);
+  if (storeIdOrErr instanceof NextResponse) return storeIdOrErr;
+  const storeId = storeIdOrErr;
 
   const [productsRes, ordersRes, storeRes] = await Promise.all([
     supabase.from("products").select("stock, price").eq("store_id", storeId),
@@ -53,7 +56,7 @@ export async function GET(request: Request) {
         error: raw,
         hint:
           hintForSupabaseError(raw) ??
-          "Pastikan schema `mb178` & tabelnya sudah dibuat (lihat `supabase/setup-complete.sql`).",
+          "Pastikan tabel di `public` sudah dibuat (jalankan `supabase/setup-complete.sql`).",
       },
       { status: 503 }
     );

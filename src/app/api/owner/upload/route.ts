@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireOwnerSession } from "@/app/api/owner/_session";
+import { requireResolvedStoreId } from "@/app/api/owner/_store-id";
 import { createMb178Client } from "@/lib/supabase/admin";
 
 const BUCKET = "mb178_assets";
@@ -13,6 +14,9 @@ export async function POST(request: Request) {
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  const storeIdOrErr = requireResolvedStoreId(session);
+  if (storeIdOrErr instanceof NextResponse) return storeIdOrErr;
 
   const supabase = createMb178Client();
   if (!supabase) {
@@ -40,7 +44,7 @@ export async function POST(request: Request) {
     typeof (file as File).name === "string"
       ? (file as File).name
       : "upload";
-  const path = `${session.user.storeId}/${Date.now()}-${safeFileName(original)}`;
+  const path = `${storeIdOrErr}/${Date.now()}-${safeFileName(original)}`;
   const buffer = Buffer.from(await file.arrayBuffer());
 
   const { error } = await supabase.storage

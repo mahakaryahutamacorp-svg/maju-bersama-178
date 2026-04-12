@@ -8,6 +8,7 @@ import { FloatingLabelInput } from "@/components/ui/FloatingLabelInput";
 import { Button } from "@/components/ui/Button";
 import type { Mb178ProductRow } from "@/lib/mb178/types";
 import type { Mb178StoreRow } from "@/lib/mb178/types";
+import { useOwnerStoreScope } from "@/components/owner/owner-store-scope";
 
 function formatRp(n: number) {
   return new Intl.NumberFormat("id-ID", {
@@ -19,6 +20,7 @@ function formatRp(n: number) {
 
 export default function OwnerProductsPage() {
   const { data: session, status } = useSession();
+  const { appendApiUrl, ready: storeReady } = useOwnerStoreScope();
   const [store, setStore] = useState<Mb178StoreRow | null>(null);
   const [products, setProducts] = useState<Mb178ProductRow[]>([]);
   const [connected, setConnected] = useState(true);
@@ -39,15 +41,15 @@ export default function OwnerProductsPage() {
     setError(null);
     try {
       const [sRes, pRes] = await Promise.all([
-        fetch("/api/owner/store"),
-        fetch("/api/owner/products"),
+        fetch(appendApiUrl("/api/owner/store")),
+        fetch(appendApiUrl("/api/owner/products")),
       ]);
       const sJson = await sRes.json();
       const pJson = await pRes.json();
       if (!sRes.ok)
         setError(
           [sJson.error, sJson.hint].filter(Boolean).join(" — ") ||
-            "Gagal memuat toko"
+          "Gagal memuat toko"
         );
       else {
         setConnected(!!sJson.connected);
@@ -56,7 +58,7 @@ export default function OwnerProductsPage() {
       if (!pRes.ok)
         setError(
           [pJson.error, pJson.hint].filter(Boolean).join(" — ") ||
-            "Gagal memuat produk"
+          "Gagal memuat produk"
         );
       else setProducts(pJson.products ?? []);
     } catch {
@@ -64,17 +66,17 @@ export default function OwnerProductsPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [appendApiUrl]);
 
   useEffect(() => {
-    if (status === "authenticated") void refresh();
-  }, [status, refresh]);
+    if (status === "authenticated" && storeReady) void refresh();
+  }, [status, storeReady, refresh]);
 
   async function toggleHideZeroStock(next: boolean) {
     setSavingVisibility(true);
     setError(null);
     try {
-      const res = await fetch("/api/owner/store", {
+      const res = await fetch(appendApiUrl("/api/owner/store"), {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ hide_zero_stock_from_catalog: next }),
@@ -102,7 +104,7 @@ export default function OwnerProductsPage() {
       fd.set("price", price);
       fd.set("stock", stock);
       if (imageFile) fd.set("image", imageFile);
-      const res = await fetch("/api/owner/products", {
+      const res = await fetch(appendApiUrl("/api/owner/products"), {
         method: "POST",
         body: fd,
       });
@@ -128,7 +130,9 @@ export default function OwnerProductsPage() {
     if (!confirm("Hapus produk ini?")) return;
     setError(null);
     try {
-      const res = await fetch(`/api/owner/products/${id}`, { method: "DELETE" });
+      const res = await fetch(appendApiUrl(`/api/owner/products/${id}`), {
+        method: "DELETE",
+      });
       const json = await res.json();
       if (!res.ok) {
         setError(json.error ?? "Gagal menghapus");
@@ -145,7 +149,7 @@ export default function OwnerProductsPage() {
     const fd = new FormData();
     fd.set("image", file);
     try {
-      const res = await fetch(`/api/owner/products/${id}`, {
+      const res = await fetch(appendApiUrl(`/api/owner/products/${id}`), {
         method: "PATCH",
         body: fd,
       });
@@ -160,7 +164,7 @@ export default function OwnerProductsPage() {
     }
   }
 
-  if (status === "loading" || (status === "authenticated" && loading)) {
+  if (status === "loading" || (status === "authenticated" && storeReady && loading)) {
     return (
       <div className="px-4 py-16 text-center text-sm text-zinc-500">
         Memuat…
@@ -170,6 +174,22 @@ export default function OwnerProductsPage() {
 
   if (!session?.user || (session.user.role !== "owner" && session.user.role !== "super_admin")) {
     return null;
+  }
+
+  if (session.user.role === "owner" && !session.user.storeId) {
+    return (
+      <div className="px-4 py-16 text-center text-sm text-zinc-500">
+        Menunggu penautan toko…
+      </div>
+    );
+  }
+
+  if (status === "authenticated" && !storeReady) {
+    return (
+      <div className="px-4 py-16 text-center text-sm text-zinc-500">
+        Memuat konteks toko…
+      </div>
+    );
   }
 
   const hideZero = store?.hide_zero_stock_from_catalog ?? false;
@@ -191,7 +211,7 @@ export default function OwnerProductsPage() {
       <p className="mt-1 text-sm text-zinc-500">
         Unggah foto ke bucket{" "}
         <code className="text-zinc-400">mb178_assets</code> — data{" "}
-        <code className="text-zinc-400">mb178.products</code>.
+        <code className="text-zinc-400">public.products</code>.
       </p>
 
       {error ? (
@@ -221,11 +241,10 @@ export default function OwnerProductsPage() {
             </p>
           </div>
           <label
-            className={`relative h-9 w-[3.25rem] shrink-0 rounded-full border-2 transition ${
-              hideZero
+            className={`relative h-9 w-[3.25rem] shrink-0 rounded-full border-2 transition ${hideZero
                 ? "border-amber-400 bg-gradient-to-r from-amber-600 to-yellow-500 shadow-[0_0_20px_rgba(250,204,21,0.45)]"
                 : "border-zinc-600 bg-zinc-800"
-            } ${savingVisibility || !connected ? "opacity-50" : ""}`}
+              } ${savingVisibility || !connected ? "opacity-50" : ""}`}
             title={
               hideZero
                 ? "Aktif: stok 0 disembunyikan"
@@ -243,9 +262,8 @@ export default function OwnerProductsPage() {
             />
             <span
               aria-hidden
-              className={`absolute top-1/2 block h-6 w-6 -translate-y-1/2 rounded-full bg-zinc-950 shadow-md transition-all ${
-                hideZero ? "left-[calc(100%-1.65rem)] bg-amber-50" : "left-1"
-              }`}
+              className={`absolute top-1/2 block h-6 w-6 -translate-y-1/2 rounded-full bg-zinc-950 shadow-md transition-all ${hideZero ? "left-[calc(100%-1.65rem)] bg-amber-50" : "left-1"
+                }`}
             />
           </label>
         </div>
