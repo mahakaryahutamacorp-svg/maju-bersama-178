@@ -75,8 +75,8 @@ export function BannerSlider({ items }: { items: BannerSlideItem[] }) {
                 aria-label={`Banner ${i + 1} dari ${count}`}
                 aria-current={i === index}
                 className={`h-2 rounded-full transition-all duration-300 ${i === index
-                    ? "w-8 bg-gradient-to-r from-amber-400 to-yellow-500"
-                    : "w-2 bg-white/25 hover:bg-white/40"
+                  ? "w-8 bg-gradient-to-r from-amber-400 to-yellow-500"
+                  : "w-2 bg-white/25 hover:bg-white/40"
                   }`}
                 onClick={() => go(i)}
               />
