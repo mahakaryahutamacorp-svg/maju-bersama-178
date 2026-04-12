@@ -6,7 +6,7 @@
 -- Yang dilakukan:
 --   1) Hapus schema lama aplikasi `mb178` (jika ada).
 --   2) Reset schema `public` (menghapus SEMUA objek di public — proyek khusus app ini).
---   3) Buat ulang tabel + RLS + seed (8 toko, master, mb178, 8 owner).
+--   3) Buat ulang tabel + RLS + seed (8 toko, master, mb178, 8 owner, banners beranda).
 --
 -- Setelah itu (Dashboard):
 --   - Buat bucket Storage `mb178_assets` (publik baca untuk katalog; unggah via server).
@@ -112,6 +112,14 @@ CREATE TABLE public.order_items (
   line_total numeric(14, 2) NOT NULL CHECK (line_total >= 0),
   created_at timestamptz NOT NULL DEFAULT now()
 );
+-- Slider promosi beranda (URL gambar: Storage publik mb178_assets atau HTTPS lain yang diizinkan app)
+CREATE TABLE public.banners (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  image_url text NOT NULL,
+  title text,
+  is_active boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
 -- ------------------------------------------------------------
 -- 4) Hak pada tabel yang baru dibuat (objek yang sudah ada sekarang)
 -- ------------------------------------------------------------
@@ -133,6 +141,7 @@ ALTER TABLE public.products ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.app_users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.order_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.banners ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "app_users_deny_all" ON public.app_users FOR ALL TO anon,
 authenticated USING (false) WITH CHECK (false);
 CREATE POLICY "stores_select_all" ON public.stores FOR
@@ -178,6 +187,17 @@ CREATE POLICY "order_items_block_update" ON public.order_items FOR
 UPDATE TO anon,
   authenticated USING (false) WITH CHECK (false);
 CREATE POLICY "order_items_block_delete" ON public.order_items FOR DELETE TO anon,
+authenticated USING (false);
+CREATE POLICY "banners_select_active" ON public.banners FOR
+SELECT TO anon,
+  authenticated USING (is_active = true);
+CREATE POLICY "banners_block_insert" ON public.banners FOR
+INSERT TO anon,
+  authenticated WITH CHECK (false);
+CREATE POLICY "banners_block_update" ON public.banners FOR
+UPDATE TO anon,
+  authenticated USING (false) WITH CHECK (false);
+CREATE POLICY "banners_block_delete" ON public.banners FOR DELETE TO anon,
 authenticated USING (false);
 -- ------------------------------------------------------------
 -- STORAGE — bucket `mb178_assets` (buat manual di Dashboard jika belum ada)
