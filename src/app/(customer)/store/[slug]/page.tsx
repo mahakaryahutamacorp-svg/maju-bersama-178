@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { buttonClass } from "@/components/ui/Button";
+import { resolveStoreFrontImage } from "@/lib/mb178/local-store-images";
 import { safeCatalogImageUrl } from "@/lib/mb178/safe-remote-image";
 import { createMb178Client } from "@/lib/supabase/admin";
 import type { Mb178ProductRow } from "@/lib/mb178/types";
@@ -70,6 +71,11 @@ export default async function StoreCatalogPage({ params }: Props) {
 
   const list = (products ?? []) as Mb178ProductRow[];
   const wa = row.whatsapp_link?.trim();
+  const coverSrc = resolveStoreFrontImage(
+    slug,
+    row.profile_image_url,
+    supabaseOrigin
+  );
 
   return (
     <div className="px-4 pb-24 pt-8 md:mx-auto md:max-w-lg">
@@ -80,6 +86,16 @@ export default async function StoreCatalogPage({ params }: Props) {
         ← Beranda
       </Link>
       <header className="mt-6">
+        <div className="relative mb-6 aspect-[16/10] w-full max-w-lg overflow-hidden rounded-2xl border border-amber-500/20 shadow-[0_0_32px_rgba(212,175,55,0.08)]">
+          <Image
+            src={coverSrc}
+            alt={row.name}
+            fill
+            className="object-cover"
+            sizes="(max-width: 768px) 100vw, 512px"
+            priority
+          />
+        </div>
         <h1 className="font-serif text-3xl text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-400 to-amber-600">
           {row.name}
         </h1>

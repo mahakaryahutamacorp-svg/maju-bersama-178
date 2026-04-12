@@ -2,7 +2,7 @@ import Link from "next/link";
 import { BannerSlider } from "@/components/customer/banner-slider";
 import { Card } from "@/components/ui/Card";
 import { buttonClass } from "@/components/ui/Button";
-import { resolveStoreCardImage } from "@/lib/mb178/local-store-images";
+import { resolveStoreFrontImage } from "@/lib/mb178/local-store-images";
 import type { Mb178StoreRow } from "@/lib/mb178/types";
 import { createMb178Client } from "@/lib/supabase/admin";
 
@@ -55,11 +55,7 @@ export default async function CustomerHomePage() {
             <Card
               key={store.slug}
               title={store.name}
-              imageSrc={resolveStoreCardImage(
-                store.slug,
-                store.image,
-                supabaseOrigin,
-              )}
+              imageSrc={resolveStoreFrontImage(store.slug, store.image, supabaseOrigin)}
               imageAlt={`Toko ${store.name}`}
               darkened={false}
             >

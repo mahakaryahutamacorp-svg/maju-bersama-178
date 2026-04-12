@@ -44,14 +44,6 @@ export type Mb178OrderRow = {
   created_at: string;
 };
 
-export interface Mb178BannerRow {
-  id: string;
-  image_url: string;
-  title: string | null;
-  is_active: boolean;
-  created_at: string;
-}
-
 export type Mb178OrderItemRow = {
   id: string;
   order_id: string;
