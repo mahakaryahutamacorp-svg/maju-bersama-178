@@ -13,12 +13,12 @@ Buka [http://localhost:3000](http://localhost:3000). Salin variabel dari [`.env.
 
 ## Setup database (Supabase)
 
-Satu skrip untuk schema, RLS, dan data awal (8 toko + owner + master admin):
+Satu skrip untuk **reset `public` + schema lama `mb178`**, lalu tabel, RLS, dan data awal (8 toko + owner + master admin):
 
-1. Di [Supabase SQL Editor](https://supabase.com/dashboard), jalankan isi file [`supabase/setup-complete.sql`](supabase/setup-complete.sql).
-2. Untuk reset penuh: `drop schema if exists mb178 cascade;` lalu jalankan skrip lagi.
-3. Di project Supabase: **Settings → Data API** — expose schema `mb178`.
-4. Buat bucket Storage `mb178_assets` (detail komentar di bagian STORAGE dalam skrip SQL).
+1. Di [Supabase SQL Editor](https://supabase.com/dashboard), jalankan **seluruh** isi file [`supabase/setup-complete.sql`](supabase/setup-complete.sql).
+2. Skrip ini **`DROP SCHEMA public CASCADE`** — hanya untuk proyek Supabase yang memang khusus aplikasi ini.
+3. Schema **`public`** sudah default untuk API; tidak perlu menambah schema kustom di Exposed schemas (kecuali Anda menghapus `public` dari daftar).
+4. Buat bucket Storage **`mb178_assets`** (detail di komentar STORAGE dalam skrip SQL).
 
 ## Konfigurasi Vercel ke GitHub
 

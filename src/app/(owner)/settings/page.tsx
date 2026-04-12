@@ -95,7 +95,7 @@ export default function OwnerSettingsPage() {
       if (!res.ok) {
         setError(
           [json.error, json.hint].filter(Boolean).join(" — ") ||
-            "Gagal menyimpan"
+          "Gagal menyimpan"
         );
         return;
       }
@@ -157,7 +157,7 @@ export default function OwnerSettingsPage() {
       </h1>
       <p className="mt-1 text-sm text-zinc-500">
         Identitas toko tersimpan di schema{" "}
-        <code className="text-zinc-400">mb178.stores</code>
+        <code className="text-zinc-400">public.stores</code>
         {connected ? "" : " (offline — periksa env & SQL)"}.
       </p>
 

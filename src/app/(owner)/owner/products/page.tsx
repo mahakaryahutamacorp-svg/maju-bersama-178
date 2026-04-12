@@ -49,7 +49,7 @@ export default function OwnerProductsPage() {
       if (!sRes.ok)
         setError(
           [sJson.error, sJson.hint].filter(Boolean).join(" — ") ||
-            "Gagal memuat toko"
+          "Gagal memuat toko"
         );
       else {
         setConnected(!!sJson.connected);
@@ -58,7 +58,7 @@ export default function OwnerProductsPage() {
       if (!pRes.ok)
         setError(
           [pJson.error, pJson.hint].filter(Boolean).join(" — ") ||
-            "Gagal memuat produk"
+          "Gagal memuat produk"
         );
       else setProducts(pJson.products ?? []);
     } catch {
@@ -211,7 +211,7 @@ export default function OwnerProductsPage() {
       <p className="mt-1 text-sm text-zinc-500">
         Unggah foto ke bucket{" "}
         <code className="text-zinc-400">mb178_assets</code> — data{" "}
-        <code className="text-zinc-400">mb178.products</code>.
+        <code className="text-zinc-400">public.products</code>.
       </p>
 
       {error ? (
@@ -241,11 +241,10 @@ export default function OwnerProductsPage() {
             </p>
           </div>
           <label
-            className={`relative h-9 w-[3.25rem] shrink-0 rounded-full border-2 transition ${
-              hideZero
+            className={`relative h-9 w-[3.25rem] shrink-0 rounded-full border-2 transition ${hideZero
                 ? "border-amber-400 bg-gradient-to-r from-amber-600 to-yellow-500 shadow-[0_0_20px_rgba(250,204,21,0.45)]"
                 : "border-zinc-600 bg-zinc-800"
-            } ${savingVisibility || !connected ? "opacity-50" : ""}`}
+              } ${savingVisibility || !connected ? "opacity-50" : ""}`}
             title={
               hideZero
                 ? "Aktif: stok 0 disembunyikan"
@@ -263,9 +262,8 @@ export default function OwnerProductsPage() {
             />
             <span
               aria-hidden
-              className={`absolute top-1/2 block h-6 w-6 -translate-y-1/2 rounded-full bg-zinc-950 shadow-md transition-all ${
-                hideZero ? "left-[calc(100%-1.65rem)] bg-amber-50" : "left-1"
-              }`}
+              className={`absolute top-1/2 block h-6 w-6 -translate-y-1/2 rounded-full bg-zinc-950 shadow-md transition-all ${hideZero ? "left-[calc(100%-1.65rem)] bg-amber-50" : "left-1"
+                }`}
             />
           </label>
         </div>

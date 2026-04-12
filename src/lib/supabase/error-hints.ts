@@ -1,11 +1,11 @@
 export function hintForSupabaseError(message: string) {
   const m = message.toLowerCase();
 
-  if (m.includes("invalid schema") && m.includes("mb178")) {
+  if (m.includes("invalid schema") || m.includes("schema cache")) {
     return [
-      "Supabase menolak schema `mb178` via API.",
-      "Buka Supabase Dashboard → Settings → API → bagian `Exposed schemas`, lalu tambahkan `mb178`.",
-      "Tunggu 10–30 detik (PostgREST reload) lalu refresh halaman.",
+      "PostgREST tidak mengenali schema/tabel.",
+      "Pastikan skrip `supabase/setup-complete.sql` sudah dijalankan (tabel di `public`).",
+      "Di Settings → API, pastikan `public` ada di Exposed schemas (biasanya default).",
     ].join(" ");
   }
 

@@ -12,7 +12,7 @@ declare module "next-auth" {
       image?: string | null;
       role: UserRole;
       storeInitials?: string | null;
-      /** `mb178.stores.id` untuk peran owner */
+      /** `public.stores.id` untuk peran owner */
       storeId?: string | null;
     };
   }

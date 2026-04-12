@@ -20,7 +20,7 @@ function OwnerAccountAlerts() {
     <p className="mt-3 rounded-2xl border border-amber-500/30 bg-amber-950/20 px-3 py-2 text-xs text-amber-100/90">
       Akun pemilik ini belum ditautkan ke toko di database. Periksa kolom{" "}
       <code className="text-zinc-400">store_id</code> pada{" "}
-      <code className="text-zinc-400">mb178.app_users</code>.
+      <code className="text-zinc-400">public.app_users</code>.
     </p>
   );
 }
