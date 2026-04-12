@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireOwnerSession } from "@/app/api/owner/_session";
+import { requireResolvedStoreId } from "@/app/api/owner/_store-id";
 import { createMb178Client } from "@/lib/supabase/admin";
 import type { Mb178ProductRow } from "@/lib/mb178/types";
 import { hintForSupabaseError } from "@/lib/supabase/error-hints";
@@ -16,6 +17,9 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const storeIdOrErr = requireResolvedStoreId(session);
+  if (storeIdOrErr instanceof NextResponse) return storeIdOrErr;
+
   const supabase = createMb178Client();
   if (!supabase) {
     return NextResponse.json({ connected: false, products: [] });
@@ -24,7 +28,7 @@ export async function GET(request: Request) {
   const { data, error } = await supabase
     .from("products")
     .select("*")
-    .eq("store_id", session.user.storeId!)
+    .eq("store_id", storeIdOrErr)
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -45,6 +49,9 @@ export async function POST(request: Request) {
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  const storeIdOrErr = requireResolvedStoreId(session);
+  if (storeIdOrErr instanceof NextResponse) return storeIdOrErr;
 
   const supabase = createMb178Client();
   if (!supabase) {
@@ -91,7 +98,7 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
-    const path = `${session.user.storeId}/${Date.now()}-${safeFileName(imageFile.name)}`;
+    const path = `${storeIdOrErr}/${Date.now()}-${safeFileName(imageFile.name)}`;
     const buffer = Buffer.from(await imageFile.arrayBuffer());
     const { error: upErr } = await supabase.storage
       .from(BUCKET)
@@ -109,7 +116,7 @@ export async function POST(request: Request) {
   const { data, error } = await supabase
     .from("products")
     .insert({
-      store_id: session.user.storeId!,
+      store_id: storeIdOrErr,
       name,
       price,
       stock,

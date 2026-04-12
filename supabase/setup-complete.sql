@@ -284,6 +284,7 @@ values (
 -- Hash: scrypt N=16384, r=8, p=1, keylen=32
 --
 -- master   / 178178
+-- mb178    / 178178  → super_admin (alias pemilik platform, sama seperti master)
 -- mama01   / 223344  → pupuk-maju
 -- toko02   / 223344  → majubersamagrup
 -- toko03   / 223344  → toko-elektronik
@@ -306,6 +307,22 @@ values (
     'EmURxzBC2gMeaZQ4t2V+7eILygDmI5Fsaf8lCzEksRs=',
     '/0cjlahTrXN20aTslXtkAg==',
     'Master Admin',
+    'super_admin',
+    null
+  ) on conflict (user_id) do nothing;
+insert into mb178.app_users (
+    user_id,
+    password_hash,
+    password_salt,
+    name,
+    role,
+    store_id
+  )
+values (
+    'mb178',
+    'EmURxzBC2gMeaZQ4t2V+7eILygDmI5Fsaf8lCzEksRs=',
+    '/0cjlahTrXN20aTslXtkAg==',
+    'Pemilik MB178',
     'super_admin',
     null
   ) on conflict (user_id) do nothing;

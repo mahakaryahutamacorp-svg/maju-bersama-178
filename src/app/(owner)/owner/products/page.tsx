@@ -8,6 +8,7 @@ import { FloatingLabelInput } from "@/components/ui/FloatingLabelInput";
 import { Button } from "@/components/ui/Button";
 import type { Mb178ProductRow } from "@/lib/mb178/types";
 import type { Mb178StoreRow } from "@/lib/mb178/types";
+import { useOwnerStoreScope } from "@/components/owner/owner-store-scope";
 
 function formatRp(n: number) {
   return new Intl.NumberFormat("id-ID", {
@@ -19,6 +20,7 @@ function formatRp(n: number) {
 
 export default function OwnerProductsPage() {
   const { data: session, status } = useSession();
+  const { appendApiUrl, ready: storeReady } = useOwnerStoreScope();
   const [store, setStore] = useState<Mb178StoreRow | null>(null);
   const [products, setProducts] = useState<Mb178ProductRow[]>([]);
   const [connected, setConnected] = useState(true);
@@ -39,8 +41,8 @@ export default function OwnerProductsPage() {
     setError(null);
     try {
       const [sRes, pRes] = await Promise.all([
-        fetch("/api/owner/store"),
-        fetch("/api/owner/products"),
+        fetch(appendApiUrl("/api/owner/store")),
+        fetch(appendApiUrl("/api/owner/products")),
       ]);
       const sJson = await sRes.json();
       const pJson = await pRes.json();
@@ -64,17 +66,17 @@ export default function OwnerProductsPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [appendApiUrl]);
 
   useEffect(() => {
-    if (status === "authenticated") void refresh();
-  }, [status, refresh]);
+    if (status === "authenticated" && storeReady) void refresh();
+  }, [status, storeReady, refresh]);
 
   async function toggleHideZeroStock(next: boolean) {
     setSavingVisibility(true);
     setError(null);
     try {
-      const res = await fetch("/api/owner/store", {
+      const res = await fetch(appendApiUrl("/api/owner/store"), {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ hide_zero_stock_from_catalog: next }),
@@ -102,7 +104,7 @@ export default function OwnerProductsPage() {
       fd.set("price", price);
       fd.set("stock", stock);
       if (imageFile) fd.set("image", imageFile);
-      const res = await fetch("/api/owner/products", {
+      const res = await fetch(appendApiUrl("/api/owner/products"), {
         method: "POST",
         body: fd,
       });
@@ -128,7 +130,9 @@ export default function OwnerProductsPage() {
     if (!confirm("Hapus produk ini?")) return;
     setError(null);
     try {
-      const res = await fetch(`/api/owner/products/${id}`, { method: "DELETE" });
+      const res = await fetch(appendApiUrl(`/api/owner/products/${id}`), {
+        method: "DELETE",
+      });
       const json = await res.json();
       if (!res.ok) {
         setError(json.error ?? "Gagal menghapus");
@@ -145,7 +149,7 @@ export default function OwnerProductsPage() {
     const fd = new FormData();
     fd.set("image", file);
     try {
-      const res = await fetch(`/api/owner/products/${id}`, {
+      const res = await fetch(appendApiUrl(`/api/owner/products/${id}`), {
         method: "PATCH",
         body: fd,
       });
@@ -160,7 +164,7 @@ export default function OwnerProductsPage() {
     }
   }
 
-  if (status === "loading" || (status === "authenticated" && loading)) {
+  if (status === "loading" || (status === "authenticated" && storeReady && loading)) {
     return (
       <div className="px-4 py-16 text-center text-sm text-zinc-500">
         Memuat…
@@ -170,6 +174,22 @@ export default function OwnerProductsPage() {
 
   if (!session?.user || (session.user.role !== "owner" && session.user.role !== "super_admin")) {
     return null;
+  }
+
+  if (session.user.role === "owner" && !session.user.storeId) {
+    return (
+      <div className="px-4 py-16 text-center text-sm text-zinc-500">
+        Menunggu penautan toko…
+      </div>
+    );
+  }
+
+  if (status === "authenticated" && !storeReady) {
+    return (
+      <div className="px-4 py-16 text-center text-sm text-zinc-500">
+        Memuat konteks toko…
+      </div>
+    );
   }
 
   const hideZero = store?.hide_zero_stock_from_catalog ?? false;

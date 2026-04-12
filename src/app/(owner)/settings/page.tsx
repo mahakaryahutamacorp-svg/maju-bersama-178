@@ -9,6 +9,7 @@ import { FloatingLabelInput } from "@/components/ui/FloatingLabelInput";
 import { FloatingLabelTextarea } from "@/components/ui/FloatingLabelTextarea";
 import { Button } from "@/components/ui/Button";
 import type { Mb178StoreRow } from "@/lib/mb178/types";
+import { useOwnerStoreScope } from "@/components/owner/owner-store-scope";
 
 const LocationMapPicker = dynamic(
   () =>
@@ -28,6 +29,7 @@ const defaultLng = 106.8456;
 
 export default function OwnerSettingsPage() {
   const { data: session, status } = useSession();
+  const { appendApiUrl, ready: storeReady } = useOwnerStoreScope();
   const [mapOpen, setMapOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -45,7 +47,7 @@ export default function OwnerSettingsPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/owner/store");
+      const res = await fetch(appendApiUrl("/api/owner/store"));
       const json = await res.json();
       if (!res.ok) {
         setError(
@@ -67,18 +69,18 @@ export default function OwnerSettingsPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [appendApiUrl]);
 
   useEffect(() => {
-    if (status === "authenticated") void loadStore();
-  }, [status, loadStore]);
+    if (status === "authenticated" && storeReady) void loadStore();
+  }, [status, storeReady, loadStore]);
 
   async function onSave() {
     setSaving(true);
     setMessage(null);
     setError(null);
     try {
-      const res = await fetch("/api/owner/store", {
+      const res = await fetch(appendApiUrl("/api/owner/store"), {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -111,7 +113,7 @@ export default function OwnerSettingsPage() {
     }
   }
 
-  if (status === "loading" || (status === "authenticated" && loading)) {
+  if (status === "loading" || (status === "authenticated" && storeReady && loading)) {
     return (
       <div className="px-4 py-16 text-center text-sm text-zinc-500">
         Memuat…
@@ -121,6 +123,22 @@ export default function OwnerSettingsPage() {
 
   if (!session?.user || (session.user.role !== "owner" && session.user.role !== "super_admin")) {
     return null;
+  }
+
+  if (session.user.role === "owner" && !session.user.storeId) {
+    return (
+      <div className="px-4 py-16 text-center text-sm text-zinc-500">
+        Menunggu penautan toko…
+      </div>
+    );
+  }
+
+  if (status === "authenticated" && !storeReady) {
+    return (
+      <div className="px-4 py-16 text-center text-sm text-zinc-500">
+        Memuat konteks toko…
+      </div>
+    );
   }
 
   return (

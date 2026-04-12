@@ -11,6 +11,7 @@ import {
   Cog6ToothIcon,
 } from "@heroicons/react/24/outline";
 import { OwnerRadar } from "@/components/owner/owner-radar";
+import { useOwnerStoreScope } from "@/components/owner/owner-store-scope";
 
 const menuItems = [
   {
@@ -50,15 +51,16 @@ function formatRp(n: number) {
 
 export default function OwnerDashboardPage() {
   const { data: session, status } = useSession();
+  const { appendApiUrl, ready: storeReady } = useOwnerStoreScope();
   const [stats, setStats] = useState<Stats | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (status !== "authenticated") return;
+    if (status !== "authenticated" || !storeReady) return;
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch("/api/owner/dashboard-stats");
+        const res = await fetch(appendApiUrl("/api/owner/dashboard-stats"));
         const json = (await res.json()) as Stats & {
           error?: string;
           hint?: string | null;
@@ -81,7 +83,7 @@ export default function OwnerDashboardPage() {
     return () => {
       cancelled = true;
     };
-  }, [status]);
+  }, [status, storeReady, appendApiUrl]);
 
   if (status === "loading") {
     return (
@@ -93,6 +95,22 @@ export default function OwnerDashboardPage() {
 
   if (!session?.user || (session.user.role !== "owner" && session.user.role !== "super_admin")) {
     return null;
+  }
+
+  if (session.user.role === "owner" && !session.user.storeId) {
+    return (
+      <div className="px-4 py-16 text-center text-sm text-zinc-500">
+        Menunggu penautan toko…
+      </div>
+    );
+  }
+
+  if (status === "authenticated" && !storeReady) {
+    return (
+      <div className="px-4 py-16 text-center text-sm text-zinc-500">
+        Memuat konteks toko…
+      </div>
+    );
   }
 
   const initials = session.user.storeInitials ?? "RG";
