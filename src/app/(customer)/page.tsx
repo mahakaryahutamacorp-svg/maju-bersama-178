@@ -2,9 +2,8 @@ import Link from "next/link";
 import { BannerSlider } from "@/components/customer/banner-slider";
 import { Card } from "@/components/ui/Card";
 import { buttonClass } from "@/components/ui/Button";
-import { normalizeBannerImageUrl } from "@/lib/mb178/banner-url";
-import { safeCatalogImageUrl } from "@/lib/mb178/safe-remote-image";
-import type { Mb178BannerRow, Mb178StoreRow } from "@/lib/mb178/types";
+import { resolveStoreCardImage } from "@/lib/mb178/local-store-images";
+import type { Mb178StoreRow } from "@/lib/mb178/types";
 import { createMb178Client } from "@/lib/supabase/admin";
 
 export default async function CustomerHomePage() {
@@ -30,26 +29,6 @@ export default async function CustomerHomePage() {
     }
   }
 
-  const bannerSlides: { id: string; imageUrl: string; title: string | null }[] = [];
-  if (supabase) {
-    const { data: bannerRows, error: bannersError } = await supabase
-      .from("banners")
-      .select("id, image_url, title, is_active, created_at")
-      .eq("is_active", true)
-      .order("created_at", { ascending: true });
-
-    if (bannersError) {
-      console.error("[CustomerHomePage] banners query failed:", bannersError.message);
-    }
-
-    for (const row of (bannerRows ?? []) as Mb178BannerRow[]) {
-      const normalized = normalizeBannerImageUrl(row.image_url, supabaseOrigin);
-      if (!normalized) continue;
-      const imageUrl = safeCatalogImageUrl(normalized, supabaseOrigin);
-      bannerSlides.push({ id: row.id, imageUrl, title: row.title });
-    }
-  }
-
   return (
     <div className="px-4 pb-8 pt-8 md:mx-auto md:max-w-4xl">
       <header className="mb-8">
@@ -63,7 +42,7 @@ export default async function CustomerHomePage() {
         </div>
       </header>
 
-      <BannerSlider items={bannerSlides} />
+      <BannerSlider />
 
       {stores.length === 0 ? (
         <p className="rounded-3xl border border-white/10 bg-white/5 px-5 py-8 text-center text-sm text-zinc-400">
@@ -76,7 +55,11 @@ export default async function CustomerHomePage() {
             <Card
               key={store.slug}
               title={store.name}
-              imageSrc={safeCatalogImageUrl(store.image, supabaseOrigin)}
+              imageSrc={resolveStoreCardImage(
+                store.slug,
+                store.image,
+                supabaseOrigin,
+              )}
               imageAlt={`Toko ${store.name}`}
               darkened={false}
             >

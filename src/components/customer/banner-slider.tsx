@@ -9,18 +9,45 @@ export interface BannerSlideItem {
   title: string | null;
 }
 
+/** Aset statis di /public/banners/ — urutan tampil di slider. */
+export const LOCAL_BANNER_SLIDES: BannerSlideItem[] = [
+  {
+    id: "local-banner-1",
+    imageUrl: "/banners/banners01.jpg",
+    title: "Maju Bersama 178",
+  },
+  {
+    id: "local-banner-2",
+    imageUrl: "/banners/banners02.jpg",
+    title: "Katalog Multi-Toko",
+  },
+  {
+    id: "local-banner-3",
+    imageUrl: "/banners/banners03.jpg",
+    title: "Belanja Nyaman",
+  },
+];
+
 const INTERVAL_MS = 6000;
 
-export function BannerSlider({ items }: { items: BannerSlideItem[] }) {
+type Props = {
+  /** Jika tidak diisi atau kosong, memakai {@link LOCAL_BANNER_SLIDES}. */
+  items?: BannerSlideItem[];
+};
+
+export function BannerSlider({ items }: Props) {
+  const slides =
+    items && items.length > 0 ? items : LOCAL_BANNER_SLIDES;
+
   const [index, setIndex] = useState(0);
-  const count = items.length;
+  const count = slides.length;
 
   const go = useCallback(
     (next: number) => {
       if (count === 0) return;
       setIndex(((next % count) + count) % count);
     },
-    [count]
+    [count],
   );
 
   useEffect(() => {
@@ -40,11 +67,14 @@ export function BannerSlider({ items }: { items: BannerSlideItem[] }) {
       aria-label="Promo dan banner"
     >
       <div className="relative aspect-[21/9] w-full min-h-[140px] sm:aspect-[2.4/1] sm:min-h-[180px]">
-        {items.map((item, i) => (
+        {slides.map((item, i) => (
           <div
             key={item.id}
-            className={`absolute inset-0 transition-opacity duration-700 ease-out ${i === index ? "z-[1] opacity-100" : "z-0 opacity-0 pointer-events-none"
-              }`}
+            className={`absolute inset-0 transition-opacity duration-700 ease-out ${
+              i === index
+                ? "z-[1] opacity-100"
+                : "z-0 opacity-0 pointer-events-none"
+            }`}
             {...(i === index ? {} : { "aria-hidden": true as const })}
           >
             <Image
@@ -68,16 +98,17 @@ export function BannerSlider({ items }: { items: BannerSlideItem[] }) {
       {count > 1 ? (
         <>
           <div className="absolute bottom-3 left-0 right-0 z-[2] flex justify-center gap-1.5">
-            {items.map((item, i) => (
+            {slides.map((item, i) => (
               <button
                 key={item.id}
                 type="button"
                 aria-label={`Banner ${i + 1} dari ${count}`}
                 aria-current={i === index}
-                className={`h-2 rounded-full transition-all duration-300 ${i === index
-                  ? "w-8 bg-gradient-to-r from-amber-400 to-yellow-500"
-                  : "w-2 bg-white/25 hover:bg-white/40"
-                  }`}
+                className={`h-2 rounded-full transition-all duration-300 ${
+                  i === index
+                    ? "w-8 bg-gradient-to-r from-amber-400 to-yellow-500"
+                    : "w-2 bg-white/25 hover:bg-white/40"
+                }`}
                 onClick={() => go(i)}
               />
             ))}
