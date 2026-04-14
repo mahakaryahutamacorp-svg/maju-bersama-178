@@ -1,3 +1,4 @@
+-- DEPRECATED table `public.app_users`: pembaruan di file ini hanya untuk migrasi data legacy. Autentikasi aplikasi memakai Supabase Auth.
 -- Migrasi sekali pakai: selaraskan toko dengan public/toko_images/ (tanpa reset schema).
 -- Jalankan setelah backup. Asumsi DB masih memakai seed lama (8 slug placeholder).
 -- Jika slug sudah sama dengan target, baris UPDATE untuk slug itu bisa dilewati.

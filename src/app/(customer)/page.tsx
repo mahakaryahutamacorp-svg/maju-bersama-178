@@ -2,6 +2,7 @@ import Link from "next/link";
 import { BannerSlider } from "@/components/customer/banner-slider";
 import { Card } from "@/components/ui/Card";
 import { buttonClass } from "@/components/ui/Button";
+import { fetchActiveBannersForHome } from "@/lib/mb178/banners";
 import { resolveStoreFrontImage } from "@/lib/mb178/local-store-images";
 import type { Mb178StoreRow } from "@/lib/mb178/types";
 import { createSupabaseServerComponentClient } from "@/lib/supabase/ssr";
@@ -11,6 +12,8 @@ export default async function CustomerHomePage() {
   const supabaseOrigin = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
 
   const supabase = await createSupabaseServerComponentClient();
+  const bannerItems = supabase ? await fetchActiveBannersForHome(supabase) : [];
+
   if (supabase) {
     const { data } = await supabase
       .from("stores")
@@ -42,7 +45,7 @@ export default async function CustomerHomePage() {
         </div>
       </header>
 
-      <BannerSlider />
+      {bannerItems.length > 0 ? <BannerSlider items={bannerItems} /> : null}
 
       {stores.length === 0 ? (
         <p className="rounded-3xl border border-white/10 bg-white/5 px-5 py-8 text-center text-sm text-zinc-400">

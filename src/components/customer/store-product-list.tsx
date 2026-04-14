@@ -1,15 +1,25 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useCallback, useState } from "react";
+import { useAuth } from "@/components/providers/auth-provider";
+import { upsertCartLine } from "@/lib/mb178/cart-storage";
 
 export interface StoreCatalogProduct {
   id: string;
   name: string;
   price: number;
   stock: number;
+  unit: string;
   imageSrc: string | null;
   description: string | null;
+}
+
+export interface StoreCatalogMeta {
+  storeId: string;
+  storeSlug: string;
+  storeName: string;
 }
 
 function formatRp(n: number) {
@@ -22,16 +32,42 @@ function formatRp(n: number) {
 
 interface Props {
   products: StoreCatalogProduct[];
+  storeMeta?: StoreCatalogMeta | null;
 }
 
-export function StoreProductList({ products }: Props) {
+export function StoreProductList({ products, storeMeta }: Props) {
+  const { user } = useAuth();
   const [openDescriptions, setOpenDescriptions] = useState<Record<string, boolean>>(
     {},
   );
+  const [cartHint, setCartHint] = useState<string | null>(null);
 
   const toggleDescription = useCallback((id: string) => {
     setOpenDescriptions((prev) => ({ ...prev, [id]: !prev[id] }));
   }, []);
+
+  const addToCart = useCallback(
+    (p: StoreCatalogProduct) => {
+      if (!storeMeta) return;
+      if (p.stock < 1) {
+        setCartHint("Stok habis.");
+        return;
+      }
+      upsertCartLine({
+        store_id: storeMeta.storeId,
+        store_slug: storeMeta.storeSlug,
+        store_name: storeMeta.storeName,
+        product_id: p.id,
+        name: p.name,
+        unit: p.unit || "pcs",
+        price: p.price,
+        qty: 1,
+      });
+      setCartHint("Ditambahkan ke keranjang.");
+      window.setTimeout(() => setCartHint(null), 2000);
+    },
+    [storeMeta]
+  );
 
   if (products.length === 0) {
     return (
@@ -43,6 +79,11 @@ export function StoreProductList({ products }: Props) {
 
   return (
     <ul className="space-y-4">
+      {cartHint ? (
+        <li className="rounded-xl border border-amber-500/30 bg-amber-950/40 px-3 py-2 text-center text-xs text-amber-100/90">
+          {cartHint}
+        </li>
+      ) : null}
       {products.map((p) => {
         const expanded = !!openDescriptions[p.id];
         const hasText = Boolean(p.description?.trim());
@@ -89,6 +130,26 @@ export function StoreProductList({ products }: Props) {
                 <p className="mt-2 text-xs text-zinc-600">
                   Ketuk gambar untuk deskripsi
                 </p>
+                {storeMeta ? (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => addToCart(p)}
+                      disabled={p.stock < 1}
+                      className="rounded-xl bg-amber-500/90 px-3 py-1.5 text-xs font-semibold text-zinc-950 transition hover:bg-amber-400 disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      + Keranjang
+                    </button>
+                    {!user ? (
+                      <Link
+                        href={`/login?callbackUrl=/cart`}
+                        className="rounded-xl border border-zinc-600 px-3 py-1.5 text-xs text-zinc-400 hover:border-amber-500/40 hover:text-amber-200/90"
+                      >
+                        Checkout perlu masuk
+                      </Link>
+                    ) : null}
+                  </div>
+                ) : null}
               </div>
             </div>
             {expanded ? (

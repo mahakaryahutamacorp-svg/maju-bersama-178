@@ -71,6 +71,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { data, error } = await supabase
         .from("store_memberships")
         .select("role")
+        .eq("user_id", user.id)
         .in("role", ["owner", "super_admin"]);
       if (cancelled) return;
       if (error) {
