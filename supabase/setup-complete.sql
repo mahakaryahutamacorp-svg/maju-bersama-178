@@ -79,6 +79,7 @@ CREATE TABLE public.products (
   description text,
   created_at timestamptz NOT NULL DEFAULT now()
 );
+-- DEPRECATED: legacy credential table. Aplikasi memakai Supabase Auth (`auth.users`) + `public.profiles` / `public.store_memberships`. Jangan menambahkan logika app baru yang membaca `app_users`.
 CREATE TABLE public.app_users (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id text NOT NULL UNIQUE,
@@ -295,6 +296,7 @@ VALUES (
 -- ------------------------------------------------------------
 -- 7) SEED: akun (scrypt — lihat komentar password)
 -- master / 178178 | mb178 / 178178 | mama01..toko08 / 223344
+-- DEPRECATED: seed `app_users` hanya untuk lingkungan lama / dokumentasi. Aplikasi memakai Supabase Auth, bukan baris di tabel ini.
 -- ------------------------------------------------------------
 INSERT INTO public.app_users (
     user_id,

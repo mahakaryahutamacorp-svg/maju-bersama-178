@@ -9,32 +9,9 @@ export interface BannerSlideItem {
   title: string | null;
 }
 
-/** Urutan mengikuti file di `public/banners/`. */
-export const LOCAL_BANNER_ITEMS: BannerSlideItem[] = [
-  {
-    id: "local-banner-1",
-    imageUrl: "/banners/banners01.jpg",
-    title: "Maju Bersama 178",
-  },
-  {
-    id: "local-banner-2",
-    imageUrl: "/banners/banners02.jpg",
-    title: null,
-  },
-  {
-    id: "local-banner-3",
-    imageUrl: "/banners/banners03.jpg",
-    title: null,
-  },
-];
-
 const INTERVAL_MS = 6000;
 
-export function BannerSlider({
-  items = LOCAL_BANNER_ITEMS,
-}: {
-  items?: BannerSlideItem[];
-}) {
+export function BannerSlider({ items }: { items: BannerSlideItem[] }) {
   const [index, setIndex] = useState(0);
   const count = items.length;
 

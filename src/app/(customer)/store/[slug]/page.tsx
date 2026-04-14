@@ -68,6 +68,7 @@ export default async function StoreCatalogPage({ params }: Props) {
     name: p.name,
     price: p.price,
     stock: p.stock,
+    unit: p.unit ?? "pcs",
     description: p.description ?? null,
     imageSrc: p.image_url
       ? safeCatalogImageUrl(p.image_url, supabaseOrigin)
@@ -121,7 +122,14 @@ export default async function StoreCatalogPage({ params }: Props) {
 
       <section className="mt-10">
         <h2 className="mb-4 font-serif text-lg text-zinc-300">Katalog</h2>
-        <StoreProductList products={catalogItems} />
+        <StoreProductList
+          products={catalogItems}
+          storeMeta={{
+            storeId: row.id,
+            storeSlug: slug,
+            storeName: row.name,
+          }}
+        />
       </section>
     </div>
   );
