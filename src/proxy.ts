@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
-import { MB178_SCHEMA } from "@/lib/mb178/constants";
 
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
+
+  // Only protect owner/admin routes
   if (
     pathname.startsWith("/dashboard") ||
     pathname.startsWith("/settings") ||
@@ -18,7 +19,6 @@ export async function proxy(req: NextRequest) {
 
     const res = NextResponse.next();
     const supabase = createServerClient(url, anonKey, {
-      db: { schema: MB178_SCHEMA },
       cookies: {
         getAll() {
           return req.cookies.getAll();

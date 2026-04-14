@@ -14,14 +14,13 @@ import {
   appendStoreScope,
 } from "@/lib/mb178/owner-scope";
 import type { Mb178StoreRow } from "@/lib/mb178/types";
-import { MB178_SCHEMA } from "@/lib/mb178/constants";
 import { useAuth } from "@/components/providers/auth-provider";
 
 function getSupabase() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
   if (!url || !anonKey) return null;
-  return createBrowserClient(url, anonKey, { db: { schema: MB178_SCHEMA } });
+  return createBrowserClient(url, anonKey);
 }
 
 interface OwnerStoreScopeValue {

@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import { createBrowserClient } from "@supabase/ssr";
-import { MB178_SCHEMA } from "@/lib/mb178/constants";
 
 function userIdToEmail(userId: string) {
   return `${userId}@local.mb178`;
@@ -14,7 +13,7 @@ function getSupabase() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
   if (!url || !anonKey) return null;
-  return createBrowserClient(url, anonKey, { db: { schema: MB178_SCHEMA } });
+  return createBrowserClient(url, anonKey);
 }
 
 function LoginForm() {

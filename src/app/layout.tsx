@@ -15,9 +15,30 @@ const playfair = Playfair_Display({
 });
 
 export const metadata: Metadata = {
-  title: "Maju Bersama 178",
-  description: "Marketplace multi-toko — Luxury Dark PWA",
+  title: {
+    default: "Maju Bersama 178 — Marketplace Multi-Toko",
+    template: "%s | Maju Bersama 178",
+  },
+  description:
+    "Marketplace multi-toko terpercaya — belanja pupuk, kosmetik, gadget, makanan, dan layanan perjalanan dalam satu platform. Luxury Dark PWA.",
   manifest: "/manifest.json",
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL || "https://mb178.online"
+  ),
+  openGraph: {
+    type: "website",
+    locale: "id_ID",
+    siteName: "Maju Bersama 178",
+    title: "Maju Bersama 178 — Marketplace Multi-Toko",
+    description:
+      "Belanja dari 8 toko terpilih dalam satu platform premium. Pupuk, kosmetik, gadget, makanan, dan lainnya.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Maju Bersama 178",
+    description: "Marketplace multi-toko premium — Luxury Dark PWA",
+  },
+  robots: { index: true, follow: true },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",

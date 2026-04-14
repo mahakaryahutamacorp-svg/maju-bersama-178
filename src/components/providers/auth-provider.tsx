@@ -3,7 +3,6 @@
 import { createBrowserClient } from "@supabase/ssr";
 import type { User } from "@supabase/supabase-js";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { MB178_SCHEMA } from "@/lib/mb178/constants";
 
 interface AuthContextValue {
   user: User | null;
@@ -19,7 +18,7 @@ function createSupabaseBrowserClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url?.trim() || !anonKey?.trim()) return null;
-  return createBrowserClient(url, anonKey, { db: { schema: MB178_SCHEMA } });
+  return createBrowserClient(url, anonKey);
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {

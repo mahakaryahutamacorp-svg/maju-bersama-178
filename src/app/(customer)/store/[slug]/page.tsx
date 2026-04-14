@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import { StoreProductList } from "@/components/customer/store-product-list";
 import { buttonClass } from "@/components/ui/Button";
 import { resolveStoreFrontImage } from "@/lib/mb178/local-store-images";
@@ -10,6 +11,36 @@ import type { Mb178ProductRow } from "@/lib/mb178/types";
 import type { Mb178StoreRow } from "@/lib/mb178/types";
 
 type Props = { params: Promise<{ slug: string }> };
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params;
+  const supabase = await createSupabaseServerComponentClient();
+  if (!supabase) return { title: "Toko" };
+
+  const { data: store } = await supabase
+    .from("stores")
+    .select("name, address, slug")
+    .eq("slug", slug)
+    .maybeSingle();
+
+  if (!store) return { title: "Toko Tidak Ditemukan" };
+
+  const row = store as Pick<Mb178StoreRow, "name" | "address" | "slug">;
+  const description = row.address
+    ? `${row.name} — ${row.address}. Belanja online di Maju Bersama 178.`
+    : `${row.name} — Belanja online di Maju Bersama 178.`;
+
+  return {
+    title: row.name,
+    description,
+    openGraph: {
+      title: `${row.name} — Maju Bersama 178`,
+      description,
+      type: "website",
+      url: `/store/${row.slug}`,
+    },
+  };
+}
 
 export default async function StoreCatalogPage({ params }: Props) {
   const { slug } = await params;

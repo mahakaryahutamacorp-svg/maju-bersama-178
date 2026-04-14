@@ -1,7 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import type { CookieOptions } from "@supabase/ssr";
 import { cookies } from "next/headers";
-import { MB178_SCHEMA } from "@/lib/mb178/constants";
 
 function getEnv() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
@@ -19,7 +18,6 @@ export async function createSupabaseRouteClient() {
   const cookieStore = await cookies();
 
   return createServerClient(env.url, env.anonKey, {
-    db: { schema: MB178_SCHEMA },
     cookies: {
       getAll() {
         return cookieStore.getAll();
@@ -42,7 +40,6 @@ export async function createSupabaseServerComponentClient() {
   const cookieStore = await cookies();
 
   return createServerClient(env.url, env.anonKey, {
-    db: { schema: MB178_SCHEMA },
     cookies: {
       getAll() {
         return cookieStore.getAll();
