@@ -6,7 +6,7 @@
 -- Yang dilakukan:
 --   1) Hapus schema lama aplikasi `mb178` (jika ada).
 --   2) Reset schema `public` (menghapus SEMUA objek di public — proyek khusus app ini).
---   3) Buat ulang tabel + RLS + seed (8 toko, master, mb178, 8 owner, banners beranda).
+--   3) Buat ulang tabel + RLS + seed (8 toko kanonis, banners; tanpa seed app_users).
 --
 -- Setelah itu (Dashboard):
 --   - Buat bucket Storage `mb178_assets` (publik baca untuk katalog; unggah via server).
@@ -207,10 +207,9 @@ authenticated USING (false);
 --   INSERT/UPDATE/DELETE: tolak anon/authenticated (unggah via server + service role)
 -- ------------------------------------------------------------
 -- ------------------------------------------------------------
--- 6) SEED: 8 toko (slug + nama selaras dengan file di public/toko_images/)
--- Urutan owner: mama01=pupuk-maju, toko02=pestisida-mbp, toko03=pakan-pei,
--- toko04=rosaura-skin-clinic, toko05=drg-sona, toko06=raniah-travel,
--- toko07=dapurku-seafood, toko08=rocell-gadget
+-- 6) SEED: tepat 8 toko MB178 (nama kanonis; slug = public/toko_images/ & kode app)
+-- Urutan beranda: ORDER BY created_at ASC — baris pertama = paling atas.
+-- Admin toko: Supabase Auth + store_memberships (bukan app_users).
 -- ------------------------------------------------------------
 INSERT INTO public.stores (
     slug,
@@ -219,7 +218,8 @@ INSERT INTO public.stores (
     whatsapp_link,
     phone,
     lat,
-    lng
+    lng,
+    created_at
   )
 VALUES (
     'pupuk-maju',
@@ -228,25 +228,8 @@ VALUES (
     'https://wa.me/6281211172228',
     '081211172228',
     -6.2088,
-    106.8456
-  ),
-  (
-    'pestisida-mbp',
-    'Pestisida Maju Bersama',
-    'Jl. Raya Mangga No. 5, Bekasi',
-    'https://wa.me/6281211172228',
-    '081211172228',
-    -6.2416,
-    106.9926
-  ),
-  (
-    'pakan-pei',
-    'Pakan PE''I Maju Bersama',
-    'Jl. Sudirman No. 88, Jakarta',
-    'https://wa.me/6281300001111',
-    '081300001111',
-    -6.2146,
-    106.8451
+    106.8456,
+    '2026-01-01 00:00:01+07'::timestamptz
   ),
   (
     'rosaura-skin-clinic',
@@ -255,16 +238,8 @@ VALUES (
     'https://wa.me/6281300002222',
     '081300002222',
     -6.1954,
-    106.8232
-  ),
-  (
-    'drg-sona',
-    'Klinik drg. Sona',
-    'Jl. Gatot Subroto No. 45, Bandung',
-    'https://wa.me/6281300003333',
-    '081300003333',
-    -6.9175,
-    107.6191
+    106.8232,
+    '2026-01-01 00:00:02+07'::timestamptz
   ),
   (
     'raniah-travel',
@@ -273,16 +248,28 @@ VALUES (
     'https://wa.me/6281300004444',
     '081300004444',
     -7.2575,
-    112.7521
+    112.7521,
+    '2026-01-01 00:00:03+07'::timestamptz
   ),
   (
-    'dapurku-seafood',
-    'Restoran Seafood Dapurku by Chef Hendra',
-    'Jl. Diponegoro No. 33, Semarang',
-    'https://wa.me/6281300005555',
-    '081300005555',
-    -6.9932,
-    110.4203
+    'pakan-pei',
+    'Pakan PE''I Maju Bersama',
+    'Jl. Sudirman No. 88, Jakarta',
+    'https://wa.me/6281300001111',
+    '081300001111',
+    -6.2146,
+    106.8451,
+    '2026-01-01 00:00:04+07'::timestamptz
+  ),
+  (
+    'drg-sona',
+    'Klinik drg. Sona',
+    'Jl. Gatot Subroto No. 45, Bandung',
+    'https://wa.me/6281300003333',
+    '081300003333',
+    -6.9175,
+    107.6191,
+    '2026-01-01 00:00:05+07'::timestamptz
   ),
   (
     'rocell-gadget',
@@ -291,138 +278,31 @@ VALUES (
     'https://wa.me/6281300006666',
     '081300006666',
     3.5952,
-    98.6722
+    98.6722,
+    '2026-01-01 00:00:06+07'::timestamptz
+  ),
+  (
+    'pestisida-mbp',
+    'Pestisida Maju Bersama',
+    'Jl. Raya Mangga No. 5, Bekasi',
+    'https://wa.me/6281211172228',
+    '081211172228',
+    -6.2416,
+    106.9926,
+    '2026-01-01 00:00:07+07'::timestamptz
+  ),
+  (
+    'dapurku-seafood',
+    'Restoran Seafood Dapurku by Chef Hend',
+    'Jl. Diponegoro No. 33, Semarang',
+    'https://wa.me/6281300005555',
+    '081300005555',
+    -6.9932,
+    110.4203,
+    '2026-01-01 00:00:08+07'::timestamptz
   ) ON CONFLICT (slug) DO NOTHING;
 -- ------------------------------------------------------------
--- 7) SEED: akun (scrypt — lihat komentar password)
--- master / 178178 | mb178 / 178178 | mama01..toko08 / 223344
--- DEPRECATED: seed `app_users` hanya untuk lingkungan lama / dokumentasi. Aplikasi memakai Supabase Auth, bukan baris di tabel ini.
+-- 7) app_users: tabel legacy dikosongkan (tanpa seed). Login = Supabase Auth.
+--    Owner & super_admin: supabase/sql-editor/create-local-mb178-auth-users.sql
+--    lalu supabase/migrations/20260414120000_seed_store_memberships.sql
 -- ------------------------------------------------------------
-INSERT INTO public.app_users (
-    user_id,
-    password_hash,
-    password_salt,
-    name,
-    role,
-    store_id
-  )
-VALUES (
-    'master',
-    'EmURxzBC2gMeaZQ4t2V+7eILygDmI5Fsaf8lCzEksRs=',
-    '/0cjlahTrXN20aTslXtkAg==',
-    'Master Admin',
-    'super_admin',
-    NULL
-  ),
-  (
-    'mb178',
-    'EmURxzBC2gMeaZQ4t2V+7eILygDmI5Fsaf8lCzEksRs=',
-    '/0cjlahTrXN20aTslXtkAg==',
-    'Pemilik MB178',
-    'super_admin',
-    NULL
-  ) ON CONFLICT (user_id) DO NOTHING;
-INSERT INTO public.app_users (
-    user_id,
-    password_hash,
-    password_salt,
-    name,
-    role,
-    store_id
-  )
-VALUES (
-    'mama01',
-    'tNOLF2klvZkMjpWPdQOigeM04vkdolCie4Gx3H8eDaI=',
-    '0U72bPhSp4a5ipnBCvcsBA==',
-    'Mama',
-    'owner',
-    (
-      SELECT id
-      FROM public.stores
-      WHERE slug = 'pupuk-maju'
-    )
-  ),
-  (
-    'toko02',
-    'UXDaoFY9O1kbIUimG1bf3onTitVj39iNrNQlA5DPN5k=',
-    'J+rJK6ID9HBNEgtf53t5nw==',
-    'Owner MBG',
-    'owner',
-    (
-      SELECT id
-      FROM public.stores
-      WHERE slug = 'pestisida-mbp'
-    )
-  ),
-  (
-    'toko03',
-    'B/T3mtyzB813J0U7Rs0iNykU9b+CQtFJOCkMc8qbics=',
-    'i87KA/LT4zmLxkh4KAw6zA==',
-    'Owner Elektronik',
-    'owner',
-    (
-      SELECT id
-      FROM public.stores
-      WHERE slug = 'pakan-pei'
-    )
-  ),
-  (
-    'toko04',
-    'ae0/C6U1P2g+aMrSPMMRclzJjR0DvPM6cjC7DhlDEBM=',
-    'g5ji06p9XBRSCUGZKkmJSA==',
-    'Owner Fashion',
-    'owner',
-    (
-      SELECT id
-      FROM public.stores
-      WHERE slug = 'rosaura-skin-clinic'
-    )
-  ),
-  (
-    'toko05',
-    'xabjBQaueXT7ENbtO0ll+vdygxmyNGLDkSvIj+2PXDw=',
-    'wNkBkQ17kUtH9H8RyBwCxg==',
-    'Owner Bangunan',
-    'owner',
-    (
-      SELECT id
-      FROM public.stores
-      WHERE slug = 'drg-sona'
-    )
-  ),
-  (
-    'toko06',
-    'jIYP/J2oZO6OUi4ajf1rLBE3Bm+N3eO3rFrNeX/W3RQ=',
-    'rK+VbwfVSHTKockwKm0Zww==',
-    'Owner Sembako',
-    'owner',
-    (
-      SELECT id
-      FROM public.stores
-      WHERE slug = 'raniah-travel'
-    )
-  ),
-  (
-    'toko07',
-    'b4WkxYZ1Ej75IX6zBKyssC1wr/oVujH6pAhMd0bAvdo=',
-    'mIShmaBhREUEn+wjUbCcFA==',
-    'Owner ATK',
-    'owner',
-    (
-      SELECT id
-      FROM public.stores
-      WHERE slug = 'dapurku-seafood'
-    )
-  ),
-  (
-    'toko08',
-    'Mw3CyWw4siI6eXwdNgfb75QZrfCko91p8eClo/bUFso=',
-    'DCmfiku/eVEDZ497qGE2ag==',
-    'Owner Kosmetik',
-    'owner',
-    (
-      SELECT id
-      FROM public.stores
-      WHERE slug = 'rocell-gadget'
-    )
-  ) ON CONFLICT (user_id) DO NOTHING;

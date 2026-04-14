@@ -1,7 +1,8 @@
 -- DEPRECATED table `public.app_users`: pembaruan di file ini hanya untuk migrasi data legacy. Autentikasi aplikasi memakai Supabase Auth.
--- Migrasi sekali pakai: selaraskan toko dengan public/toko_images/ (tanpa reset schema).
--- Jalankan setelah backup. Asumsi DB masih memakai seed lama (8 slug placeholder).
--- Jika slug sudah sama dengan target, baris UPDATE untuk slug itu bisa dilewati.
+-- Migrasi sekali pakai (data lama → slug kanonis). Jika Anda sudah memakai
+-- supabase/sql-editor/mb178-toko-reset-dan-setup-lengkap.sql atau setup-complete.sql terbaru,
+-- slug toko biasanya sudah benar — skrip ini bisa dilewati.
+-- Jalankan setelah backup jika masih ada slug placeholder lama.
 BEGIN;
 UPDATE public.stores
 SET name = 'Maju Bersama Pupuk & Alat Pertanian'

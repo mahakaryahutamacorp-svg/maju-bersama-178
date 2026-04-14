@@ -1,5 +1,7 @@
 -- =============================================================================
 -- Buat akun Supabase Auth untuk MB178 (email sintetis …@local.mb178)
+-- Pastikan `public.stores` berisi 8 slug kanonis (seed dari setup-complete.sql atau
+-- sql-editor/mb178-toko-reset-dan-setup-lengkap.sql) sebelum menjalankan skrip ini.
 -- Jalankan di: Supabase Dashboard → SQL Editor → Production
 --
 -- Isi:

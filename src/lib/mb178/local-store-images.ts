@@ -2,7 +2,7 @@ import { safeCatalogImageUrl } from "@/lib/mb178/safe-remote-image";
 
 /**
  * Nama file harus sama persis dengan isi folder `public/toko_images/`.
- * Key = `stores.slug` dari Supabase.
+ * Key = `stores.slug` dari Supabase (8 toko kanonis MB178; seed SQL menyelaraskan `stores.name`).
  */
 const STORE_SLUG_TO_IMAGE_FILE: Record<string, string> = {
   "rocell-gadget": "rocell gadget.jpg",
