@@ -20,8 +20,11 @@ function getSupabase() {
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") ?? "/";
   const mode = searchParams.get("mode") ?? "customer";
+  /** Admin toko: default ke dashboard agar langsung ke konteks toko (bukan beranda pelanggan). */
+  const callbackUrl =
+    searchParams.get("callbackUrl")?.trim() ||
+    (mode === "owner" ? "/dashboard" : "/");
   const [userId, setUserId] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
