@@ -33,6 +33,7 @@ UPDATE public.stores
 SET slug = 'rocell-gadget',
   name = 'Rocell Gadget'
 WHERE slug = 'toko-kosmetik';
+-- Legacy `app_users` (bukan auth.users). Hanya untuk perbaikan FK data lama.
 UPDATE public.app_users u
 SET store_id = s.id
 FROM public.stores s

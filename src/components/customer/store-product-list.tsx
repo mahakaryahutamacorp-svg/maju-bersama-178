@@ -2,12 +2,14 @@
 
 import Image from "next/image";
 import { useCallback, useState } from "react";
+import { addOrMergeCartLine } from "@/lib/mb178/cart-storage";
 
 export interface StoreCatalogProduct {
   id: string;
   name: string;
   price: number;
   stock: number;
+  unit: string;
   imageSrc: string | null;
   description: string | null;
 }
@@ -22,16 +24,37 @@ function formatRp(n: number) {
 
 interface Props {
   products: StoreCatalogProduct[];
+  storeContext: { storeId: string; storeSlug: string };
 }
 
-export function StoreProductList({ products }: Props) {
+export function StoreProductList({ products, storeContext }: Props) {
   const [openDescriptions, setOpenDescriptions] = useState<Record<string, boolean>>(
     {},
   );
+  const [toastId, setToastId] = useState<string | null>(null);
 
   const toggleDescription = useCallback((id: string) => {
     setOpenDescriptions((prev) => ({ ...prev, [id]: !prev[id] }));
   }, []);
+
+  const addToCart = useCallback(
+    (p: StoreCatalogProduct) => {
+      if (p.stock < 1) return;
+      addOrMergeCartLine({
+        productId: p.id,
+        storeId: storeContext.storeId,
+        storeSlug: storeContext.storeSlug,
+        name: p.name,
+        unit: p.unit || "pcs",
+        price: p.price,
+        qty: 1,
+        imageUrl: p.imageSrc,
+      });
+      setToastId(p.id);
+      window.setTimeout(() => setToastId((cur) => (cur === p.id ? null : cur)), 2000);
+    },
+    [storeContext.storeId, storeContext.storeSlug],
+  );
 
   if (products.length === 0) {
     return (
@@ -89,6 +112,19 @@ export function StoreProductList({ products }: Props) {
                 <p className="mt-2 text-xs text-zinc-600">
                   Ketuk gambar untuk deskripsi
                 </p>
+                <button
+                  type="button"
+                  disabled={p.stock < 1}
+                  onClick={() => addToCart(p)}
+                  className="mt-3 w-full rounded-xl border border-amber-500/35 bg-amber-500/10 px-3 py-2 text-xs font-semibold text-amber-200/95 transition hover:border-amber-400/50 hover:bg-amber-500/15 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  {p.stock < 1 ? "Stok habis" : "Tambah ke keranjang"}
+                </button>
+                {toastId === p.id ? (
+                  <p className="mt-1 text-center text-[11px] text-emerald-400/90" role="status">
+                    Ditambahkan ke keranjang
+                  </p>
+                ) : null}
               </div>
             </div>
             {expanded ? (

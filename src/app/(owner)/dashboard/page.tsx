@@ -32,7 +32,6 @@ const menuItems = [
 ];
 
 type Stats = {
-  connected: boolean;
   totalProducts: number;
   totalStock: number;
   orderCount: number;
@@ -61,7 +60,7 @@ export default function OwnerDashboardPage() {
     (async () => {
       try {
         const res = await fetch(appendApiUrl("/api/owner/dashboard-stats"));
-        const json = (await res.json()) as Stats & {
+        const json = (await res.json()) as Partial<Stats> & {
           error?: string;
           hint?: string | null;
         };
@@ -74,7 +73,14 @@ export default function OwnerDashboardPage() {
         }
         if (!cancelled) {
           setLoadError(null);
-          setStats(json);
+          setStats({
+            totalProducts: json.totalProducts ?? 0,
+            totalStock: json.totalStock ?? 0,
+            orderCount: json.orderCount ?? 0,
+            revenue: json.revenue ?? 0,
+            rating05: json.rating05 ?? 4.5,
+            radar: json.radar ?? { stok: 0, pesanan: 0, rating: 0 },
+          });
         }
       } catch {
         if (!cancelled) setLoadError("Gagal memuat statistik");
@@ -109,7 +115,7 @@ export default function OwnerDashboardPage() {
   const radar = stats?.radar;
   const totalProducts = stats?.totalProducts;
   const revenue = stats?.revenue;
-  const metricsReady = stats !== null && stats.connected;
+  const metricsReady = stats !== null;
 
   return (
     <div className="px-4 md:mx-auto md:max-w-lg">
@@ -129,13 +135,6 @@ export default function OwnerDashboardPage() {
       {loadError ? (
         <p className="mb-4 rounded-2xl border border-red-500/30 bg-red-950/30 px-4 py-3 text-sm text-red-200/90">
           {loadError}
-        </p>
-      ) : null}
-
-      {stats && !stats.connected ? (
-        <p className="mb-4 text-center text-xs text-zinc-500">
-          Supabase belum terhubung — angka & radar memakai contoh. Isi env & jalankan{" "}
-          <code className="text-zinc-400">supabase/setup-complete.sql</code>.
         </p>
       ) : null}
 

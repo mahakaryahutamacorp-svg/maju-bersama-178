@@ -79,6 +79,7 @@ CREATE TABLE public.products (
   description text,
   created_at timestamptz NOT NULL DEFAULT now()
 );
+-- LEGACY: tidak dipakai aplikasi untuk login (pakai Supabase Auth). Lihat COMMENT pasca-migrasi 20260415103000.
 CREATE TABLE public.app_users (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id text NOT NULL UNIQUE,

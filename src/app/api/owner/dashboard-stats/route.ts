@@ -13,19 +13,13 @@ export async function GET(request: Request) {
 
   const supabase = createMb178Client();
   if (!supabase) {
-    return NextResponse.json({
-      connected: false,
-      totalProducts: 0,
-      totalStock: 0,
-      orderCount: 0,
-      revenue: 0,
-      rating05: 4.5,
-      radar: computeRadarAxes({
-        totalStock: 320,
-        orderCount: 18,
-        rating05: 4.5,
-      }),
-    });
+    return NextResponse.json(
+      {
+        error: "Supabase service role tidak dikonfigurasi",
+        hint: "Isi SUPABASE_SERVICE_ROLE_KEY di .env.local agar statistik dashboard membaca data nyata.",
+      },
+      { status: 503 },
+    );
   }
 
   const storeIdOrErr = requireResolvedStoreId(session);
@@ -68,12 +62,11 @@ export async function GET(request: Request) {
   const totalProducts = products.length;
   const orderCount = orders.length;
   const revenue = orders
-    .filter((o) => o.status !== "cancelled")
+    .filter((o) => o.status !== "cancelled" && o.status !== "pending_payment")
     .reduce((s, o) => s + Number(o.total), 0);
   const rating05 = Number(storeRes.data?.average_rating ?? 4.5);
 
   return NextResponse.json({
-    connected: true,
     totalProducts,
     totalStock,
     orderCount,

@@ -1,21 +1,33 @@
 import Link from "next/link";
-import { BannerSlider } from "@/components/customer/banner-slider";
+import {
+  BannerSlider,
+  type BannerSlideItem,
+} from "@/components/customer/banner-slider";
 import { Card } from "@/components/ui/Card";
 import { buttonClass } from "@/components/ui/Button";
 import { resolveStoreFrontImage } from "@/lib/mb178/local-store-images";
-import type { Mb178StoreRow } from "@/lib/mb178/types";
+import { safeCatalogImageUrl } from "@/lib/mb178/safe-remote-image";
+import type { Mb178BannerRow, Mb178StoreRow } from "@/lib/mb178/types";
 import { createSupabaseServerComponentClient } from "@/lib/supabase/ssr";
 
 export default async function CustomerHomePage() {
   const stores: { slug: string; name: string; whatsapp: string; image: string | null }[] = [];
+  let bannerItems: BannerSlideItem[] = [];
   const supabaseOrigin = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
 
   const supabase = await createSupabaseServerComponentClient();
   if (supabase) {
-    const { data } = await supabase
-      .from("stores")
-      .select("slug, name, whatsapp_link, profile_image_url")
-      .order("created_at", { ascending: true });
+    const [{ data }, { data: bannerRows }] = await Promise.all([
+      supabase
+        .from("stores")
+        .select("slug, name, whatsapp_link, profile_image_url")
+        .order("created_at", { ascending: true }),
+      supabase
+        .from("banners")
+        .select("id, image_url, title")
+        .eq("is_active", true)
+        .order("created_at", { ascending: true }),
+    ]);
 
     if (data && data.length > 0) {
       stores.push(
@@ -25,6 +37,16 @@ export default async function CustomerHomePage() {
           whatsapp: s.whatsapp_link?.replace(/\D/g, "") ?? "",
           image: s.profile_image_url,
         }))
+      );
+    }
+
+    if (bannerRows && bannerRows.length > 0) {
+      bannerItems = (bannerRows as Pick<Mb178BannerRow, "id" | "image_url" | "title">[]).map(
+        (b) => ({
+          id: b.id,
+          imageUrl: safeCatalogImageUrl(b.image_url, supabaseOrigin),
+          title: b.title,
+        }),
       );
     }
   }
@@ -42,7 +64,7 @@ export default async function CustomerHomePage() {
         </div>
       </header>
 
-      <BannerSlider />
+      {bannerItems.length > 0 ? <BannerSlider items={bannerItems} /> : null}
 
       {stores.length === 0 ? (
         <p className="rounded-3xl border border-white/10 bg-white/5 px-5 py-8 text-center text-sm text-zinc-400">

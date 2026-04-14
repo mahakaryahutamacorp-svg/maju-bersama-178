@@ -1,10 +1,14 @@
+import { Suspense } from "react";
+import { CartClient } from "./cart-client";
+
 export default function CartPage() {
   return (
-    <div className="px-4 py-10 text-center">
-      <h1 className="font-serif text-2xl text-amber-200/90">Keranjang</h1>
-      <p className="mt-2 text-sm text-zinc-500">
-        Belum ada item. Katalog multi-toko akan terhubung ke Supabase nanti.
-      </p>
-    </div>
+    <Suspense
+      fallback={
+        <div className="px-4 py-16 text-center text-sm text-zinc-500">Memuat keranjang…</div>
+      }
+    >
+      <CartClient />
+    </Suspense>
   );
 }
