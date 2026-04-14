@@ -1,5 +1,6 @@
 -- =============================================================================
 -- MB178 — Reset data toko + DDL/RLS toko, admin membership, app_users (legacy)
+-- Definisi & komentar kolom `stores`: lihat schema-public-stores-multistore.sql
 -- =============================================================================
 -- Isi:
 --   A) Hapus semua baris toko & turunannya (sama seperti 00-hapus-data-*.sql)
