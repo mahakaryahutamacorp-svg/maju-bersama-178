@@ -1,26 +1,22 @@
 "use client";
 
-import { useSession } from "next-auth/react";
 import { TopBar } from "@/components/ui/TopBar";
 import {
   OwnerStoreScopeProvider,
   SuperAdminStorePicker,
 } from "@/components/owner/owner-store-scope";
+import { useAuth } from "@/components/providers/auth-provider";
 
 function OwnerAccountAlerts() {
-  const { data: session, status } = useSession();
-  if (
-    status !== "authenticated" ||
-    session?.user?.role !== "owner" ||
-    session.user.storeId
-  ) {
+  const { user, loading, isOwner, isSuperAdmin } = useAuth();
+  if (loading || !user || !isOwner || isSuperAdmin) {
     return null;
   }
   return (
     <p className="mt-3 rounded-2xl border border-amber-500/30 bg-amber-950/20 px-3 py-2 text-xs text-amber-100/90">
-      Akun pemilik ini belum ditautkan ke toko di database. Periksa kolom{" "}
-      <code className="text-zinc-400">store_id</code> pada{" "}
-      <code className="text-zinc-400">public.app_users</code>.
+      Akun pemilik ini belum ditautkan ke toko di database. Periksa entri{" "}
+      <code className="text-zinc-400">public.store_memberships</code> untuk user
+      ini.
     </p>
   );
 }

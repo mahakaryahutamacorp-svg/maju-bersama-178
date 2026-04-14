@@ -135,7 +135,7 @@ GRANT USAGE ON ALL SEQUENCES IN SCHEMA public TO anon,
   service_role;
 -- ------------------------------------------------------------
 -- 5) RLS
--- Login lewat NextAuth; tulis data via service role. Katalog baca publik (anon).
+-- Katalog baca publik (anon); autentikasi aplikasi lewat Supabase Auth + store_memberships.
 -- ------------------------------------------------------------
 ALTER TABLE public.stores ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.products ENABLE ROW LEVEL SECURITY;

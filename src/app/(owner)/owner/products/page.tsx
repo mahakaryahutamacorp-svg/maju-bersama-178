@@ -2,13 +2,13 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useSession } from "next-auth/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { FloatingLabelInput } from "@/components/ui/FloatingLabelInput";
 import { Button } from "@/components/ui/Button";
 import type { Mb178ProductRow } from "@/lib/mb178/types";
 import type { Mb178StoreRow } from "@/lib/mb178/types";
 import { useOwnerStoreScope } from "@/components/owner/owner-store-scope";
+import { useAuth } from "@/components/providers/auth-provider";
 
 function formatRp(n: number) {
   return new Intl.NumberFormat("id-ID", {
@@ -19,7 +19,7 @@ function formatRp(n: number) {
 }
 
 export default function OwnerProductsPage() {
-  const { data: session, status } = useSession();
+  const { user, loading: authLoading, isOwner } = useAuth();
   const { appendApiUrl, ready: storeReady } = useOwnerStoreScope();
   const [store, setStore] = useState<Mb178StoreRow | null>(null);
   const [products, setProducts] = useState<Mb178ProductRow[]>([]);
@@ -77,8 +77,8 @@ export default function OwnerProductsPage() {
   }, [appendApiUrl]);
 
   useEffect(() => {
-    if (status === "authenticated" && storeReady) void refresh();
-  }, [status, storeReady, refresh]);
+    if (!authLoading && user && isOwner && storeReady) void refresh();
+  }, [authLoading, user, isOwner, storeReady, refresh]);
 
   async function toggleHideZeroStock(next: boolean) {
     setSavingVisibility(true);
@@ -227,7 +227,7 @@ export default function OwnerProductsPage() {
     }
   }
 
-  if (status === "loading" || (status === "authenticated" && storeReady && loading)) {
+  if (authLoading || (!authLoading && user && isOwner && storeReady && loading)) {
     return (
       <div className="px-4 py-16 text-center text-sm text-zinc-500">
         Memuat…
@@ -235,19 +235,11 @@ export default function OwnerProductsPage() {
     );
   }
 
-  if (!session?.user || (session.user.role !== "owner" && session.user.role !== "super_admin")) {
+  if (!user || !isOwner) {
     return null;
   }
 
-  if (session.user.role === "owner" && !session.user.storeId) {
-    return (
-      <div className="px-4 py-16 text-center text-sm text-zinc-500">
-        Menunggu penautan toko…
-      </div>
-    );
-  }
-
-  if (status === "authenticated" && !storeReady) {
+  if (!storeReady) {
     return (
       <div className="px-4 py-16 text-center text-sm text-zinc-500">
         Memuat konteks toko…
