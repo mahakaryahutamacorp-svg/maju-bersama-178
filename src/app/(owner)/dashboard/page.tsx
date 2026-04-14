@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import {
   CubeIcon,
@@ -12,6 +11,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { OwnerRadar } from "@/components/owner/owner-radar";
 import { useOwnerStoreScope } from "@/components/owner/owner-store-scope";
+import { useAuth } from "@/components/providers/auth-provider";
 
 const menuItems = [
   {
@@ -50,13 +50,13 @@ function formatRp(n: number) {
 }
 
 export default function OwnerDashboardPage() {
-  const { data: session, status } = useSession();
+  const { user, loading, isOwner } = useAuth();
   const { appendApiUrl, ready: storeReady } = useOwnerStoreScope();
   const [stats, setStats] = useState<Stats | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (status !== "authenticated" || !storeReady) return;
+    if (loading || !user || !isOwner || !storeReady) return;
     let cancelled = false;
     (async () => {
       try {
@@ -83,9 +83,9 @@ export default function OwnerDashboardPage() {
     return () => {
       cancelled = true;
     };
-  }, [status, storeReady, appendApiUrl]);
+  }, [loading, user, isOwner, storeReady, appendApiUrl]);
 
-  if (status === "loading") {
+  if (loading) {
     return (
       <div className="px-4 py-16 text-center text-sm text-zinc-500">
         Memuat…
@@ -93,19 +93,11 @@ export default function OwnerDashboardPage() {
     );
   }
 
-  if (!session?.user || (session.user.role !== "owner" && session.user.role !== "super_admin")) {
+  if (!user || !isOwner) {
     return null;
   }
 
-  if (session.user.role === "owner" && !session.user.storeId) {
-    return (
-      <div className="px-4 py-16 text-center text-sm text-zinc-500">
-        Menunggu penautan toko…
-      </div>
-    );
-  }
-
-  if (status === "authenticated" && !storeReady) {
+  if (!storeReady) {
     return (
       <div className="px-4 py-16 text-center text-sm text-zinc-500">
         Memuat konteks toko…
@@ -113,7 +105,7 @@ export default function OwnerDashboardPage() {
     );
   }
 
-  const initials = session.user.storeInitials ?? "RG";
+  const initials = (user.email ?? "MB").slice(0, 2).toUpperCase();
   const radar = stats?.radar;
   const totalProducts = stats?.totalProducts;
   const revenue = stats?.revenue;
@@ -130,7 +122,7 @@ export default function OwnerDashboardPage() {
         </div>
         <div>
           <p className="font-serif text-xl text-amber-100/90">Dashboard</p>
-          <p className="text-sm text-zinc-500">{session.user.name}</p>
+          <p className="text-sm text-zinc-500">{user.email}</p>
         </div>
       </header>
 

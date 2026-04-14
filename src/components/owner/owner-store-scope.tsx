@@ -8,12 +8,21 @@ import {
   useMemo,
   useState,
 } from "react";
-import { useSession } from "next-auth/react";
+import { createBrowserClient } from "@supabase/ssr";
 import {
   MB178_ADMIN_STORE_KEY,
   appendStoreScope,
 } from "@/lib/mb178/owner-scope";
 import type { Mb178StoreRow } from "@/lib/mb178/types";
+import { MB178_SCHEMA } from "@/lib/mb178/constants";
+import { useAuth } from "@/components/providers/auth-provider";
+
+function getSupabase() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
+  if (!url || !anonKey) return null;
+  return createBrowserClient(url, anonKey, { db: { schema: MB178_SCHEMA } });
+}
 
 interface OwnerStoreScopeValue {
   /** Toko yang dipakai untuk query owner API (owner: dari sesi; admin: pilihan). */
@@ -45,7 +54,7 @@ export function OwnerStoreScopeProvider({
 }: {
   children: React.ReactNode;
 }) {
-  const { data: session, status } = useSession();
+  const { user, loading, isOwner, isSuperAdmin } = useAuth();
   const [superAdminStores, setSuperAdminStores] = useState<Mb178StoreRow[]>(
     []
   );
@@ -53,22 +62,49 @@ export function OwnerStoreScopeProvider({
   const [storesLoaded, setStoresLoaded] = useState(false);
   const [storesLoadError, setStoresLoadError] = useState<string | null>(null);
 
-  const role = session?.user?.role;
-  const ownerStoreId = session?.user?.storeId ?? null;
+  const [ownerStoreId, setOwnerStoreId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (status !== "authenticated") return;
-    if (role !== "super_admin") {
-      setStoresLoaded(true);
-      setStoresLoadError(null);
+    let cancelled = false;
+    async function resolveOwnerStoreId() {
+      if (loading || !user || !isOwner || isSuperAdmin) {
+        setOwnerStoreId(null);
+        return;
+      }
+      const supabase = getSupabase();
+      if (!supabase) {
+        setOwnerStoreId(null);
+        return;
+      }
+      const { data, error } = await supabase
+        .from("store_memberships")
+        .select("store_id")
+        .eq("role", "owner")
+        .limit(1)
+        .maybeSingle();
+      if (cancelled) return;
+      if (error || !data?.store_id) {
+        setOwnerStoreId(null);
+        return;
+      }
+      setOwnerStoreId(data.store_id);
+    }
+    void resolveOwnerStoreId();
+    return () => {
+      cancelled = true;
+    };
+  }, [loading, user, isOwner, isSuperAdmin]);
+
+  useEffect(() => {
+    if (loading || !user) return;
+    if (!isSuperAdmin) {
       return;
     }
 
     let cancelled = false;
-    setStoresLoaded(false);
-    setStoresLoadError(null);
-
     (async () => {
+      setStoresLoaded(false);
+      setStoresLoadError(null);
       try {
         const res = await fetch("/api/owner/stores");
         const json = (await res.json()) as {
@@ -81,7 +117,7 @@ export function OwnerStoreScopeProvider({
           setSuperAdminStores([]);
           setStoresLoadError(
             [json.error, json.hint].filter(Boolean).join(" — ") ||
-              "Gagal memuat daftar toko"
+            "Gagal memuat daftar toko"
           );
           setStoresLoaded(true);
           return;
@@ -113,31 +149,31 @@ export function OwnerStoreScopeProvider({
     return () => {
       cancelled = true;
     };
-  }, [status, role]);
+  }, [loading, user, isSuperAdmin]);
 
   useEffect(() => {
     if (
-      role === "super_admin" &&
+      isSuperAdmin &&
       adminStoreId &&
       typeof window !== "undefined"
     ) {
       window.localStorage.setItem(MB178_ADMIN_STORE_KEY, adminStoreId);
     }
-  }, [role, adminStoreId]);
+  }, [isSuperAdmin, adminStoreId]);
 
   const effectiveStoreId =
-    role === "owner"
+    !loading && isOwner && !isSuperAdmin
       ? ownerStoreId
-      : role === "super_admin"
+      : !loading && isSuperAdmin
         ? adminStoreId
         : null;
 
   const ready = useMemo(() => {
-    if (status !== "authenticated") return false;
-    if (role === "owner") return !!ownerStoreId;
-    if (role === "super_admin") return storesLoaded;
+    if (loading || !user) return false;
+    if (isOwner && !isSuperAdmin) return !!ownerStoreId;
+    if (isSuperAdmin) return storesLoaded;
     return false;
-  }, [status, role, ownerStoreId, storesLoaded]);
+  }, [loading, user, isOwner, isSuperAdmin, ownerStoreId, storesLoaded]);
 
   const appendApiUrl = useCallback(
     (path: string) => appendStoreScope(path, effectiveStoreId),
@@ -147,7 +183,9 @@ export function OwnerStoreScopeProvider({
   const value = useMemo<OwnerStoreScopeValue>(
     () => ({
       effectiveStoreId,
-      ready: ready && (role !== "super_admin" || !!effectiveStoreId || superAdminStores.length === 0),
+      ready:
+        ready &&
+        (!isSuperAdmin || !!effectiveStoreId || superAdminStores.length === 0),
       appendApiUrl,
       superAdminStores,
       setSuperAdminStoreId: setAdminStoreId,
@@ -156,7 +194,7 @@ export function OwnerStoreScopeProvider({
     [
       effectiveStoreId,
       ready,
-      role,
+      isSuperAdmin,
       appendApiUrl,
       superAdminStores,
       storesLoadError,
@@ -171,7 +209,7 @@ export function OwnerStoreScopeProvider({
 }
 
 export function SuperAdminStorePicker() {
-  const { data: session, status } = useSession();
+  const { loading, user, isSuperAdmin } = useAuth();
   const {
     superAdminStores,
     setSuperAdminStoreId,
@@ -180,7 +218,7 @@ export function SuperAdminStorePicker() {
     ready,
   } = useOwnerStoreScope();
 
-  if (status !== "authenticated" || session?.user?.role !== "super_admin") {
+  if (loading || !user || !isSuperAdmin) {
     return null;
   }
 

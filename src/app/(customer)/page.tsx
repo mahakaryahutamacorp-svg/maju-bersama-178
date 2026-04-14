@@ -4,13 +4,13 @@ import { Card } from "@/components/ui/Card";
 import { buttonClass } from "@/components/ui/Button";
 import { resolveStoreFrontImage } from "@/lib/mb178/local-store-images";
 import type { Mb178StoreRow } from "@/lib/mb178/types";
-import { createMb178Client } from "@/lib/supabase/admin";
+import { createSupabaseServerComponentClient } from "@/lib/supabase/ssr";
 
 export default async function CustomerHomePage() {
   const stores: { slug: string; name: string; whatsapp: string; image: string | null }[] = [];
   const supabaseOrigin = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
 
-  const supabase = createMb178Client();
+  const supabase = await createSupabaseServerComponentClient();
   if (supabase) {
     const { data } = await supabase
       .from("stores")

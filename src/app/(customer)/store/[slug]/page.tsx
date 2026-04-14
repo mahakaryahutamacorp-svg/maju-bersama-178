@@ -5,7 +5,7 @@ import { StoreProductList } from "@/components/customer/store-product-list";
 import { buttonClass } from "@/components/ui/Button";
 import { resolveStoreFrontImage } from "@/lib/mb178/local-store-images";
 import { safeCatalogImageUrl } from "@/lib/mb178/safe-remote-image";
-import { createMb178Client } from "@/lib/supabase/admin";
+import { createSupabaseServerComponentClient } from "@/lib/supabase/ssr";
 import type { Mb178ProductRow } from "@/lib/mb178/types";
 import type { Mb178StoreRow } from "@/lib/mb178/types";
 
@@ -14,7 +14,7 @@ type Props = { params: Promise<{ slug: string }> };
 export default async function StoreCatalogPage({ params }: Props) {
   const { slug } = await params;
   const supabaseOrigin = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
-  const supabase = createMb178Client();
+  const supabase = await createSupabaseServerComponentClient();
 
   if (!supabase) {
     return (

@@ -1,29 +1,54 @@
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth-options";
+import { createSupabaseRouteClient } from "@/lib/supabase/ssr";
+import type { OwnerSession } from "@/app/api/owner/_store-id";
 
 /**
  * Returns session if user is owner (with storeId) or super_admin.
  * super_admin can pass ?store_id=<uuid> query param to act on any store.
  */
 export async function requireOwnerSession(request?: Request) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user) return null;
+  const supabase = await createSupabaseRouteClient();
+  if (!supabase) return null;
 
-  const { role, storeId } = session.user;
+  const { data: auth, error: authErr } = await supabase.auth.getUser();
+  if (authErr || !auth.user) return null;
 
-  if (role === "super_admin") {
-    let targetStoreId = storeId;
+  const userId = auth.user.id;
+
+  const { data: memberships, error: memErr } = await supabase
+    .from("store_memberships")
+    .select("store_id, role")
+    .eq("user_id", userId);
+
+  if (memErr || !memberships?.length) return null;
+
+  const hasSuperAdmin = memberships.some((m) => m.role === "super_admin");
+  const ownerMembership = memberships.find((m) => m.role === "owner");
+
+  if (!hasSuperAdmin && !ownerMembership) return null;
+
+  let storeId: string | undefined = ownerMembership?.store_id ?? undefined;
+  let role: OwnerSession["user"]["role"] = "owner";
+
+  if (hasSuperAdmin) {
+    role = "super_admin";
     if (request) {
       const url = new URL(request.url);
-      targetStoreId = url.searchParams.get("store_id") ?? storeId ?? undefined;
+      const param = url.searchParams.get("store_id")?.trim() ?? "";
+      // basic UUID sanity check (avoid confusing behavior)
+      if (/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(param)) {
+        storeId = param;
+      }
     }
-    return {
-      ...session,
-      user: { ...session.user, storeId: targetStoreId ?? undefined },
-    };
   }
 
-  if (role !== "owner" || !storeId) return null;
+  const session: OwnerSession = {
+    user: {
+      id: userId,
+      email: auth.user.email ?? null,
+      role,
+      storeId,
+    },
+  };
 
   return session;
 }

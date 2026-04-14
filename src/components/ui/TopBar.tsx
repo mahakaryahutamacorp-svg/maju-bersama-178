@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { signOut, useSession } from "next-auth/react";
 import { usePathname } from "next/navigation";
 import { buttonClass } from "@/components/ui/Button";
+import { useAuth } from "@/components/providers/auth-provider";
 
 type Props = {
   /** tampilkan tombol masuk/daftar jika belum login */
@@ -18,11 +18,10 @@ export function TopBar({
   backHref,
   backLabel = "← Kembali",
 }: Props) {
-  const { data: session, status } = useSession();
+  const { user, loading, isOwner, signOut } = useAuth();
   const pathname = usePathname();
 
-  const loggedIn = status === "authenticated" && !!session?.user;
-  const isOwner = session?.user?.role === "owner";
+  const loggedIn = !loading && !!user;
   const hideDashboard = pathname === "/";
 
   return (
@@ -61,7 +60,7 @@ export function TopBar({
             <button
               type="button"
               className={`${buttonClass("toko")} w-auto px-4 shadow-[0_0_28px_rgba(212,175,55,0.28)]`}
-              onClick={() => void signOut({ callbackUrl: "/" })}
+              onClick={() => void signOut()}
             >
               Logout
             </button>

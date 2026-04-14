@@ -1,9 +1,21 @@
 "use client";
 
-import { signIn } from "next-auth/react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
+import { createBrowserClient } from "@supabase/ssr";
+import { MB178_SCHEMA } from "@/lib/mb178/constants";
+
+function userIdToEmail(userId: string) {
+  return `${userId}@local.mb178`;
+}
+
+function getSupabase() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
+  if (!url || !anonKey) return null;
+  return createBrowserClient(url, anonKey, { db: { schema: MB178_SCHEMA } });
+}
 
 function LoginForm() {
   const router = useRouter();
@@ -21,13 +33,18 @@ function LoginForm() {
     e.preventDefault();
     setError(null);
     setPending(true);
-    const res = await signIn("credentials", {
-      email: userId.trim().toLowerCase(),
+    const supabase = getSupabase();
+    if (!supabase) {
+      setPending(false);
+      setError("Supabase belum dikonfigurasi (env).");
+      return;
+    }
+    const res = await supabase.auth.signInWithPassword({
+      email: userIdToEmail(userId.trim().toLowerCase()),
       password,
-      redirect: false,
     });
     setPending(false);
-    if (res?.error) {
+    if (res.error) {
       setError("Username atau password salah.");
       return;
     }
@@ -43,27 +60,22 @@ function LoginForm() {
     setError(null);
     setRegistering(true);
     try {
-      const res = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId: userId.trim().toLowerCase(),
-          password,
-          name: regName.trim() || null,
-        }),
-      });
-      const json = await res.json();
-      if (!res.ok) {
-        setError(json.error || "Gagal daftar");
+      const supabase = getSupabase();
+      if (!supabase) {
+        setError("Supabase belum dikonfigurasi (env).");
         return;
       }
-      const login = await signIn("credentials", {
-        email: userId.trim().toLowerCase(),
+      const res = await supabase.auth.signUp({
+        email: userIdToEmail(userId.trim().toLowerCase()),
         password,
-        redirect: false,
+        options: {
+          data: {
+            full_name: regName.trim() || null,
+          },
+        },
       });
-      if (login?.error) {
-        setError("Akun dibuat, tapi login gagal. Coba masuk ulang.");
+      if (res.error) {
+        setError(res.error.message || "Gagal daftar");
         return;
       }
       router.push(callbackUrl);
