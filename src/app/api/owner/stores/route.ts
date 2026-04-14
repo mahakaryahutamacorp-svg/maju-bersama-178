@@ -16,12 +16,36 @@ export async function GET(request: Request) {
     return NextResponse.json({ connected: false, stores: [] as Mb178StoreRow[] });
   }
 
-  const { role, storeId } = session.user;
+  const { role, id: userId } = session.user;
 
   if (role === "super_admin") {
+    const { data: allowed, error: memErr } = await supabase
+      .from("store_memberships")
+      .select("store_id")
+      .eq("user_id", userId)
+      .eq("role", "super_admin");
+
+    if (memErr) {
+      return NextResponse.json(
+        { error: memErr.message, hint: hintForSupabaseError(memErr.message) },
+        { status: 503 }
+      );
+    }
+
+    const ids = (allowed ?? []).map((r) => r.store_id).filter(Boolean);
+    if (ids.length === 0) {
+      return NextResponse.json({
+        connected: true,
+        stores: [] as Mb178StoreRow[],
+      });
+    }
+
     const { data, error } = await supabase
       .from("stores")
-      .select("id, slug, name, address, phone, whatsapp_link, profile_image_url, lat, lng, average_rating, hide_zero_stock_from_catalog, created_at")
+      .select(
+        "id, slug, name, address, phone, whatsapp_link, profile_image_url, lat, lng, average_rating, hide_zero_stock_from_catalog, created_at"
+      )
+      .in("id", ids)
       .order("name", { ascending: true });
 
     if (error) {
@@ -37,11 +61,11 @@ export async function GET(request: Request) {
     });
   }
 
-  if (role === "owner" && storeId) {
+  if (role === "owner" && session.user.storeId) {
     const { data, error } = await supabase
       .from("stores")
       .select("id, slug, name, address, phone, whatsapp_link, profile_image_url, lat, lng, average_rating, hide_zero_stock_from_catalog, created_at")
-      .eq("id", storeId)
+      .eq("id", session.user.storeId)
       .maybeSingle();
 
     if (error) {

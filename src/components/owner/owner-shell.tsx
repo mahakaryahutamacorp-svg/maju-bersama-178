@@ -2,6 +2,10 @@
 
 import { TopBar } from "@/components/ui/TopBar";
 import {
+  OwnerActiveStoreBanner,
+  OwnerQuickNav,
+} from "@/components/owner/owner-admin-chrome";
+import {
   OwnerStoreScopeProvider,
   SuperAdminStorePicker,
 } from "@/components/owner/owner-store-scope";
@@ -24,13 +28,15 @@ function OwnerAccountAlerts() {
 export function OwnerShell({ children }: { children: React.ReactNode }) {
   return (
     <OwnerStoreScopeProvider>
-      <div className="min-h-dvh bg-[var(--charcoal)] pb-8 pt-4 text-zinc-100">
+      <div className="min-h-dvh bg-[var(--charcoal)] pb-[calc(5rem+env(safe-area-inset-bottom))] pt-4 text-zinc-100">
         <div className="px-4 md:mx-auto md:max-w-lg">
           <TopBar showAuthButtons={false} />
           <SuperAdminStorePicker />
+          <OwnerActiveStoreBanner />
           <OwnerAccountAlerts />
         </div>
         {children}
+        <OwnerQuickNav />
       </div>
     </OwnerStoreScopeProvider>
   );

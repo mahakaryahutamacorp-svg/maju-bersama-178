@@ -42,7 +42,8 @@ export default function OwnerProductsPage() {
   const [editDescription, setEditDescription] = useState("");
   const [savingEditId, setSavingEditId] = useState<string | null>(null);
 
-  const fileRef = useRef<HTMLInputElement>(null);
+  const galleryNewRef = useRef<HTMLInputElement>(null);
+  const cameraNewRef = useRef<HTMLInputElement>(null);
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -127,7 +128,8 @@ export default function OwnerProductsPage() {
       setStock("");
       setDescription("");
       setImageFile(null);
-      if (fileRef.current) fileRef.current.value = "";
+      if (galleryNewRef.current) galleryNewRef.current.value = "";
+      if (cameraNewRef.current) cameraNewRef.current.value = "";
       await refresh();
     } catch {
       setError("Gagal menambah produk");
@@ -325,8 +327,9 @@ export default function OwnerProductsPage() {
       </section>
 
       <form
+        id="owner-product-form"
         onSubmit={(e) => void onCreateProduct(e)}
-        className="mt-8 space-y-5 rounded-3xl border border-white/10 bg-white/[0.03] p-5 backdrop-blur-md"
+        className="mt-8 scroll-mt-24 space-y-5 rounded-3xl border border-white/10 bg-white/[0.03] p-5 backdrop-blur-md"
       >
         <p className="font-serif text-sm text-amber-200/80">Produk baru</p>
         <FloatingLabelInput
@@ -377,22 +380,57 @@ export default function OwnerProductsPage() {
           />
         </div>
         <div>
-          <label
-            htmlFor="p-image"
-            className="mb-2 block text-xs font-medium uppercase tracking-wider text-zinc-500"
-          >
+          <p className="mb-2 text-xs font-medium uppercase tracking-wider text-zinc-500">
             Foto produk
-          </label>
-          <input
-            ref={fileRef}
-            id="p-image"
-            type="file"
-            accept="image/*"
-            className="block w-full text-sm text-zinc-400 file:mr-3 file:rounded-xl file:border-0 file:bg-amber-500/20 file:px-4 file:py-2 file:text-amber-200"
-            onChange={(e) =>
-              setImageFile(e.target.files?.[0] ?? null)
-            }
-          />
+          </p>
+          <p className="mb-3 text-[11px] leading-relaxed text-zinc-600">
+            Pilih sumber: galeri file, atau kamera (di HP biasanya membuka kamera
+            belakang).
+          </p>
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+            <input
+              ref={galleryNewRef}
+              id="p-image-gallery"
+              type="file"
+              accept="image/*"
+              className="sr-only"
+              onChange={(e) => {
+                setImageFile(e.target.files?.[0] ?? null);
+              }}
+            />
+            <input
+              ref={cameraNewRef}
+              id="p-image-camera"
+              type="file"
+              accept="image/*"
+              capture="environment"
+              className="sr-only"
+              onChange={(e) => {
+                setImageFile(e.target.files?.[0] ?? null);
+              }}
+            />
+            <button
+              type="button"
+              onClick={() => galleryNewRef.current?.click()}
+              className="rounded-xl border border-zinc-600 bg-zinc-900/80 px-4 py-2.5 text-sm text-amber-200/95 transition hover:border-amber-500/40"
+            >
+              Pilih dari galeri
+            </button>
+            <button
+              type="button"
+              onClick={() => cameraNewRef.current?.click()}
+              className="rounded-xl border border-amber-500/35 bg-amber-950/30 px-4 py-2.5 text-sm font-medium text-amber-100 transition hover:border-amber-400/60"
+            >
+              Ambil foto (kamera)
+            </button>
+          </div>
+          {imageFile ? (
+            <p className="mt-2 text-xs text-zinc-400">
+              Terpilih: <span className="text-zinc-200">{imageFile.name}</span>
+            </p>
+          ) : (
+            <p className="mt-2 text-xs text-zinc-600">Belum ada foto dipilih.</p>
+          )}
         </div>
         <Button type="submit" disabled={submitting || !connected}>
           {submitting ? "Menyimpan…" : "Simpan & unggah"}
@@ -510,19 +548,35 @@ export default function OwnerProductsPage() {
                           >
                             Edit
                           </button>
-                          <label className="cursor-pointer text-xs text-amber-500/90 underline-offset-2 hover:underline">
-                            Ganti foto
-                            <input
-                              type="file"
-                              accept="image/*"
-                              className="sr-only"
-                              onChange={(e) => {
-                                const f = e.target.files?.[0];
-                                e.target.value = "";
-                                if (f) void onReplaceImage(p.id, f);
-                              }}
-                            />
-                          </label>
+                          <span className="inline-flex flex-wrap gap-2">
+                            <label className="cursor-pointer text-xs text-amber-500/90 underline-offset-2 hover:underline">
+                              Galeri
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="sr-only"
+                                onChange={(e) => {
+                                  const f = e.target.files?.[0];
+                                  e.target.value = "";
+                                  if (f) void onReplaceImage(p.id, f);
+                                }}
+                              />
+                            </label>
+                            <label className="cursor-pointer text-xs text-amber-500/90 underline-offset-2 hover:underline">
+                              Kamera
+                              <input
+                                type="file"
+                                accept="image/*"
+                                capture="environment"
+                                className="sr-only"
+                                onChange={(e) => {
+                                  const f = e.target.files?.[0];
+                                  e.target.value = "";
+                                  if (f) void onReplaceImage(p.id, f);
+                                }}
+                              />
+                            </label>
+                          </span>
                           <button
                             type="button"
                             onClick={() => void onDeleteProduct(p.id)}

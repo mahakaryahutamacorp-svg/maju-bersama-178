@@ -26,6 +26,10 @@ export async function requireOwnerSession(request?: Request) {
 
   if (!hasSuperAdmin && !ownerMembership) return null;
 
+  const superAdminStoreIds = new Set(
+    memberships.filter((m) => m.role === "super_admin").map((m) => m.store_id)
+  );
+
   let storeId: string | undefined = ownerMembership?.store_id ?? undefined;
   let role: OwnerSession["user"]["role"] = "owner";
 
@@ -34,8 +38,11 @@ export async function requireOwnerSession(request?: Request) {
     if (request) {
       const url = new URL(request.url);
       const param = url.searchParams.get("store_id")?.trim() ?? "";
-      // basic UUID sanity check (avoid confusing behavior)
-      if (/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(param)) {
+      const uuidOk =
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+          param
+        );
+      if (uuidOk && superAdminStoreIds.has(param)) {
         storeId = param;
       }
     }

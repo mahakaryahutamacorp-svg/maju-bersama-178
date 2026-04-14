@@ -27,6 +27,8 @@ function getSupabase() {
 interface OwnerStoreScopeValue {
   /** Toko yang dipakai untuk query owner API (owner: dari sesi; admin: pilihan). */
   effectiveStoreId: string | null;
+  /** Label singkat toko aktif (untuk banner UI). */
+  activeStoreLabel: string | null;
   /** Siap memanggil API yang membutuhkan store_id (termasuk admin setelah daftar toko dimuat). */
   ready: boolean;
   appendApiUrl: (path: string) => string;
@@ -63,6 +65,7 @@ export function OwnerStoreScopeProvider({
   const [storesLoadError, setStoresLoadError] = useState<string | null>(null);
 
   const [ownerStoreId, setOwnerStoreId] = useState<string | null>(null);
+  const [activeStoreLabel, setActiveStoreLabel] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -180,9 +183,45 @@ export function OwnerStoreScopeProvider({
     [effectiveStoreId]
   );
 
+  useEffect(() => {
+    let cancelled = false;
+    const sid = effectiveStoreId?.trim() ?? "";
+    void (async () => {
+      if (!ready || !sid) {
+        if (!cancelled) setActiveStoreLabel(null);
+        return;
+      }
+      if (isSuperAdmin) {
+        const row = superAdminStores.find((s) => s.id === sid);
+        if (!cancelled) {
+          setActiveStoreLabel(
+            row ? `${row.name} · /store/${row.slug}` : null
+          );
+        }
+        return;
+      }
+      const url = appendStoreScope("/api/owner/store", sid);
+      try {
+        const res = await fetch(url, { credentials: "same-origin" });
+        const json = (await res.json()) as { store?: Mb178StoreRow | null };
+        if (cancelled) return;
+        const s = json.store;
+        setActiveStoreLabel(
+          s ? `${s.name} · /store/${s.slug}` : null
+        );
+      } catch {
+        if (!cancelled) setActiveStoreLabel(null);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [ready, effectiveStoreId, isSuperAdmin, superAdminStores]);
+
   const value = useMemo<OwnerStoreScopeValue>(
     () => ({
       effectiveStoreId,
+      activeStoreLabel,
       ready:
         ready &&
         (!isSuperAdmin || !!effectiveStoreId || superAdminStores.length === 0),
@@ -193,6 +232,7 @@ export function OwnerStoreScopeProvider({
     }),
     [
       effectiveStoreId,
+      activeStoreLabel,
       ready,
       isSuperAdmin,
       appendApiUrl,
