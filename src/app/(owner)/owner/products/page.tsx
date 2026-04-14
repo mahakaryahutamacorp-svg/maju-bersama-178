@@ -391,8 +391,10 @@ export default function OwnerProductsPage() {
             <input
               ref={galleryNewRef}
               id="p-image-gallery"
+              name="image_gallery"
               type="file"
               accept="image/*"
+              aria-label="Pilih foto produk dari galeri"
               className="sr-only"
               onChange={(e) => {
                 setImageFile(e.target.files?.[0] ?? null);
@@ -401,9 +403,11 @@ export default function OwnerProductsPage() {
             <input
               ref={cameraNewRef}
               id="p-image-camera"
+              name="image_camera"
               type="file"
               accept="image/*"
               capture="environment"
+              aria-label="Ambil foto produk dengan kamera"
               className="sr-only"
               onChange={(e) => {
                 setImageFile(e.target.files?.[0] ?? null);
