@@ -293,7 +293,7 @@ VALUES (
   ),
   (
     'dapurku-seafood',
-    'Restoran Seafood Dapurku by Chef Hend',
+    'Restoran Seafood Dapurku by Chef Hendra',
     'Jl. Diponegoro No. 33, Semarang',
     'https://wa.me/6281300005555',
     '081300005555',
