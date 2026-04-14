@@ -1,26 +1,20 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { StoreProductList } from "@/components/customer/store-product-list";
 import { buttonClass } from "@/components/ui/Button";
+import { resolveStoreFrontImage } from "@/lib/mb178/local-store-images";
 import { safeCatalogImageUrl } from "@/lib/mb178/safe-remote-image";
-import { createMb178Client } from "@/lib/supabase/admin";
+import { createSupabaseServerComponentClient } from "@/lib/supabase/ssr";
 import type { Mb178ProductRow } from "@/lib/mb178/types";
 import type { Mb178StoreRow } from "@/lib/mb178/types";
 
 type Props = { params: Promise<{ slug: string }> };
 
-function formatRp(n: number) {
-  return new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
-    maximumFractionDigits: 0,
-  }).format(n);
-}
-
 export default async function StoreCatalogPage({ params }: Props) {
   const { slug } = await params;
   const supabaseOrigin = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
-  const supabase = createMb178Client();
+  const supabase = await createSupabaseServerComponentClient();
 
   if (!supabase) {
     return (
@@ -69,7 +63,23 @@ export default async function StoreCatalogPage({ params }: Props) {
   }
 
   const list = (products ?? []) as Mb178ProductRow[];
+  const catalogItems = list.map((p) => ({
+    id: p.id,
+    name: p.name,
+    price: p.price,
+    stock: p.stock,
+    unit: p.unit ?? "pcs",
+    description: p.description ?? null,
+    imageSrc: p.image_url
+      ? safeCatalogImageUrl(p.image_url, supabaseOrigin)
+      : null,
+  }));
   const wa = row.whatsapp_link?.trim();
+  const coverSrc = resolveStoreFrontImage(
+    slug,
+    row.profile_image_url,
+    supabaseOrigin
+  );
 
   return (
     <div className="px-4 pb-24 pt-8 md:mx-auto md:max-w-lg">
@@ -80,6 +90,16 @@ export default async function StoreCatalogPage({ params }: Props) {
         ← Beranda
       </Link>
       <header className="mt-6">
+        <div className="relative mb-6 aspect-[16/10] w-full max-w-lg overflow-hidden rounded-2xl border border-amber-500/20 shadow-[0_0_32px_rgba(212,175,55,0.08)]">
+          <Image
+            src={coverSrc}
+            alt={row.name}
+            fill
+            className="object-cover"
+            sizes="(max-width: 768px) 100vw, 512px"
+            priority
+          />
+        </div>
         <h1 className="font-serif text-3xl text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-400 to-amber-600">
           {row.name}
         </h1>
@@ -102,41 +122,14 @@ export default async function StoreCatalogPage({ params }: Props) {
 
       <section className="mt-10">
         <h2 className="mb-4 font-serif text-lg text-zinc-300">Katalog</h2>
-        {list.length === 0 ? (
-          <p className="rounded-2xl border border-dashed border-zinc-700 py-12 text-center text-sm text-zinc-500">
-            Belum ada produk di katalog.
-          </p>
-        ) : (
-          <ul className="space-y-4">
-            {list.map((p) => (
-              <li
-                key={p.id}
-                className="flex gap-4 rounded-2xl border border-yellow-600/10 bg-zinc-900/35 p-4"
-              >
-                <div className="relative h-28 w-28 shrink-0 overflow-hidden rounded-xl border border-amber-500/15 bg-zinc-800">
-                  {p.image_url ? (
-                    <Image
-                      src={safeCatalogImageUrl(p.image_url, supabaseOrigin)}
-                      alt={p.name}
-                      fill
-                      className="object-cover"
-                      sizes="112px"
-                    />
-                  ) : (
-                    <span className="flex h-full items-center justify-center px-2 text-center text-xs text-zinc-600">
-                      {p.name}
-                    </span>
-                  )}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="font-medium text-zinc-100">{p.name}</p>
-                  <p className="mt-1 text-amber-200/90">{formatRp(p.price)}</p>
-                  <p className="text-xs text-zinc-500">Stok: {p.stock}</p>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
+        <StoreProductList
+          products={catalogItems}
+          storeMeta={{
+            storeId: row.id,
+            storeSlug: slug,
+            storeName: row.name,
+          }}
+        />
       </section>
     </div>
   );

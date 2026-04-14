@@ -1,6 +1,6 @@
 # Maju Bersama 178
 
-Marketplace multi-toko (Next.js App Router, NextAuth, Supabase). Font: Inter + Playfair Display (`src/app/layout.tsx`).
+Marketplace multi-toko (Next.js App Router, Supabase Auth, Supabase). Font: Inter + Playfair Display (`src/app/layout.tsx`).
 
 ## Menjalankan lokal
 
@@ -39,14 +39,13 @@ Cara mendapatkan nilai: token di Vercel **Settings → Tokens**; `orgId` dan `pr
 
 Sesuai `.env.example`:
 
-- `NEXTAUTH_URL`, `NEXTAUTH_SECRET`
 - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
 - `NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN`
 
 ### Alur deploy
 
-- **Pull request ke `master`**: Preview Deployment
-- **Push/merge ke `master`**: Production Deployment
+- **Pull request ke `main`**: Preview Deployment
+- **Push/merge ke `main`**: Production Deployment
 
 Workflow: [`.github/workflows/vercel.yml`](.github/workflows/vercel.yml)
 

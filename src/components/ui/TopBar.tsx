@@ -1,9 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { signOut, useSession } from "next-auth/react";
-import { usePathname } from "next/navigation";
 import { buttonClass } from "@/components/ui/Button";
+import { useAuth } from "@/components/providers/auth-provider";
 
 type Props = {
   /** tampilkan tombol masuk/daftar jika belum login */
@@ -18,12 +17,9 @@ export function TopBar({
   backHref,
   backLabel = "← Kembali",
 }: Props) {
-  const { data: session, status } = useSession();
-  const pathname = usePathname();
+  const { user, loading, isOwner, signOut } = useAuth();
 
-  const loggedIn = status === "authenticated" && !!session?.user;
-  const isOwner = session?.user?.role === "owner";
-  const hideDashboard = pathname === "/";
+  const loggedIn = !loading && !!user;
 
   return (
     <div className="mb-4 flex items-center justify-between gap-3">
@@ -43,25 +39,33 @@ export function TopBar({
       <div className="flex shrink-0 flex-wrap items-center justify-end gap-2 sm:gap-3">
         {loggedIn ? (
           <>
-            {isOwner && !hideDashboard ? (
-              <Link
-                href="/dashboard"
-                className={`${buttonClass("ghost")} w-auto border-amber-500/15 px-4 shadow-[0_0_20px_rgba(0,0,0,0.35)]`}
-              >
-                Dashboard
-              </Link>
-            ) : !isOwner ? (
+            {isOwner ? (
+              <>
+                <Link
+                  href="/dashboard"
+                  className={`${buttonClass("ghost")} w-auto border-amber-500/15 px-3 shadow-[0_0_20px_rgba(0,0,0,0.35)] sm:px-4`}
+                >
+                  Dashboard
+                </Link>
+                <Link
+                  href="/owner/products#owner-product-form"
+                  className={`${buttonClass("ghost")} inline-flex w-auto border-amber-500/15 px-3 shadow-[0_0_20px_rgba(0,0,0,0.35)] sm:px-4`}
+                >
+                  + Produk
+                </Link>
+              </>
+            ) : (
               <Link
                 href="/profile"
                 className={`${buttonClass("ghost")} w-auto border-amber-500/15 px-4 shadow-[0_0_20px_rgba(0,0,0,0.35)]`}
               >
                 Profil
               </Link>
-            ) : null}
+            )}
             <button
               type="button"
               className={`${buttonClass("toko")} w-auto px-4 shadow-[0_0_28px_rgba(212,175,55,0.28)]`}
-              onClick={() => void signOut({ callbackUrl: "/" })}
+              onClick={() => void signOut()}
             >
               Logout
             </button>

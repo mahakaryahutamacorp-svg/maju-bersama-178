@@ -76,8 +76,10 @@ CREATE TABLE public.products (
   stock integer NOT NULL DEFAULT 0 CHECK (stock >= 0),
   unit text NOT NULL DEFAULT 'pcs',
   image_url text,
+  description text,
   created_at timestamptz NOT NULL DEFAULT now()
 );
+-- DEPRECATED: legacy credential table. Aplikasi memakai Supabase Auth (`auth.users`) + `public.profiles` / `public.store_memberships`. Jangan menambahkan logika app baru yang membaca `app_users`.
 CREATE TABLE public.app_users (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id text NOT NULL UNIQUE,
@@ -134,7 +136,7 @@ GRANT USAGE ON ALL SEQUENCES IN SCHEMA public TO anon,
   service_role;
 -- ------------------------------------------------------------
 -- 5) RLS
--- Login lewat NextAuth; tulis data via service role. Katalog baca publik (anon).
+-- Katalog baca publik (anon); autentikasi aplikasi lewat Supabase Auth + store_memberships.
 -- ------------------------------------------------------------
 ALTER TABLE public.stores ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.products ENABLE ROW LEVEL SECURITY;
@@ -205,7 +207,10 @@ authenticated USING (false);
 --   INSERT/UPDATE/DELETE: tolak anon/authenticated (unggah via server + service role)
 -- ------------------------------------------------------------
 -- ------------------------------------------------------------
--- 6) SEED: 8 toko
+-- 6) SEED: 8 toko (slug + nama selaras dengan file di public/toko_images/)
+-- Urutan owner: mama01=pupuk-maju, toko02=pestisida-mbp, toko03=pakan-pei,
+-- toko04=rosaura-skin-clinic, toko05=drg-sona, toko06=raniah-travel,
+-- toko07=dapurku-seafood, toko08=rocell-gadget
 -- ------------------------------------------------------------
 INSERT INTO public.stores (
     slug,
@@ -218,7 +223,7 @@ INSERT INTO public.stores (
   )
 VALUES (
     'pupuk-maju',
-    'Toko Pupuk MAJU BERSAMA',
+    'Maju Bersama Pupuk & Alat Pertanian',
     'Jl. Contoh No. 178, Jakarta',
     'https://wa.me/6281211172228',
     '081211172228',
@@ -226,8 +231,8 @@ VALUES (
     106.8456
   ),
   (
-    'majubersamagrup',
-    'MAJUBERSAMAGRUP',
+    'pestisida-mbp',
+    'Pestisida Maju Bersama',
     'Jl. Raya Mangga No. 5, Bekasi',
     'https://wa.me/6281211172228',
     '081211172228',
@@ -235,8 +240,8 @@ VALUES (
     106.9926
   ),
   (
-    'toko-elektronik',
-    'Toko Elektronik Jaya',
+    'pakan-pei',
+    'Pakan PE''I Maju Bersama',
     'Jl. Sudirman No. 88, Jakarta',
     'https://wa.me/6281300001111',
     '081300001111',
@@ -244,8 +249,8 @@ VALUES (
     106.8451
   ),
   (
-    'fashion-murah',
-    'Fashion Murah 178',
+    'rosaura-skin-clinic',
+    'Rosaura Skin Clinic',
     'Jl. Thamrin No. 12, Jakarta',
     'https://wa.me/6281300002222',
     '081300002222',
@@ -253,8 +258,8 @@ VALUES (
     106.8232
   ),
   (
-    'toko-bangunan',
-    'Toko Bangunan Sentosa',
+    'drg-sona',
+    'Klinik drg. Sona',
     'Jl. Gatot Subroto No. 45, Bandung',
     'https://wa.me/6281300003333',
     '081300003333',
@@ -262,8 +267,8 @@ VALUES (
     107.6191
   ),
   (
-    'sembako-berkah',
-    'Sembako Berkah',
+    'raniah-travel',
+    'Raniah Travel Umroh dan Haji',
     'Jl. Pahlawan No. 99, Surabaya',
     'https://wa.me/6281300004444',
     '081300004444',
@@ -271,8 +276,8 @@ VALUES (
     112.7521
   ),
   (
-    'toko-alat-tulis',
-    'Toko Alat Tulis Pintar',
+    'dapurku-seafood',
+    'Restoran Seafood Dapurku by Chef Hendra',
     'Jl. Diponegoro No. 33, Semarang',
     'https://wa.me/6281300005555',
     '081300005555',
@@ -280,8 +285,8 @@ VALUES (
     110.4203
   ),
   (
-    'toko-kosmetik',
-    'Kosmetik Cantik 178',
+    'rocell-gadget',
+    'Rocell Gadget',
     'Jl. Ahmad Yani No. 77, Medan',
     'https://wa.me/6281300006666',
     '081300006666',
@@ -291,6 +296,7 @@ VALUES (
 -- ------------------------------------------------------------
 -- 7) SEED: akun (scrypt — lihat komentar password)
 -- master / 178178 | mb178 / 178178 | mama01..toko08 / 223344
+-- DEPRECATED: seed `app_users` hanya untuk lingkungan lama / dokumentasi. Aplikasi memakai Supabase Auth, bukan baris di tabel ini.
 -- ------------------------------------------------------------
 INSERT INTO public.app_users (
     user_id,
@@ -345,7 +351,7 @@ VALUES (
     (
       SELECT id
       FROM public.stores
-      WHERE slug = 'majubersamagrup'
+      WHERE slug = 'pestisida-mbp'
     )
   ),
   (
@@ -357,7 +363,7 @@ VALUES (
     (
       SELECT id
       FROM public.stores
-      WHERE slug = 'toko-elektronik'
+      WHERE slug = 'pakan-pei'
     )
   ),
   (
@@ -369,7 +375,7 @@ VALUES (
     (
       SELECT id
       FROM public.stores
-      WHERE slug = 'fashion-murah'
+      WHERE slug = 'rosaura-skin-clinic'
     )
   ),
   (
@@ -381,7 +387,7 @@ VALUES (
     (
       SELECT id
       FROM public.stores
-      WHERE slug = 'toko-bangunan'
+      WHERE slug = 'drg-sona'
     )
   ),
   (
@@ -393,7 +399,7 @@ VALUES (
     (
       SELECT id
       FROM public.stores
-      WHERE slug = 'sembako-berkah'
+      WHERE slug = 'raniah-travel'
     )
   ),
   (
@@ -405,7 +411,7 @@ VALUES (
     (
       SELECT id
       FROM public.stores
-      WHERE slug = 'toko-alat-tulis'
+      WHERE slug = 'dapurku-seafood'
     )
   ),
   (
@@ -417,6 +423,6 @@ VALUES (
     (
       SELECT id
       FROM public.stores
-      WHERE slug = 'toko-kosmetik'
+      WHERE slug = 'rocell-gadget'
     )
   ) ON CONFLICT (user_id) DO NOTHING;

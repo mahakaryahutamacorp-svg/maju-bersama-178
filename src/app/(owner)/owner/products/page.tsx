@@ -2,13 +2,13 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useSession } from "next-auth/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { FloatingLabelInput } from "@/components/ui/FloatingLabelInput";
 import { Button } from "@/components/ui/Button";
 import type { Mb178ProductRow } from "@/lib/mb178/types";
 import type { Mb178StoreRow } from "@/lib/mb178/types";
 import { useOwnerStoreScope } from "@/components/owner/owner-store-scope";
+import { useAuth } from "@/components/providers/auth-provider";
 
 function formatRp(n: number) {
   return new Intl.NumberFormat("id-ID", {
@@ -19,7 +19,7 @@ function formatRp(n: number) {
 }
 
 export default function OwnerProductsPage() {
-  const { data: session, status } = useSession();
+  const { user, loading: authLoading, isOwner } = useAuth();
   const { appendApiUrl, ready: storeReady } = useOwnerStoreScope();
   const [store, setStore] = useState<Mb178StoreRow | null>(null);
   const [products, setProducts] = useState<Mb178ProductRow[]>([]);
@@ -31,10 +31,19 @@ export default function OwnerProductsPage() {
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
   const [stock, setStock] = useState("");
+  const [description, setDescription] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  const fileRef = useRef<HTMLInputElement>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editPrice, setEditPrice] = useState("");
+  const [editStock, setEditStock] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [savingEditId, setSavingEditId] = useState<string | null>(null);
+
+  const galleryNewRef = useRef<HTMLInputElement>(null);
+  const cameraNewRef = useRef<HTMLInputElement>(null);
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -69,8 +78,8 @@ export default function OwnerProductsPage() {
   }, [appendApiUrl]);
 
   useEffect(() => {
-    if (status === "authenticated" && storeReady) void refresh();
-  }, [status, storeReady, refresh]);
+    if (!authLoading && user && isOwner && storeReady) void refresh();
+  }, [authLoading, user, isOwner, storeReady, refresh]);
 
   async function toggleHideZeroStock(next: boolean) {
     setSavingVisibility(true);
@@ -103,6 +112,7 @@ export default function OwnerProductsPage() {
       fd.set("name", name.trim());
       fd.set("price", price);
       fd.set("stock", stock);
+      fd.set("description", description);
       if (imageFile) fd.set("image", imageFile);
       const res = await fetch(appendApiUrl("/api/owner/products"), {
         method: "POST",
@@ -116,8 +126,10 @@ export default function OwnerProductsPage() {
       setName("");
       setPrice("");
       setStock("");
+      setDescription("");
       setImageFile(null);
-      if (fileRef.current) fileRef.current.value = "";
+      if (galleryNewRef.current) galleryNewRef.current.value = "";
+      if (cameraNewRef.current) cameraNewRef.current.value = "";
       await refresh();
     } catch {
       setError("Gagal menambah produk");
@@ -144,6 +156,59 @@ export default function OwnerProductsPage() {
     }
   }
 
+  function beginEdit(p: Mb178ProductRow) {
+    setEditingId(p.id);
+    setEditName(p.name);
+    setEditPrice(String(p.price));
+    setEditStock(String(p.stock));
+    setEditDescription(p.description ?? "");
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+  }
+
+  async function onSaveEdit(id: string) {
+    const priceNum = Number(editPrice);
+    const stockNum = Number(editStock);
+    if (
+      !editName.trim() ||
+      Number.isNaN(priceNum) ||
+      priceNum < 0 ||
+      Number.isNaN(stockNum) ||
+      stockNum < 0
+    ) {
+      setError("Nama, harga, dan stok harus valid");
+      return;
+    }
+    setSavingEditId(id);
+    setError(null);
+    try {
+      const res = await fetch(appendApiUrl(`/api/owner/products/${id}`), {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: editName.trim(),
+          price: priceNum,
+          stock: stockNum,
+          description:
+            editDescription.trim() === "" ? null : editDescription.trim(),
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        setError(json.error ?? "Gagal menyimpan");
+        return;
+      }
+      setEditingId(null);
+      await refresh();
+    } catch {
+      setError("Gagal menyimpan");
+    } finally {
+      setSavingEditId(null);
+    }
+  }
+
   async function onReplaceImage(id: string, file: File) {
     setError(null);
     const fd = new FormData();
@@ -164,7 +229,7 @@ export default function OwnerProductsPage() {
     }
   }
 
-  if (status === "loading" || (status === "authenticated" && storeReady && loading)) {
+  if (authLoading || (!authLoading && user && isOwner && storeReady && loading)) {
     return (
       <div className="px-4 py-16 text-center text-sm text-zinc-500">
         Memuat…
@@ -172,19 +237,11 @@ export default function OwnerProductsPage() {
     );
   }
 
-  if (!session?.user || (session.user.role !== "owner" && session.user.role !== "super_admin")) {
+  if (!user || !isOwner) {
     return null;
   }
 
-  if (session.user.role === "owner" && !session.user.storeId) {
-    return (
-      <div className="px-4 py-16 text-center text-sm text-zinc-500">
-        Menunggu penautan toko…
-      </div>
-    );
-  }
-
-  if (status === "authenticated" && !storeReady) {
+  if (!storeReady) {
     return (
       <div className="px-4 py-16 text-center text-sm text-zinc-500">
         Memuat konteks toko…
@@ -242,8 +299,8 @@ export default function OwnerProductsPage() {
           </div>
           <label
             className={`relative h-9 w-[3.25rem] shrink-0 rounded-full border-2 transition ${hideZero
-                ? "border-amber-400 bg-gradient-to-r from-amber-600 to-yellow-500 shadow-[0_0_20px_rgba(250,204,21,0.45)]"
-                : "border-zinc-600 bg-zinc-800"
+              ? "border-amber-400 bg-gradient-to-r from-amber-600 to-yellow-500 shadow-[0_0_20px_rgba(250,204,21,0.45)]"
+              : "border-zinc-600 bg-zinc-800"
               } ${savingVisibility || !connected ? "opacity-50" : ""}`}
             title={
               hideZero
@@ -270,8 +327,9 @@ export default function OwnerProductsPage() {
       </section>
 
       <form
+        id="owner-product-form"
         onSubmit={(e) => void onCreateProduct(e)}
-        className="mt-8 space-y-5 rounded-3xl border border-white/10 bg-white/[0.03] p-5 backdrop-blur-md"
+        className="mt-8 scroll-mt-24 space-y-5 rounded-3xl border border-white/10 bg-white/[0.03] p-5 backdrop-blur-md"
       >
         <p className="font-serif text-sm text-amber-200/80">Produk baru</p>
         <FloatingLabelInput
@@ -306,21 +364,77 @@ export default function OwnerProductsPage() {
         />
         <div>
           <label
-            htmlFor="p-image"
+            htmlFor="p-description"
             className="mb-2 block text-xs font-medium uppercase tracking-wider text-zinc-500"
           >
-            Foto produk
+            Deskripsi (opsional)
           </label>
-          <input
-            ref={fileRef}
-            id="p-image"
-            type="file"
-            accept="image/*"
-            className="block w-full text-sm text-zinc-400 file:mr-3 file:rounded-xl file:border-0 file:bg-amber-500/20 file:px-4 file:py-2 file:text-amber-200"
-            onChange={(e) =>
-              setImageFile(e.target.files?.[0] ?? null)
-            }
+          <textarea
+            id="p-description"
+            name="description"
+            rows={3}
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            className="w-full rounded-xl border border-zinc-600 bg-zinc-900/60 px-3 py-2 text-sm text-zinc-100 outline-none transition focus:border-amber-500"
+            placeholder="Tampil di katalog saat pelanggan mengetuk foto produk"
           />
+        </div>
+        <div>
+          <p className="mb-2 text-xs font-medium uppercase tracking-wider text-zinc-500">
+            Foto produk
+          </p>
+          <p className="mb-3 text-[11px] leading-relaxed text-zinc-600">
+            Pilih sumber: galeri file, atau kamera (di HP biasanya membuka kamera
+            belakang).
+          </p>
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+            <input
+              ref={galleryNewRef}
+              id="p-image-gallery"
+              name="image_gallery"
+              type="file"
+              accept="image/*"
+              aria-label="Pilih foto produk dari galeri"
+              className="sr-only"
+              onChange={(e) => {
+                setImageFile(e.target.files?.[0] ?? null);
+              }}
+            />
+            <input
+              ref={cameraNewRef}
+              id="p-image-camera"
+              name="image_camera"
+              type="file"
+              accept="image/*"
+              capture="environment"
+              aria-label="Ambil foto produk dengan kamera"
+              className="sr-only"
+              onChange={(e) => {
+                setImageFile(e.target.files?.[0] ?? null);
+              }}
+            />
+            <button
+              type="button"
+              onClick={() => galleryNewRef.current?.click()}
+              className="rounded-xl border border-zinc-600 bg-zinc-900/80 px-4 py-2.5 text-sm text-amber-200/95 transition hover:border-amber-500/40"
+            >
+              Pilih dari galeri
+            </button>
+            <button
+              type="button"
+              onClick={() => cameraNewRef.current?.click()}
+              className="rounded-xl border border-amber-500/35 bg-amber-950/30 px-4 py-2.5 text-sm font-medium text-amber-100 transition hover:border-amber-400/60"
+            >
+              Ambil foto (kamera)
+            </button>
+          </div>
+          {imageFile ? (
+            <p className="mt-2 text-xs text-zinc-400">
+              Terpilih: <span className="text-zinc-200">{imageFile.name}</span>
+            </p>
+          ) : (
+            <p className="mt-2 text-xs text-zinc-600">Belum ada foto dipilih.</p>
+          )}
         </div>
         <Button type="submit" disabled={submitting || !connected}>
           {submitting ? "Menyimpan…" : "Simpan & unggah"}
@@ -338,48 +452,145 @@ export default function OwnerProductsPage() {
             products.map((p) => (
               <li
                 key={p.id}
-                className="flex gap-4 rounded-2xl border border-yellow-600/10 bg-zinc-900/40 p-4"
+                className="rounded-2xl border border-yellow-600/10 bg-zinc-900/40 p-4"
               >
-                <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-xl border border-amber-500/20 bg-zinc-800">
-                  {p.image_url ? (
-                    <Image
-                      src={p.image_url}
-                      alt={p.name}
-                      fill
-                      className="object-cover"
-                      sizes="96px"
-                    />
-                  ) : (
-                    <span className="flex h-full items-center justify-center text-xs text-zinc-600">
-                      Tanpa foto
-                    </span>
-                  )}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="font-medium text-zinc-100">{p.name}</p>
-                  <p className="text-sm text-amber-200/80">{formatRp(p.price)}</p>
-                  <p className="text-xs text-zinc-500">Stok: {p.stock}</p>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <label className="cursor-pointer text-xs text-amber-500/90 underline-offset-2 hover:underline">
-                      Ganti foto
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="sr-only"
-                        onChange={(e) => {
-                          const f = e.target.files?.[0];
-                          e.target.value = "";
-                          if (f) void onReplaceImage(p.id, f);
-                        }}
+                <div className="flex gap-4">
+                  <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-xl border border-amber-500/20 bg-zinc-800">
+                    {p.image_url ? (
+                      <Image
+                        src={p.image_url}
+                        alt={p.name}
+                        fill
+                        className="object-cover"
+                        sizes="96px"
                       />
-                    </label>
-                    <button
-                      type="button"
-                      onClick={() => void onDeleteProduct(p.id)}
-                      className="text-xs text-red-400/90 hover:underline"
-                    >
-                      Hapus
-                    </button>
+                    ) : (
+                      <span className="flex h-full items-center justify-center text-xs text-zinc-600">
+                        Tanpa foto
+                      </span>
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    {editingId === p.id ? (
+                      <div className="space-y-3">
+                        <FloatingLabelInput
+                          id={`edit-name-${p.id}`}
+                          label="Nama produk"
+                          value={editName}
+                          onChange={(e) => setEditName(e.target.value)}
+                        />
+                        <FloatingLabelInput
+                          id={`edit-price-${p.id}`}
+                          label="Harga (IDR)"
+                          type="number"
+                          min={0}
+                          step={1}
+                          value={editPrice}
+                          onChange={(e) => setEditPrice(e.target.value)}
+                        />
+                        <FloatingLabelInput
+                          id={`edit-stock-${p.id}`}
+                          label="Stok"
+                          type="number"
+                          min={0}
+                          step={1}
+                          value={editStock}
+                          onChange={(e) => setEditStock(e.target.value)}
+                        />
+                        <div>
+                          <label
+                            htmlFor={`edit-desc-${p.id}`}
+                            className="mb-1 block text-xs text-zinc-500"
+                          >
+                            Deskripsi
+                          </label>
+                          <textarea
+                            id={`edit-desc-${p.id}`}
+                            rows={3}
+                            value={editDescription}
+                            onChange={(e) => setEditDescription(e.target.value)}
+                            className="w-full rounded-xl border border-zinc-600 bg-zinc-900/60 px-3 py-2 text-sm text-zinc-100 outline-none focus:border-amber-500"
+                          />
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          <Button
+                            type="button"
+                            disabled={
+                              savingEditId === p.id || !connected
+                            }
+                            onClick={() => void onSaveEdit(p.id)}
+                          >
+                            {savingEditId === p.id ? "Menyimpan…" : "Simpan"}
+                          </Button>
+                          <button
+                            type="button"
+                            disabled={savingEditId === p.id}
+                            onClick={cancelEdit}
+                            className="rounded-xl border border-zinc-600 px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800"
+                          >
+                            Batal
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <p className="font-medium text-zinc-100">{p.name}</p>
+                        <p className="text-sm text-amber-200/80">
+                          {formatRp(p.price)}
+                        </p>
+                        <p className="text-xs text-zinc-500">Stok: {p.stock}</p>
+                        {p.description ? (
+                          <p className="mt-2 line-clamp-2 text-xs text-zinc-500">
+                            {p.description}
+                          </p>
+                        ) : null}
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={() => beginEdit(p)}
+                            className="text-xs text-amber-500/90 underline-offset-2 hover:underline"
+                          >
+                            Edit
+                          </button>
+                          <span className="inline-flex flex-wrap gap-2">
+                            <label className="cursor-pointer text-xs text-amber-500/90 underline-offset-2 hover:underline">
+                              Galeri
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="sr-only"
+                                onChange={(e) => {
+                                  const f = e.target.files?.[0];
+                                  e.target.value = "";
+                                  if (f) void onReplaceImage(p.id, f);
+                                }}
+                              />
+                            </label>
+                            <label className="cursor-pointer text-xs text-amber-500/90 underline-offset-2 hover:underline">
+                              Kamera
+                              <input
+                                type="file"
+                                accept="image/*"
+                                capture="environment"
+                                className="sr-only"
+                                onChange={(e) => {
+                                  const f = e.target.files?.[0];
+                                  e.target.value = "";
+                                  if (f) void onReplaceImage(p.id, f);
+                                }}
+                              />
+                            </label>
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => void onDeleteProduct(p.id)}
+                            className="text-xs text-red-400/90 hover:underline"
+                          >
+                            Hapus
+                          </button>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
               </li>

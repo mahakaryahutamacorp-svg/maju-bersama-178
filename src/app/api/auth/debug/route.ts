@@ -9,8 +9,6 @@ export async function GET() {
   const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
   const hasAnon = !!anon;
   const hasService = !!process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
-  const hasSecret = !!process.env.NEXTAUTH_SECRET?.trim();
-  const nextauthUrl = process.env.NEXTAUTH_URL ?? "(not set)";
 
   let anonRef: string | null = null;
   let urlRef: string | null = null;
@@ -30,10 +28,6 @@ export async function GET() {
   }
 
   return NextResponse.json({
-    nextauth: {
-      NEXTAUTH_SECRET: hasSecret ? "set" : "MISSING",
-      NEXTAUTH_URL: nextauthUrl,
-    },
     supabase: {
       NEXT_PUBLIC_SUPABASE_URL: url ? "set" : "MISSING",
       NEXT_PUBLIC_SUPABASE_ANON_KEY: hasAnon ? "set" : "MISSING",

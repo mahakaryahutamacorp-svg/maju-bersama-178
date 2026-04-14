@@ -65,6 +65,7 @@ export async function POST(request: Request) {
   let name: string;
   let price: number;
   let stock: number;
+  let description: string | null = null;
   let imageFile: File | null = null;
   let imageUrl: string | null = null;
 
@@ -73,6 +74,11 @@ export async function POST(request: Request) {
     name = String(form.get("name") ?? "").trim();
     price = Number(form.get("price"));
     stock = Number(form.get("stock"));
+    const descRaw = form.get("description");
+    if (typeof descRaw === "string") {
+      const t = descRaw.trim();
+      description = t.length > 0 ? t : null;
+    }
     const f = form.get("image");
     if (f && f instanceof File && f.size > 0) imageFile = f;
   } else {
@@ -81,6 +87,12 @@ export async function POST(request: Request) {
     price = Number(body.price);
     stock = Number(body.stock);
     if (typeof body.image_url === "string") imageUrl = body.image_url;
+    if (typeof body.description === "string") {
+      const t = body.description.trim();
+      description = t.length > 0 ? t : null;
+    } else if (body.description === null) {
+      description = null;
+    }
   }
 
   if (!name || Number.isNaN(price) || price < 0 || Number.isNaN(stock) || stock < 0) {
@@ -121,6 +133,7 @@ export async function POST(request: Request) {
       price,
       stock,
       image_url: imageUrl,
+      description,
     })
     .select("*")
     .single();

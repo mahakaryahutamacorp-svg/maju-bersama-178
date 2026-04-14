@@ -2,7 +2,6 @@
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useSession } from "next-auth/react";
 import { useCallback, useEffect, useState } from "react";
 import { MapPinIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { FloatingLabelInput } from "@/components/ui/FloatingLabelInput";
@@ -10,6 +9,7 @@ import { FloatingLabelTextarea } from "@/components/ui/FloatingLabelTextarea";
 import { Button } from "@/components/ui/Button";
 import type { Mb178StoreRow } from "@/lib/mb178/types";
 import { useOwnerStoreScope } from "@/components/owner/owner-store-scope";
+import { useAuth } from "@/components/providers/auth-provider";
 
 const LocationMapPicker = dynamic(
   () =>
@@ -28,7 +28,7 @@ const defaultLat = -6.2088;
 const defaultLng = 106.8456;
 
 export default function OwnerSettingsPage() {
-  const { data: session, status } = useSession();
+  const { user, loading: authLoading, isOwner } = useAuth();
   const { appendApiUrl, ready: storeReady } = useOwnerStoreScope();
   const [mapOpen, setMapOpen] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -72,8 +72,8 @@ export default function OwnerSettingsPage() {
   }, [appendApiUrl]);
 
   useEffect(() => {
-    if (status === "authenticated" && storeReady) void loadStore();
-  }, [status, storeReady, loadStore]);
+    if (!authLoading && user && isOwner && storeReady) void loadStore();
+  }, [authLoading, user, isOwner, storeReady, loadStore]);
 
   async function onSave() {
     setSaving(true);
@@ -113,7 +113,7 @@ export default function OwnerSettingsPage() {
     }
   }
 
-  if (status === "loading" || (status === "authenticated" && storeReady && loading)) {
+  if (authLoading || (!authLoading && user && isOwner && storeReady && loading)) {
     return (
       <div className="px-4 py-16 text-center text-sm text-zinc-500">
         Memuat…
@@ -121,19 +121,11 @@ export default function OwnerSettingsPage() {
     );
   }
 
-  if (!session?.user || (session.user.role !== "owner" && session.user.role !== "super_admin")) {
+  if (!user || !isOwner) {
     return null;
   }
 
-  if (session.user.role === "owner" && !session.user.storeId) {
-    return (
-      <div className="px-4 py-16 text-center text-sm text-zinc-500">
-        Menunggu penautan toko…
-      </div>
-    );
-  }
-
-  if (status === "authenticated" && !storeReady) {
+  if (!storeReady) {
     return (
       <div className="px-4 py-16 text-center text-sm text-zinc-500">
         Memuat konteks toko…
