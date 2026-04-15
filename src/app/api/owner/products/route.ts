@@ -66,11 +66,20 @@ export async function POST(request: Request) {
   let imageFile: File | null = null;
   let imageUrl: string | null = null;
 
+  let unit = "pcs";
+
   if (contentType.includes("multipart/form-data")) {
     const form = await request.formData();
     name = String(form.get("name") ?? "").trim();
     price = Number(form.get("price"));
     stock = Number(form.get("stock"));
+    const unitRaw = form.get("unit");
+    if (typeof unitRaw === "string") {
+      const u = unitRaw.trim().toLowerCase();
+      if (u.length > 0 && u.length <= 24 && /^[a-z0-9_-]+$/.test(u)) {
+        unit = u;
+      }
+    }
     const descRaw = form.get("description");
     if (typeof descRaw === "string") {
       const t = descRaw.trim();
@@ -83,6 +92,12 @@ export async function POST(request: Request) {
     name = String(body.name ?? "").trim();
     price = Number(body.price);
     stock = Number(body.stock);
+    if (typeof body.unit === "string") {
+      const u = body.unit.trim().toLowerCase();
+      if (u.length > 0 && u.length <= 24 && /^[a-z0-9_-]+$/.test(u)) {
+        unit = u;
+      }
+    }
     if (typeof body.image_url === "string") imageUrl = body.image_url;
     if (typeof body.description === "string") {
       const t = body.description.trim();
@@ -144,6 +159,7 @@ export async function POST(request: Request) {
       name,
       price,
       stock,
+      unit,
       image_url: imageUrl,
       description,
     })

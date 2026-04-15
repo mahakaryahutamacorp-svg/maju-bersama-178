@@ -2,10 +2,7 @@
 
 import { AppShellDecoration } from "@/components/customer/app-shell-decoration";
 import { TopBar } from "@/components/ui/TopBar";
-import {
-  OwnerActiveStoreBanner,
-  OwnerQuickNav,
-} from "@/components/owner/owner-admin-chrome";
+import { OwnerQuickNav } from "@/components/owner/owner-admin-chrome";
 import {
   OwnerStoreScopeProvider,
   SuperAdminStorePicker,
@@ -50,7 +47,6 @@ export function OwnerShell({ children }: { children: React.ReactNode }) {
         <div className="relative z-0 px-4 md:mx-auto md:max-w-lg">
           <TopBar showAuthButtons={false} />
           <SuperAdminStorePicker />
-          <OwnerActiveStoreBanner />
           <OwnerAccountAlerts />
         </div>
         <div className="relative z-0">{children}</div>

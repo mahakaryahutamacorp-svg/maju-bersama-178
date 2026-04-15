@@ -3,6 +3,16 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  ArchiveBoxIcon,
+  BeakerIcon,
+  CameraIcon,
+  EllipsisHorizontalCircleIcon,
+  MicrophoneIcon,
+  PhotoIcon,
+  SunIcon,
+  WrenchScrewdriverIcon,
+} from "@heroicons/react/24/outline";
 import { FloatingLabelInput } from "@/components/ui/FloatingLabelInput";
 import { Button } from "@/components/ui/Button";
 import type { Mb178ProductRow } from "@/lib/mb178/types";
@@ -18,6 +28,91 @@ function formatRp(n: number) {
   }).format(n);
 }
 
+type ProductKind = "pupuk" | "alat" | "pestisida" | "benih" | "lainnya";
+
+const KIND_TO_UNIT: Record<ProductKind, string> = {
+  pupuk: "karung",
+  alat: "pcs",
+  pestisida: "botol",
+  benih: "pcs",
+  lainnya: "pcs",
+};
+
+function formatThousandsInput(raw: string): string {
+  const digits = raw.replace(/\D/g, "");
+  if (!digits) return "";
+  return Number(digits).toLocaleString("id-ID");
+}
+
+function parseIdrDisplay(display: string): number {
+  const n = Number(display.replace(/\./g, ""));
+  return Number.isFinite(n) ? n : 0;
+}
+
+function playProductSavedChime() {
+  try {
+    const Ctx = window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!Ctx) return;
+    const ctx = new Ctx();
+    const gain = ctx.createGain();
+    gain.connect(ctx.destination);
+    gain.gain.value = 0.12;
+    const osc = ctx.createOscillator();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(523.25, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(784, ctx.currentTime + 0.08);
+    osc.connect(gain);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.14);
+    const osc2 = ctx.createOscillator();
+    osc2.type = "sine";
+    osc2.frequency.setValueAtTime(784, ctx.currentTime + 0.12);
+    osc2.connect(gain);
+    osc2.start(ctx.currentTime + 0.12);
+    osc2.stop(ctx.currentTime + 0.28);
+    window.setTimeout(() => void ctx.close(), 450);
+  } catch {
+    /* audio opsional */
+  }
+}
+
+/** Subset Web Speech API — tipe vendor tidak selalu ada di lib DOM. */
+interface OwnerSpeechRecognition {
+  lang: string;
+  continuous: boolean;
+  interimResults: boolean;
+  start: () => void;
+  stop: () => void;
+  onresult: ((ev: OwnerSpeechRecognitionResultEvent) => void) | null;
+  onerror: (() => void) | null;
+  onend: (() => void) | null;
+}
+
+interface OwnerSpeechRecognitionResultEvent {
+  resultIndex: number;
+  results: Array<{ 0: { transcript: string }; isFinal: boolean }>;
+}
+
+function speechRecognitionAvailable(): boolean {
+  if (typeof window === "undefined") return false;
+  return (
+    "SpeechRecognition" in window ||
+    "webkitSpeechRecognition" in window
+  );
+}
+
+const KIND_OPTIONS: {
+  kind: ProductKind;
+  label: string;
+  Icon: typeof ArchiveBoxIcon;
+}[] = [
+    { kind: "pupuk", label: "Pupuk", Icon: ArchiveBoxIcon },
+    { kind: "alat", label: "Alat", Icon: WrenchScrewdriverIcon },
+    { kind: "pestisida", label: "Obat", Icon: BeakerIcon },
+    { kind: "benih", label: "Benih", Icon: SunIcon },
+    { kind: "lainnya", label: "Lain", Icon: EllipsisHorizontalCircleIcon },
+  ];
+
 export default function OwnerProductsPage() {
   const { user, loading: authLoading, isOwner } = useAuth();
   const { appendApiUrl, ready: storeReady } = useOwnerStoreScope();
@@ -29,11 +124,14 @@ export default function OwnerProductsPage() {
   const [savingVisibility, setSavingVisibility] = useState(false);
 
   const [name, setName] = useState("");
-  const [price, setPrice] = useState("");
+  const [priceDisplay, setPriceDisplay] = useState("");
   const [stock, setStock] = useState("");
   const [description, setDescription] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [formStep, setFormStep] = useState<1 | 2 | 3>(1);
+  const [productKind, setProductKind] = useState<ProductKind>("lainnya");
+  const [voiceBusy, setVoiceBusy] = useState(false);
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
@@ -44,6 +142,7 @@ export default function OwnerProductsPage() {
 
   const galleryNewRef = useRef<HTMLInputElement>(null);
   const cameraNewRef = useRef<HTMLInputElement>(null);
+  const speechRef = useRef<OwnerSpeechRecognition | null>(null);
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -105,13 +204,28 @@ export default function OwnerProductsPage() {
 
   async function onCreateProduct(e: React.FormEvent) {
     e.preventDefault();
+    if (formStep !== 3) return;
+    const priceNum = parseIdrDisplay(priceDisplay);
+    const stockNum = Number(stock);
+    if (
+      !name.trim() ||
+      Number.isNaN(priceNum) ||
+      priceNum < 0 ||
+      Number.isNaN(stockNum) ||
+      stockNum < 0
+    ) {
+      setError("Nama, harga, dan stok harus valid");
+      setFormStep(2);
+      return;
+    }
     setSubmitting(true);
     setError(null);
     try {
       const fd = new FormData();
       fd.set("name", name.trim());
-      fd.set("price", price);
+      fd.set("price", String(priceNum));
       fd.set("stock", stock);
+      fd.set("unit", KIND_TO_UNIT[productKind]);
       fd.set("description", description);
       if (imageFile) fd.set("image", imageFile);
       const res = await fetch(appendApiUrl("/api/owner/products"), {
@@ -123,8 +237,11 @@ export default function OwnerProductsPage() {
         setError(json.error ?? "Gagal menambah produk");
         return;
       }
+      playProductSavedChime();
+      setFormStep(1);
+      setProductKind("lainnya");
       setName("");
-      setPrice("");
+      setPriceDisplay("");
       setStock("");
       setDescription("");
       setImageFile(null);
@@ -136,6 +253,75 @@ export default function OwnerProductsPage() {
     } finally {
       setSubmitting(false);
     }
+  }
+
+  useEffect(() => {
+    return () => {
+      try {
+        speechRef.current?.stop();
+      } catch {
+        /* */
+      }
+      speechRef.current = null;
+    };
+  }, []);
+
+  function toggleDescriptionVoice() {
+    if (!speechRecognitionAvailable()) {
+      setError("Suara ke teks tidak tersedia di perangkat ini.");
+      return;
+    }
+    if (voiceBusy && speechRef.current) {
+      speechRef.current.stop();
+      setVoiceBusy(false);
+      return;
+    }
+    setError(null);
+    const W = window as Window &
+      typeof globalThis & {
+        SpeechRecognition?: new () => OwnerSpeechRecognition;
+        webkitSpeechRecognition?: new () => OwnerSpeechRecognition;
+      };
+    const Ctor = W.SpeechRecognition ?? W.webkitSpeechRecognition;
+    if (!Ctor) {
+      setError("Suara ke teks tidak tersedia di perangkat ini.");
+      return;
+    }
+    const rec = new Ctor();
+    speechRef.current = rec;
+    rec.lang = "id-ID";
+    rec.continuous = false;
+    rec.interimResults = false;
+    rec.onresult = (event: OwnerSpeechRecognitionResultEvent) => {
+      let text = "";
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        text += event.results[i][0].transcript;
+      }
+      const t = text.trim();
+      if (t) {
+        setDescription((d) => (d.trim() ? `${d.trim()} ${t}` : t));
+      }
+    };
+    rec.onerror = () => {
+      setVoiceBusy(false);
+    };
+    rec.onend = () => {
+      setVoiceBusy(false);
+    };
+    setVoiceBusy(true);
+    rec.start();
+  }
+
+  function canAdvanceFromStep2() {
+    const priceNum = parseIdrDisplay(priceDisplay);
+    const stockNum = Number(stock);
+    return (
+      name.trim().length > 0 &&
+      !Number.isNaN(priceNum) &&
+      priceNum >= 0 &&
+      !Number.isNaN(stockNum) &&
+      stockNum >= 0
+    );
   }
 
   async function onDeleteProduct(id: string) {
@@ -266,11 +452,7 @@ export default function OwnerProductsPage() {
         Produk Saya
       </h1>
       <p className="mt-1 text-sm text-zinc-500">
-        Foto produk disimpan per toko di Storage:{" "}
-        <code className="text-zinc-400">mb178_assets/stores/</code>
-        <span className="text-amber-200/80">{store?.slug ?? "…"}</span>
-        <code className="text-zinc-400">/products/</code> — metadata di{" "}
-        <code className="text-zinc-400">public.products</code>.
+        Isi bertahap: foto → harga → simpan. Ada bantuan suara untuk deskripsi.
       </p>
 
       {error ? (
@@ -332,65 +514,34 @@ export default function OwnerProductsPage() {
       <form
         id="owner-product-form"
         onSubmit={(e) => void onCreateProduct(e)}
-        className="mt-8 scroll-mt-24 space-y-5 rounded-3xl border border-white/10 bg-white/[0.03] p-5 backdrop-blur-md"
+        className="mt-8 scroll-mt-24 space-y-5 rounded-3xl border border-amber-500/25 bg-gradient-to-b from-zinc-900/70 to-zinc-950/95 p-5 shadow-[0_0_36px_rgba(234,179,8,0.1)] backdrop-blur-md"
       >
-        <p className="font-serif text-sm text-amber-200/80">Produk baru</p>
-        <FloatingLabelInput
-          id="p-name"
-          name="name"
-          label="Nama produk"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          required
-        />
-        <FloatingLabelInput
-          id="p-price"
-          name="price"
-          label="Harga (IDR)"
-          type="number"
-          min={0}
-          step={1}
-          value={price}
-          onChange={(e) => setPrice(e.target.value)}
-          required
-        />
-        <FloatingLabelInput
-          id="p-stock"
-          name="stock"
-          label="Stok"
-          type="number"
-          min={0}
-          step={1}
-          value={stock}
-          onChange={(e) => setStock(e.target.value)}
-          required
-        />
-        <div>
-          <label
-            htmlFor="p-description"
-            className="mb-2 block text-xs font-medium uppercase tracking-wider text-zinc-500"
+        <div className="space-y-2">
+          <p className="text-center font-serif text-sm font-medium text-amber-200/90">
+            Produk baru
+          </p>
+          <div
+            className="flex gap-1.5"
+            role="group"
+            aria-label="Kemajuan isian"
           >
-            Deskripsi (opsional)
-          </label>
-          <textarea
-            id="p-description"
-            name="description"
-            rows={3}
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            className="w-full rounded-xl border border-zinc-600 bg-zinc-900/60 px-3 py-2 text-sm text-zinc-100 outline-none transition focus:border-amber-500"
-            placeholder="Tampil di katalog saat pelanggan mengetuk foto produk"
-          />
+            {([1, 2, 3] as const).map((s) => (
+              <div
+                key={s}
+                className={`h-2.5 flex-1 rounded-full transition-all ${formStep >= s
+                  ? "bg-gradient-to-r from-amber-500 to-yellow-400 shadow-[0_0_12px_rgba(250,204,21,0.45)]"
+                  : "bg-zinc-700"
+                  }`}
+              />
+            ))}
+          </div>
+          <p className="text-center text-[11px] font-medium text-zinc-500">
+            Langkah {formStep} dari 3
+          </p>
         </div>
-        <div>
-          <p className="mb-2 text-xs font-medium uppercase tracking-wider text-zinc-500">
-            Foto produk
-          </p>
-          <p className="mb-3 text-[11px] leading-relaxed text-zinc-600">
-            Pilih sumber: galeri file, atau kamera (di HP biasanya membuka kamera
-            belakang).
-          </p>
-          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+
+        {formStep === 1 ? (
+          <>
             <input
               ref={galleryNewRef}
               id="p-image-gallery"
@@ -416,32 +567,204 @@ export default function OwnerProductsPage() {
                 setImageFile(e.target.files?.[0] ?? null);
               }}
             />
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <button
+                type="button"
+                onClick={() => cameraNewRef.current?.click()}
+                className="flex min-h-[11rem] flex-col items-center justify-center gap-3 rounded-3xl border-2 border-amber-400/50 bg-gradient-to-br from-amber-500 via-yellow-400 to-amber-600 px-4 py-6 text-zinc-950 shadow-[0_8px_32px_rgba(250,204,21,0.35)] transition hover:brightness-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-300 sm:min-h-[12rem]"
+              >
+                <CameraIcon
+                  className="h-24 w-24 shrink-0 drop-shadow-md sm:h-28 sm:w-28"
+                  aria-hidden
+                />
+                <span className="text-center text-base font-bold leading-tight">
+                  Foto pakai kamera
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => galleryNewRef.current?.click()}
+                className="flex min-h-[11rem] flex-col items-center justify-center gap-3 rounded-3xl border-2 border-dashed border-zinc-500 bg-zinc-900/50 px-4 py-6 text-zinc-100 transition hover:border-amber-500/50 hover:bg-zinc-900/80 sm:min-h-[12rem]"
+              >
+                <PhotoIcon
+                  className="h-20 w-20 shrink-0 text-amber-400/90"
+                  aria-hidden
+                />
+                <span className="text-center text-sm font-semibold">
+                  Ambil dari galeri
+                </span>
+              </button>
+            </div>
+            {imageFile ? (
+              <p className="text-center text-xs text-amber-200/90">
+                Foto siap ✓
+              </p>
+            ) : (
+              <p className="text-center text-[11px] text-zinc-600">
+                Foto boleh ditambah nanti — lebih bagus kalau ada.
+              </p>
+            )}
+
+            <div>
+              <p className="mb-2 text-center text-[11px] text-zinc-500">
+                Jenis jualan (tap gambar)
+              </p>
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                {KIND_OPTIONS.map(({ kind, label, Icon }) => {
+                  const selected = productKind === kind;
+                  return (
+                    <button
+                      key={kind}
+                      type="button"
+                      onClick={() => setProductKind(kind)}
+                      className={`flex flex-col items-center gap-1.5 rounded-2xl border-2 px-2 py-3 transition ${selected
+                        ? "border-amber-400 bg-amber-500/15 shadow-[0_0_16px_rgba(250,204,21,0.2)]"
+                        : "border-zinc-600 bg-zinc-900/40 hover:border-amber-500/30"
+                        }`}
+                    >
+                      <Icon
+                        className={`h-10 w-10 ${selected ? "text-amber-300" : "text-zinc-400"}`}
+                        aria-hidden
+                      />
+                      <span
+                        className={`text-center text-[11px] font-medium leading-tight ${selected ? "text-amber-100" : "text-zinc-500"}`}
+                      >
+                        {label}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
             <button
               type="button"
-              onClick={() => galleryNewRef.current?.click()}
-              className="rounded-xl border border-zinc-600 bg-zinc-900/80 px-4 py-2.5 text-sm text-amber-200/95 transition hover:border-amber-500/40"
+              onClick={() => {
+                setError(null);
+                setFormStep(2);
+              }}
+              className="w-full rounded-2xl bg-gradient-to-r from-amber-600 via-yellow-500 to-amber-600 py-4 text-base font-bold text-zinc-950 shadow-[0_6px_28px_rgba(250,204,21,0.4)] ring-1 ring-amber-300/50 transition hover:brightness-110"
             >
-              Pilih dari galeri
+              Lanjut → harga & stok
             </button>
-            <button
-              type="button"
-              onClick={() => cameraNewRef.current?.click()}
-              className="rounded-xl border border-amber-500/35 bg-amber-950/30 px-4 py-2.5 text-sm font-medium text-amber-100 transition hover:border-amber-400/60"
-            >
-              Ambil foto (kamera)
-            </button>
-          </div>
-          {imageFile ? (
-            <p className="mt-2 text-xs text-zinc-400">
-              Terpilih: <span className="text-zinc-200">{imageFile.name}</span>
-            </p>
-          ) : (
-            <p className="mt-2 text-xs text-zinc-600">Belum ada foto dipilih.</p>
-          )}
-        </div>
-        <Button type="submit" disabled={submitting || !connected}>
-          {submitting ? "Menyimpan…" : "Simpan & unggah"}
-        </Button>
+          </>
+        ) : null}
+
+        {formStep === 2 ? (
+          <>
+            <FloatingLabelInput
+              id="p-name"
+              name="name"
+              label="Nama produk"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              autoComplete="off"
+            />
+            <FloatingLabelInput
+              id="p-price"
+              name="price"
+              label="Harga (ketik angka, jadi Rp otomatis)"
+              type="text"
+              inputMode="numeric"
+              autoComplete="off"
+              value={priceDisplay}
+              onChange={(e) =>
+                setPriceDisplay(formatThousandsInput(e.target.value))
+              }
+            />
+            <FloatingLabelInput
+              id="p-stock"
+              name="stock"
+              label="Stok"
+              type="number"
+              min={0}
+              step={1}
+              value={stock}
+              onChange={(e) => setStock(e.target.value)}
+            />
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-stretch">
+              <button
+                type="button"
+                onClick={() => {
+                  setError(null);
+                  setFormStep(1);
+                }}
+                className="rounded-2xl border border-zinc-600 px-4 py-3 text-sm font-medium text-zinc-300 transition hover:bg-zinc-800 sm:shrink-0"
+              >
+                ← Kembali
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!canAdvanceFromStep2()) {
+                    setError("Lengkapi nama, harga, dan stok dulu.");
+                    return;
+                  }
+                  setError(null);
+                  setFormStep(3);
+                }}
+                className="flex-1 rounded-2xl bg-gradient-to-r from-amber-600 via-yellow-500 to-amber-600 py-4 text-base font-bold text-zinc-950 shadow-[0_6px_28px_rgba(250,204,21,0.4)] ring-1 ring-amber-300/50 transition hover:brightness-110"
+              >
+                Lanjut → deskripsi
+              </button>
+            </div>
+          </>
+        ) : null}
+
+        {formStep === 3 ? (
+          <>
+            <div>
+              <label
+                htmlFor="p-description"
+                className="mb-2 block text-center text-[11px] text-zinc-500"
+              >
+                Deskripsi (opsional)
+              </label>
+              <textarea
+                id="p-description"
+                name="description"
+                rows={4}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                className="w-full rounded-xl border border-zinc-600 bg-zinc-900/60 px-3 py-2 text-sm text-zinc-100 outline-none transition focus:border-amber-500"
+                placeholder="Ceritakan singkat… atau pakai tombol mic"
+              />
+            </div>
+            {speechRecognitionAvailable() ? (
+              <button
+                type="button"
+                onClick={() => toggleDescriptionVoice()}
+                className={`flex w-full items-center justify-center gap-2 rounded-2xl border-2 px-4 py-3 text-sm font-semibold transition ${voiceBusy
+                  ? "border-amber-500/60 bg-amber-950/40 text-amber-200"
+                  : "border-zinc-600 bg-zinc-900/50 text-zinc-200 hover:border-amber-500/40"
+                  }`}
+              >
+                <MicrophoneIcon className="h-6 w-6 text-amber-400" aria-hidden />
+                {voiceBusy ? "Dengar… bicara sekarang" : "Bicara → jadi teks"}
+              </button>
+            ) : null}
+
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-stretch">
+              <button
+                type="button"
+                onClick={() => {
+                  setError(null);
+                  setFormStep(2);
+                }}
+                className="rounded-2xl border border-zinc-600 px-4 py-3 text-sm font-medium text-zinc-300 transition hover:bg-zinc-800 sm:shrink-0"
+              >
+                ← Kembali
+              </button>
+              <Button
+                type="submit"
+                className="flex-1 !rounded-2xl !py-4 text-base font-bold shadow-[0_6px_28px_rgba(250,204,21,0.35)]"
+                disabled={submitting || !connected}
+              >
+                {submitting ? "Menyimpan…" : "Simpan ke toko ✓"}
+              </Button>
+            </div>
+          </>
+        ) : null}
       </form>
 
       <section className="mt-10">
