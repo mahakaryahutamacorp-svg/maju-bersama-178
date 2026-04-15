@@ -19,6 +19,7 @@
 | `order_items` | Item dalam pesanan | ✓ |
 | `banners` | Slider promosi homepage | ✓ |
 | `profiles` | Profil user (1:1 auth.users) | ✓ |
+| `members` | Nama tampilan opsional pelanggan (1:1 auth.users) | ✓ |
 | `store_memberships` | Relasi user-store dengan role | ✓ |
 | `app_users` | LEGACY - tidak dipakai | ✓ |
 
@@ -29,7 +30,7 @@
 ### Functions
 
 - `has_store_role(store_id, roles[])` — Cek apakah user punya role tertentu di toko
-- `handle_new_auth_user()` — Trigger: auto-create profile saat user signup
+- `handle_new_auth_user()` — Trigger: auto-create `profiles` + `members` saat user signup
 - `mb178_checkout(...)` — Atomic checkout (service_role only)
 
 ## Akun Login
@@ -65,12 +66,14 @@
 1. **00-setup-database.sql** — Setup lengkap: schema, tables, RLS, functions, seed data
 2. **01-create-auth-users.sql** — Buat akun auth users dan memberships
 3. **02-storage-mb178-assets.sql** — Bucket `mb178_assets` + kebijakan Storage
+4. **03-members-display-name.sql** — Tabel `members` + RLS + trigger menyinkronkan `display_name` (opsional) dari metadata pendaftaran
 
 ## Cara Reset Database
 
 1. Buka Supabase Dashboard → SQL Editor
 2. Jalankan `00-setup-database.sql` (reset penuh)
 3. Jalankan `01-create-auth-users.sql` (buat akun)
+4. Jalankan `03-members-display-name.sql` jika belum (tabel `members` + trigger gabungan)
 
 ## Environment Variables
 

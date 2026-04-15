@@ -17,7 +17,7 @@ export function TopBar({
   backHref,
   backLabel = "← Kembali",
 }: Props) {
-  const { user, loading, isOwner, signOut } = useAuth();
+  const { user, loading, isOwner, displayLabel, signOut } = useAuth();
 
   const loggedIn = !loading && !!user;
 
@@ -57,9 +57,10 @@ export function TopBar({
             ) : (
               <Link
                 href="/profile"
-                className={`${buttonClass("ghost")} w-auto border-amber-500/15 px-4 shadow-[0_0_20px_rgba(0,0,0,0.35)]`}
+                title={displayLabel}
+                className={`${buttonClass("ghost")} max-w-[9rem] truncate border-amber-500/15 px-4 shadow-[0_0_20px_rgba(0,0,0,0.35)] sm:max-w-[12rem]`}
               >
-                Profil
+                {displayLabel || "Profil"}
               </Link>
             )}
             <button

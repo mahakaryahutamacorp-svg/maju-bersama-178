@@ -4,9 +4,12 @@ import { createBrowserClient } from "@supabase/ssr";
 import type { User } from "@supabase/supabase-js";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { MB178_SCHEMA } from "@/lib/mb178/constants";
+import { resolveMb178DisplayLabel } from "@/lib/mb178/user-display";
 
 interface AuthContextValue {
   user: User | null;
+  /** Label header/profil: display_name atau username. */
+  displayLabel: string;
   isOwner: boolean;
   isSuperAdmin: boolean;
   loading: boolean;
@@ -25,6 +28,9 @@ function createSupabaseBrowserClient() {
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
   const [user, setUser] = useState<User | null>(null);
+  const [memberDisplayName, setMemberDisplayName] = useState<string | null>(
+    null
+  );
   const [isOwner, setIsOwner] = useState(false);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -88,9 +94,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, [supabase, user]);
 
+  useEffect(() => {
+    let cancelled = false;
+    async function loadMemberName() {
+      if (!supabase || !user) {
+        if (!cancelled) setMemberDisplayName(null);
+        return;
+      }
+      const { data, error } = await supabase
+        .from("members")
+        .select("display_name")
+        .eq("id", user.id)
+        .maybeSingle();
+      if (cancelled) return;
+      if (error) {
+        setMemberDisplayName(null);
+        return;
+      }
+      setMemberDisplayName(
+        typeof data?.display_name === "string" ? data.display_name : null
+      );
+    }
+    void loadMemberName();
+    return () => {
+      cancelled = true;
+    };
+  }, [supabase, user]);
+
+  const displayLabel = useMemo(
+    () => resolveMb178DisplayLabel(user, memberDisplayName),
+    [user, memberDisplayName]
+  );
+
   const value: AuthContextValue = useMemo(
     () => ({
       user,
+      displayLabel,
       isOwner,
       isSuperAdmin,
       loading,
@@ -99,7 +138,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         await supabase.auth.signOut();
       },
     }),
-    [supabase, user, isOwner, isSuperAdmin, loading]
+    [supabase, user, displayLabel, isOwner, isSuperAdmin, loading]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
