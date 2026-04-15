@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import {
   CubeIcon,
   WalletIcon,
+  PlusCircleIcon,
   PencilSquareIcon,
   ClipboardDocumentListIcon,
   Cog6ToothIcon,
@@ -111,7 +112,6 @@ export default function OwnerDashboardPage() {
     );
   }
 
-  const initials = (user.email ?? "MB").slice(0, 2).toUpperCase();
   const radar = stats?.radar;
   const totalProducts = stats?.totalProducts;
   const revenue = stats?.revenue;
@@ -119,47 +119,34 @@ export default function OwnerDashboardPage() {
 
   return (
     <div className="px-4 md:mx-auto md:max-w-lg">
-      <header className="mb-8 flex items-start gap-4">
-        <div
-          className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-amber-500/40 bg-zinc-900 text-lg font-semibold text-amber-300 shadow-[0_0_28px_rgba(250,204,21,0.35)]"
-          aria-hidden
-        >
-          {initials}
-        </div>
-        <div>
-          <p className="font-serif text-xl text-amber-100/90">Dashboard</p>
-          <p className="text-sm text-zinc-500">{user.email}</p>
-        </div>
-      </header>
-
       {loadError ? (
         <p className="mb-4 rounded-2xl border border-red-500/30 bg-red-950/30 px-4 py-3 text-sm text-red-200/90">
           {loadError}
         </p>
       ) : null}
 
-      <p className="mb-4 rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-2.5 text-[11px] leading-relaxed text-zinc-500">
-        <span className="font-medium text-zinc-400">Konfigurasi toko:</span> nama,
-        alamat, dan WhatsApp di{" "}
-        <Link
-          href="/settings"
-          className="text-amber-500/90 underline underline-offset-2 hover:text-amber-400"
-        >
-          Pengaturan Toko
-        </Link>
-        . Toko yang aktif ditampilkan di banner di atas halaman.
-      </p>
-
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-4">
         <Link
           href="/owner/products#owner-product-form"
-          className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-amber-600 via-yellow-500 to-amber-600 py-3.5 text-sm font-semibold text-zinc-950 shadow-[0_0_28px_rgba(250,204,21,0.35)] ring-1 ring-amber-400/40 transition hover:brightness-110"
+          className="group relative flex w-full flex-col items-center justify-center gap-3 overflow-hidden rounded-3xl bg-gradient-to-br from-amber-500 via-yellow-400 to-amber-600 px-6 py-8 text-center shadow-[0_8px_40px_rgba(250,204,21,0.45),0_0_0_3px_rgba(24,24,27,0.9),0_0_0_5px_rgba(234,179,8,0.35)] ring-2 ring-amber-200/90 transition hover:brightness-[1.05] hover:shadow-[0_12px_48px_rgba(250,204,21,0.55)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-amber-300"
+          aria-describedby="dashboard-add-product-hint"
         >
-          <PencilSquareIcon className="h-5 w-5" aria-hidden />
-          Tambah produk
+          <PlusCircleIcon
+            className="h-16 w-16 text-zinc-950 drop-shadow-sm sm:h-20 sm:w-20"
+            aria-hidden
+          />
+          <span className="max-w-[16rem] font-serif text-2xl font-bold leading-tight tracking-tight text-zinc-950 sm:text-3xl">
+            Tambah produk baru
+          </span>
+          <span className="text-sm font-semibold text-zinc-900/85">
+            Tap di sini — ini langkah utama jualan
+          </span>
         </Link>
-        <p className="text-center text-[11px] text-zinc-500">
-          Edit atau hapus produk lewat menu di bawah, lalu buka halaman produk.
+        <p
+          id="dashboard-add-product-hint"
+          className="text-center text-xs leading-relaxed text-zinc-500"
+        >
+          Ubah daftar produk lewat menu di bawah bila perlu.
         </p>
       </div>
 

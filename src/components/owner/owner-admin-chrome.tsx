@@ -8,27 +8,6 @@ import {
   CubeIcon,
   Squares2X2Icon,
 } from "@heroicons/react/24/outline";
-import { useOwnerStoreScope } from "@/components/owner/owner-store-scope";
-
-export function OwnerActiveStoreBanner() {
-  const { activeStoreLabel, ready } = useOwnerStoreScope();
-  if (!ready || !activeStoreLabel) return null;
-  return (
-    <div
-      className="mt-3 rounded-2xl border border-amber-500/25 bg-amber-950/20 px-3 py-2.5 text-xs text-amber-100/95"
-      role="status"
-    >
-      <span className="font-medium uppercase tracking-wider text-amber-400/90">
-        Toko aktif
-      </span>
-      <p className="mt-1 text-sm text-zinc-100">{activeStoreLabel}</p>
-      <p className="mt-1 text-[11px] leading-relaxed text-zinc-500">
-        Produk, pesanan, dan pengaturan hanya untuk toko ini. Pilih toko lain di
-        menu master admin jika peran kamu memiliki lebih dari satu toko.
-      </p>
-    </div>
-  );
-}
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", Icon: Squares2X2Icon },
@@ -58,8 +37,8 @@ export function OwnerQuickNav() {
               <Link
                 href={href}
                 className={`flex flex-col items-center gap-0.5 rounded-xl px-1 py-1.5 text-[10px] font-medium transition sm:text-xs ${active
-                    ? "text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.45)]"
-                    : "text-zinc-500 hover:text-zinc-300"
+                  ? "text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.45)]"
+                  : "text-zinc-500 hover:text-zinc-300"
                   }`}
               >
                 <Icon className="h-6 w-6 shrink-0" aria-hidden />
