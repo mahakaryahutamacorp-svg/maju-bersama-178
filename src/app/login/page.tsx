@@ -69,13 +69,15 @@ function LoginForm() {
         setError("Supabase belum dikonfigurasi (env).");
         return;
       }
+      const trimmedDisplay = regName.trim();
       const res = await supabase.auth.signUp({
         email: userIdToEmail(userId.trim().toLowerCase()),
         password,
         options: {
-          data: {
-            full_name: regName.trim() || null,
-          },
+          data:
+            trimmedDisplay === ""
+              ? {}
+              : { full_name: trimmedDisplay, display_name: trimmedDisplay },
         },
       });
       if (res.error) {
@@ -116,120 +118,120 @@ function LoginForm() {
       </div>
 
       <div className="relative z-10 flex flex-1 flex-col items-center justify-center bg-[var(--charcoal)] px-4 py-8 md:py-12">
-      <div className="w-full max-w-sm rounded-3xl border border-yellow-600/20 bg-zinc-950/70 p-8 shadow-[0_0_40px_rgba(212,175,55,0.08)] backdrop-blur-md">
-        <h1 className="font-serif text-center text-2xl text-transparent bg-clip-text bg-gradient-to-r from-amber-200 to-yellow-500">
-          {isOwner ? "Masuk Admin Toko" : "Masuk / Daftar"}
-        </h1>
-        {!isOwner && (
-          <p className="mt-2 text-center text-xs text-zinc-500">
-            Buat username sendiri, password 6 digit angka.
-          </p>
-        )}
-
-        <form onSubmit={onSubmit} className="mt-6 space-y-4">
-          <div>
-            <label htmlFor="userId" className="text-xs text-zinc-500">
-              Username
-            </label>
-            <input
-              id="userId"
-              name="userId"
-              type="text"
-              autoComplete="username"
-              value={userId}
-              onChange={(e) => setUserId(e.target.value)}
-              placeholder={isOwner ? "mama01" : "contoh: yayan12"}
-              className="mt-1 w-full rounded-xl border border-zinc-700 bg-zinc-900/80 px-3 py-2.5 text-sm text-zinc-100 outline-none focus:border-amber-500"
-              required
-            />
-          </div>
-          <div>
-            <label htmlFor="password" className="text-xs text-zinc-500">
-              Password {!isOwner && <span className="text-zinc-600">(6 digit angka)</span>}
-            </label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              inputMode="numeric"
-              maxLength={6}
-              autoComplete="current-password"
-              value={password}
-              onChange={(e) => {
-                const v = e.target.value;
-                if (!isOwner) {
-                  if (/^\d{0,6}$/.test(v)) setPassword(v);
-                } else {
-                  setPassword(v);
-                }
-              }}
-              placeholder={isOwner ? "••••••" : "6 digit angka"}
-              className="mt-1 w-full rounded-xl border border-zinc-700 bg-zinc-900/80 px-3 py-2.5 text-sm text-zinc-100 outline-none focus:border-amber-500"
-              required
-            />
-          </div>
+        <div className="w-full max-w-sm rounded-3xl border border-yellow-600/20 bg-zinc-950/70 p-8 shadow-[0_0_40px_rgba(212,175,55,0.08)] backdrop-blur-md">
+          <h1 className="font-serif text-center text-2xl text-transparent bg-clip-text bg-gradient-to-r from-amber-200 to-yellow-500">
+            {isOwner ? "Masuk Admin Toko" : "Masuk / Daftar"}
+          </h1>
           {!isOwner && (
-            <div>
-              <label htmlFor="regName" className="text-xs text-zinc-500">
-                Nama tampilan <span className="text-zinc-600">(opsional)</span>
-              </label>
-              <input
-                id="regName"
-                name="regName"
-                type="text"
-                autoComplete="name"
-                value={regName}
-                onChange={(e) => setRegName(e.target.value)}
-                placeholder="contoh: Yayan"
-                className="mt-1 w-full rounded-xl border border-zinc-700 bg-zinc-900/80 px-3 py-2.5 text-sm text-zinc-100 outline-none focus:border-amber-500"
-              />
-            </div>
-          )}
-
-          {error && (
-            <p className="text-center text-sm text-red-400" role="alert">
-              {error}
+            <p className="mt-2 text-center text-xs text-zinc-500">
+              Buat username sendiri, password 6 digit angka.
             </p>
           )}
 
-          <button
-            type="submit"
-            disabled={pending}
-            className="w-full rounded-2xl bg-amber-500 py-3 text-sm font-semibold text-zinc-950 transition hover:bg-amber-400 disabled:opacity-60"
-          >
-            {pending ? "Memproses…" : "Masuk"}
-          </button>
+          <form onSubmit={onSubmit} className="mt-6 space-y-4">
+            <div>
+              <label htmlFor="userId" className="text-xs text-zinc-500">
+                Username
+              </label>
+              <input
+                id="userId"
+                name="userId"
+                type="text"
+                autoComplete="username"
+                value={userId}
+                onChange={(e) => setUserId(e.target.value)}
+                placeholder={isOwner ? "mama01" : "contoh: yayan12"}
+                className="mt-1 w-full rounded-xl border border-zinc-700 bg-zinc-900/80 px-3 py-2.5 text-sm text-zinc-100 outline-none focus:border-amber-500"
+                required
+              />
+            </div>
+            <div>
+              <label htmlFor="password" className="text-xs text-zinc-500">
+                Password {!isOwner && <span className="text-zinc-600">(6 digit angka)</span>}
+              </label>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                inputMode="numeric"
+                maxLength={6}
+                autoComplete="current-password"
+                value={password}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  if (!isOwner) {
+                    if (/^\d{0,6}$/.test(v)) setPassword(v);
+                  } else {
+                    setPassword(v);
+                  }
+                }}
+                placeholder={isOwner ? "••••••" : "6 digit angka"}
+                className="mt-1 w-full rounded-xl border border-zinc-700 bg-zinc-900/80 px-3 py-2.5 text-sm text-zinc-100 outline-none focus:border-amber-500"
+                required
+              />
+            </div>
+            {!isOwner && (
+              <div>
+                <label htmlFor="regName" className="text-xs text-zinc-500">
+                  Nama tampilan <span className="text-zinc-600">(opsional)</span>
+                </label>
+                <input
+                  id="regName"
+                  name="regName"
+                  type="text"
+                  autoComplete="name"
+                  value={regName}
+                  onChange={(e) => setRegName(e.target.value)}
+                  placeholder="contoh: Yayan"
+                  className="mt-1 w-full rounded-xl border border-zinc-700 bg-zinc-900/80 px-3 py-2.5 text-sm text-zinc-100 outline-none focus:border-amber-500"
+                />
+              </div>
+            )}
 
-          {!isOwner && (
+            {error && (
+              <p className="text-center text-sm text-red-400" role="alert">
+                {error}
+              </p>
+            )}
+
             <button
-              type="button"
-              disabled={registering || pending}
-              onClick={() => void onQuickRegister()}
-              className="w-full rounded-2xl border border-amber-500/40 bg-zinc-900/60 py-3 text-sm font-semibold text-amber-200 transition hover:border-amber-400/70 hover:bg-zinc-900 disabled:opacity-60"
+              type="submit"
+              disabled={pending}
+              className="w-full rounded-2xl bg-amber-500 py-3 text-sm font-semibold text-zinc-950 transition hover:bg-amber-400 disabled:opacity-60"
             >
-              {registering ? "Mendaftar…" : "Daftar Baru"}
+              {pending ? "Memproses…" : "Masuk"}
             </button>
-          )}
-        </form>
 
-        <div className="mt-5 flex items-center justify-center gap-4 text-xs">
-          {isOwner ? (
-            <Link
-              href="/login?mode=customer"
-              className="text-zinc-500 underline-offset-4 hover:underline"
-            >
-              ← Masuk sebagai pengunjung
-            </Link>
-          ) : (
-            <Link
-              href="/login?mode=owner"
-              className="text-zinc-500 underline-offset-4 hover:underline"
-            >
-              Masuk admin toko →
-            </Link>
-          )}
+            {!isOwner && (
+              <button
+                type="button"
+                disabled={registering || pending}
+                onClick={() => void onQuickRegister()}
+                className="w-full rounded-2xl border border-amber-500/40 bg-zinc-900/60 py-3 text-sm font-semibold text-amber-200 transition hover:border-amber-400/70 hover:bg-zinc-900 disabled:opacity-60"
+              >
+                {registering ? "Mendaftar…" : "Daftar Baru"}
+              </button>
+            )}
+          </form>
+
+          <div className="mt-5 flex items-center justify-center gap-4 text-xs">
+            {isOwner ? (
+              <Link
+                href="/login?mode=customer"
+                className="text-zinc-500 underline-offset-4 hover:underline"
+              >
+                ← Masuk sebagai pengunjung
+              </Link>
+            ) : (
+              <Link
+                href="/login?mode=owner"
+                className="text-zinc-500 underline-offset-4 hover:underline"
+              >
+                Masuk admin toko →
+              </Link>
+            )}
+          </div>
         </div>
-      </div>
       </div>
     </div>
   );
