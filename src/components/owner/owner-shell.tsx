@@ -1,5 +1,6 @@
 "use client";
 
+import { AppShellDecoration } from "@/components/customer/app-shell-decoration";
 import { TopBar } from "@/components/ui/TopBar";
 import {
   OwnerActiveStoreBanner,
@@ -44,15 +45,18 @@ function OwnerAccountAlerts() {
 export function OwnerShell({ children }: { children: React.ReactNode }) {
   return (
     <OwnerStoreScopeProvider>
-      <div className="min-h-dvh bg-[var(--charcoal)] pb-[calc(5rem+env(safe-area-inset-bottom))] pt-4 text-zinc-100">
-        <div className="px-4 md:mx-auto md:max-w-lg">
+      <div className="relative min-h-dvh pb-[calc(5rem+env(safe-area-inset-bottom))] pt-4 text-zinc-100">
+        <AppShellDecoration />
+        <div className="relative z-0 px-4 md:mx-auto md:max-w-lg">
           <TopBar showAuthButtons={false} />
           <SuperAdminStorePicker />
           <OwnerActiveStoreBanner />
           <OwnerAccountAlerts />
         </div>
-        {children}
-        <OwnerQuickNav />
+        <div className="relative z-0">{children}</div>
+        <div className="relative z-0">
+          <OwnerQuickNav />
+        </div>
       </div>
     </OwnerStoreScopeProvider>
   );

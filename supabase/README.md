@@ -54,10 +54,17 @@
 | master@local.mb178 | Super Admin (akses semua toko) |
 | mb178@local.mb178 | Super Admin (akses semua toko) |
 
+## Storage (foto produk)
+
+- Bucket: **`mb178_assets`** (publik baca).
+- Path per toko: **`stores/{slug}/products/{timestamp}-{file}`** (slug dari `public.stores`).
+- Jalankan **`02-storage-mb178-assets.sql`** sekali setelah database ada (membuat bucket + policy). Tanpa bucket, unggah gambar dari dashboard owner akan gagal.
+
 ## SQL Files
 
 1. **00-setup-database.sql** — Setup lengkap: schema, tables, RLS, functions, seed data
 2. **01-create-auth-users.sql** — Buat akun auth users dan memberships
+3. **02-storage-mb178-assets.sql** — Bucket `mb178_assets` + kebijakan Storage
 
 ## Cara Reset Database
 

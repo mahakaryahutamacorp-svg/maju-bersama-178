@@ -1,13 +1,11 @@
 import { NextResponse } from "next/server";
 import { requireOwnerSession } from "@/app/api/owner/_session";
 import { requireResolvedStoreId } from "@/app/api/owner/_store-id";
+import { resolveProductImageObjectPath } from "@/lib/mb178/product-storage-path";
 import { createMb178Client } from "@/lib/supabase/admin";
+import { hintForSupabaseError } from "@/lib/supabase/error-hints";
 
 const BUCKET = "mb178_assets";
-
-function safeFileName(name: string) {
-  return name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 120) || "file";
-}
 
 export async function POST(request: Request) {
   const session = await requireOwnerSession(request);
@@ -44,7 +42,18 @@ export async function POST(request: Request) {
     typeof (file as File).name === "string"
       ? (file as File).name
       : "upload";
-  const path = `${storeIdOrErr}/${Date.now()}-${safeFileName(original)}`;
+  const resolved = await resolveProductImageObjectPath(
+    supabase,
+    storeIdOrErr,
+    original
+  );
+  if ("error" in resolved) {
+    return NextResponse.json(
+      { error: resolved.error, hint: hintForSupabaseError(resolved.error) },
+      { status: 400 }
+    );
+  }
+  const path = resolved.path;
   const buffer = Buffer.from(await file.arrayBuffer());
 
   const { error } = await supabase.storage
@@ -53,7 +62,11 @@ export async function POST(request: Request) {
 
   if (error) {
     return NextResponse.json(
-      { error: error.message, bucket: BUCKET },
+      {
+        error: error.message,
+        bucket: BUCKET,
+        hint: hintForSupabaseError(error.message),
+      },
       { status: 503 }
     );
   }

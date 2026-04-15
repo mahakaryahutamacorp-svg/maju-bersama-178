@@ -266,8 +266,10 @@ export default function OwnerProductsPage() {
         Produk Saya
       </h1>
       <p className="mt-1 text-sm text-zinc-500">
-        Unggah foto ke bucket{" "}
-        <code className="text-zinc-400">mb178_assets</code> — data{" "}
+        Foto produk disimpan per toko di Storage:{" "}
+        <code className="text-zinc-400">mb178_assets/stores/</code>
+        <span className="text-amber-200/80">{store?.slug ?? "…"}</span>
+        <code className="text-zinc-400">/products/</code> — metadata di{" "}
         <code className="text-zinc-400">public.products</code>.
       </p>
 
@@ -279,10 +281,11 @@ export default function OwnerProductsPage() {
 
       {!connected ? (
         <p className="mt-4 text-sm text-amber-200/70">
-          Supabase belum lengkap: pastikan env terisi, jalankan{" "}
-          <code className="text-zinc-400">supabase/setup-complete.sql</code>, dan
-          isi <code className="text-zinc-400">SUPABASE_SERVICE_ROLE_KEY</code>{" "}
-          dari Vercel bila perlu.
+          Supabase belum lengkap: pastikan env terisi, jalankan skrip SQL di{" "}
+          <code className="text-zinc-400">supabase/</code>, buat bucket lewat{" "}
+          <code className="text-zinc-400">02-storage-mb178-assets.sql</code>, dan
+          isi <code className="text-zinc-400">SUPABASE_SERVICE_ROLE_KEY</code> di
+          Vercel (Production).
         </p>
       ) : null}
 

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
@@ -93,8 +94,29 @@ function LoginForm() {
   const isOwner = mode === "owner";
 
   return (
-    <div className="flex min-h-dvh flex-col items-center justify-center bg-[var(--charcoal)] px-4">
-      <div className="w-full max-w-sm rounded-3xl border border-yellow-600/20 bg-white/5 p-8 backdrop-blur-md">
+    <div className="relative flex min-h-dvh flex-col md:flex-row">
+      <div className="relative h-36 w-full shrink-0 overflow-hidden md:h-auto md:min-h-dvh md:w-[40%] md:max-w-md">
+        <Image
+          src="/banners/banners02.jpg"
+          alt=""
+          fill
+          className="object-cover"
+          sizes="(max-width: 768px) 100vw, 40vw"
+          priority
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/30 to-[var(--charcoal)] md:bg-gradient-to-r md:from-black/55 md:via-black/25 md:to-[var(--charcoal)]" />
+        <div className="absolute inset-x-0 bottom-0 p-4 md:inset-auto md:bottom-8 md:left-8 md:right-8 md:p-0">
+          <p className="font-serif text-xl font-semibold text-white drop-shadow-md md:text-2xl">
+            Maju Bersama 178
+          </p>
+          <p className="mt-1 text-xs text-zinc-200/90 md:text-sm">
+            Marketplace multi-toko — masuk untuk belanja atau kelola toko.
+          </p>
+        </div>
+      </div>
+
+      <div className="relative z-10 flex flex-1 flex-col items-center justify-center bg-[var(--charcoal)] px-4 py-8 md:py-12">
+      <div className="w-full max-w-sm rounded-3xl border border-yellow-600/20 bg-zinc-950/70 p-8 shadow-[0_0_40px_rgba(212,175,55,0.08)] backdrop-blur-md">
         <h1 className="font-serif text-center text-2xl text-transparent bg-clip-text bg-gradient-to-r from-amber-200 to-yellow-500">
           {isOwner ? "Masuk Admin Toko" : "Masuk / Daftar"}
         </h1>
@@ -207,6 +229,7 @@ function LoginForm() {
             </Link>
           )}
         </div>
+      </div>
       </div>
     </div>
   );

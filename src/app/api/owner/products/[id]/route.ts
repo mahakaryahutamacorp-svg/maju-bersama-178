@@ -1,15 +1,12 @@
 import { NextResponse } from "next/server";
 import { requireOwnerSession } from "@/app/api/owner/_session";
 import { requireResolvedStoreId } from "@/app/api/owner/_store-id";
+import { resolveProductImageObjectPath } from "@/lib/mb178/product-storage-path";
 import { createMb178Client } from "@/lib/supabase/admin";
 import type { Mb178ProductRow } from "@/lib/mb178/types";
 import { hintForSupabaseError } from "@/lib/supabase/error-hints";
 
 const BUCKET = "mb178_assets";
-
-function safeFileName(name: string) {
-  return name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 120) || "file";
-}
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -64,13 +61,31 @@ export async function PATCH(request: Request, ctx: Ctx) {
           { status: 400 }
         );
       }
-      const path = `${storeIdOrErr}/${Date.now()}-${safeFileName(f.name)}`;
+      const resolved = await resolveProductImageObjectPath(
+        supabase,
+        storeIdOrErr,
+        f.name
+      );
+      if ("error" in resolved) {
+        return NextResponse.json(
+          { error: resolved.error, hint: hintForSupabaseError(resolved.error) },
+          { status: 400 }
+        );
+      }
+      const path = resolved.path;
       const buffer = Buffer.from(await f.arrayBuffer());
       const { error: upErr } = await supabase.storage
         .from(BUCKET)
         .upload(path, buffer, { contentType: mime, upsert: false });
       if (upErr) {
-        return NextResponse.json({ error: upErr.message }, { status: 503 });
+        return NextResponse.json(
+          {
+            error: upErr.message,
+            hint: hintForSupabaseError(upErr.message),
+            bucket: BUCKET,
+          },
+          { status: 503 }
+        );
       }
       const { data: pub } = supabase.storage.from(BUCKET).getPublicUrl(path);
       patch.image_url = pub.publicUrl;

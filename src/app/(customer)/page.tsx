@@ -1,6 +1,7 @@
 import Link from "next/link";
 import {
   BannerSlider,
+  LOCAL_BANNER_ITEMS,
   type BannerSlideItem,
 } from "@/components/customer/banner-slider";
 import { Card } from "@/components/ui/Card";
@@ -51,6 +52,10 @@ export default async function CustomerHomePage() {
     }
   }
 
+  if (bannerItems.length === 0) {
+    bannerItems = LOCAL_BANNER_ITEMS;
+  }
+
   return (
     <div className="px-4 pb-8 pt-8 md:mx-auto md:max-w-4xl">
       <header className="mb-8">
@@ -61,15 +66,18 @@ export default async function CustomerHomePage() {
           <p className="mt-2 font-serif text-lg text-zinc-400 md:text-xl">
             Pilih Toko
           </p>
+          <p className="mx-auto mt-3 max-w-md text-xs leading-relaxed text-zinc-500">
+            Marketplace multi-toko — belanja per katalog, hubungi penjual via WhatsApp.
+          </p>
         </div>
       </header>
 
-      {bannerItems.length > 0 ? <BannerSlider items={bannerItems} /> : null}
+      <BannerSlider items={bannerItems} />
 
       {stores.length === 0 ? (
         <p className="rounded-3xl border border-white/10 bg-white/5 px-5 py-8 text-center text-sm text-zinc-400">
           Belum ada toko di katalog. Pastikan variabel lingkungan Supabase terisi, lalu jalankan skrip{" "}
-          <code className="text-zinc-300">supabase/setup-complete.sql</code> di Supabase SQL Editor.
+          <code className="text-zinc-300">supabase/00-setup-database.sql</code> di Supabase SQL Editor.
         </p>
       ) : (
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
