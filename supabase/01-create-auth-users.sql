@@ -1,23 +1,32 @@
 -- =============================================================================
--- Buat akun Supabase Auth untuk MB178 (email sintetis …@local.mb178)
--- Pastikan `public.stores` berisi 8 slug kanonis (seed dari setup-complete.sql atau
--- sql-editor/mb178-toko-reset-dan-setup-lengkap.sql) sebelum menjalankan skrip ini.
--- Jalankan di: Supabase Dashboard → SQL Editor → Production
+-- Maju Bersama 178 (mahakaryahutama) — Create Auth Users & Memberships
+-- =============================================================================
+-- Jalankan SETELAH 00-setup-database.sql
 --
 -- Isi:
 --   - 8 owner toko + 2 super_admin (master, mb178)
---   - Password di-hash bcrypt (sama mekanisme umum Postgres / GoTrue)
---   - email_confirmed_at = now() → tidak perlu konfirmasi email
---   - Baris auth.identities (provider email) — wajib agar login jalan
+--   - Password bcrypt hash
+--   - email_confirmed_at = now() (tidak perlu konfirmasi email)
+--   - auth.identities (provider email)
 --   - public.store_memberships (role owner / super_admin per mapping)
 --
--- Password default (sesuai pola lama seed aplikasi):
---   Owner (mama01 … toko08): 223344
---   Super admin (master, mb178): 178178
+-- Akun:
+--   Owner toko (password: 223344):
+--     mama01@local.mb178 → pupuk-maju
+--     toko02@local.mb178 → pestisida-mbp
+--     toko03@local.mb178 → pakan-pei
+--     toko04@local.mb178 → rosaura-skin-clinic
+--     toko05@local.mb178 → drg-sona
+--     toko06@local.mb178 → raniah-travel
+--     toko07@local.mb178 → dapurku-seafood
+--     toko08@local.mb178 → rocell-gadget
 --
--- Idempotent: jika email sudah ada di auth.users, baris itu dilewati.
+--   Super admin (password: 178178):
+--     master@local.mb178
+--     mb178@local.mb178
+--
+-- Idempotent: jika email sudah ada, baris itu dilewati.
 -- =============================================================================
-BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 DO $$
 DECLARE rec record;
@@ -27,8 +36,7 @@ meta jsonb;
 BEGIN FOR rec IN
 SELECT *
 FROM (
-    VALUES -- email, password_plain, display_name, slug (NULL untuk super_admin)
-      (
+    VALUES (
         'mama01@local.mb178',
         '223344',
         'Mama',
@@ -88,7 +96,8 @@ FROM (
         'Pemilik MB178',
         NULL::text
       )
-  ) AS t(email, password_plain, display_name, store_slug) LOOP IF EXISTS (
+  ) AS t(email, password_plain, display_name, store_slug) LOOP -- Skip if user already exists
+  IF EXISTS (
     SELECT 1
     FROM auth.users u
     WHERE lower(u.email) = lower(rec.email)
@@ -97,6 +106,7 @@ END IF;
 new_id := gen_random_uuid();
 pwd_hash := crypt(rec.password_plain, gen_salt('bf'));
 meta := jsonb_build_object('full_name', rec.display_name);
+-- Insert auth.users
 INSERT INTO auth.users (
     id,
     instance_id,
@@ -137,6 +147,7 @@ VALUES (
     false,
     false
   );
+-- Insert auth.identities
 INSERT INTO auth.identities (
     id,
     user_id,
@@ -166,7 +177,7 @@ VALUES (
     now(),
     now()
   );
--- Owner: satu membership ke toko sesuai slug
+-- Insert store_memberships for owners
 IF rec.store_slug IS NOT NULL THEN
 INSERT INTO public.store_memberships (user_id, store_id, role)
 SELECT new_id,
@@ -179,7 +190,7 @@ SET role = EXCLUDED.role;
 END IF;
 END LOOP;
 END $$;
--- Super admin: satu baris per toko (agar RLS has_store_role per store_id jalan)
+-- Super admin: one row per store (agar RLS has_store_role per store_id jalan)
 INSERT INTO public.store_memberships (user_id, store_id, role)
 SELECT u.id,
   s.id,
@@ -189,7 +200,39 @@ FROM auth.users u
 WHERE lower(u.email) IN ('master@local.mb178', 'mb178@local.mb178') ON CONFLICT ON CONSTRAINT store_memberships_unique_user_store DO
 UPDATE
 SET role = EXCLUDED.role;
-COMMIT;
--- Verifikasi cepat (opsional, jalankan terpisah):
+-- Sync profiles for membership users
+INSERT INTO public.profiles (id, full_name)
+SELECT DISTINCT u.id,
+  public.profile_display_name_from_user_meta(
+    COALESCE(u.raw_user_meta_data, '{}'::jsonb),
+    u.email
+  )
+FROM auth.users u
+  INNER JOIN public.store_memberships m ON m.user_id = u.id
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM public.profiles p
+    WHERE p.id = u.id
+  ) ON CONFLICT (id) DO NOTHING;
+-- Update full_name from metadata
+UPDATE public.profiles p
+SET full_name = synced.full_name
+FROM (
+    SELECT DISTINCT u.id,
+      public.profile_display_name_from_user_meta(
+        COALESCE(u.raw_user_meta_data, '{}'::jsonb),
+        u.email
+      ) AS full_name
+    FROM auth.users u
+      INNER JOIN public.store_memberships m ON m.user_id = u.id
+  ) AS synced
+WHERE p.id = synced.id
+  AND (
+    p.full_name IS DISTINCT
+    FROM synced.full_name
+  );
+-- =============================================================================
+-- Verifikasi (opsional):
 -- SELECT id, email, email_confirmed_at FROM auth.users WHERE email LIKE '%@local.mb178' ORDER BY email;
 -- SELECT u.email, s.slug, m.role FROM public.store_memberships m JOIN auth.users u ON u.id = m.user_id JOIN public.stores s ON s.id = m.store_id ORDER BY u.email, s.slug;
+-- =============================================================================

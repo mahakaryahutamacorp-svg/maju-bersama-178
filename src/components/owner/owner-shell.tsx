@@ -8,14 +8,30 @@ import {
 import {
   OwnerStoreScopeProvider,
   SuperAdminStorePicker,
+  useOwnerStoreScope,
 } from "@/components/owner/owner-store-scope";
 import { useAuth } from "@/components/providers/auth-provider";
 
 function OwnerAccountAlerts() {
   const { user, loading, isOwner, isSuperAdmin } = useAuth();
+  const { effectiveStoreId, ready } = useOwnerStoreScope();
+
+  // Don't show warning while loading, not logged in, not owner, or is super admin
   if (loading || !user || !isOwner || isSuperAdmin) {
     return null;
   }
+
+  // Don't show warning if still loading store info
+  if (!ready) {
+    return null;
+  }
+
+  // Don't show warning if store is properly linked
+  if (effectiveStoreId) {
+    return null;
+  }
+
+  // Show warning only when owner has no store linked
   return (
     <p className="mt-3 rounded-2xl border border-amber-500/30 bg-amber-950/20 px-3 py-2 text-xs text-amber-100/90">
       Akun pemilik ini belum ditautkan ke toko di database. Periksa entri{" "}
