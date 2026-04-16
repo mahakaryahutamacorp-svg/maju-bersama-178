@@ -6,9 +6,10 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import { createBrowserClient } from "@supabase/ssr";
 import { MB178_SCHEMA } from "@/lib/mb178/constants";
+import { customerPrincipalToSyntheticEmail, syntheticEmailForMb178LocalPart } from "@/lib/mb178/phone";
 
-function userIdToEmail(userId: string) {
-  return `${userId}@local.mb178`;
+function ownerPrincipalToEmail(principal: string) {
+  return syntheticEmailForMb178LocalPart(principal.trim().toLowerCase());
 }
 
 function getSupabase() {
@@ -22,6 +23,7 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const mode = searchParams.get("mode") ?? "customer";
+  const isOwner = mode === "owner";
   /** Admin toko: default ke dashboard agar langsung ke konteks toko (bukan beranda pelanggan). */
   const callbackUrl =
     searchParams.get("callbackUrl")?.trim() ||
@@ -43,13 +45,25 @@ function LoginForm() {
       setError("Supabase belum dikonfigurasi (env).");
       return;
     }
+    let email: string;
+    if (isOwner) {
+      email = ownerPrincipalToEmail(userId);
+    } else {
+      const mapped = customerPrincipalToSyntheticEmail(userId);
+      if ("error" in mapped) {
+        setPending(false);
+        setError(mapped.error);
+        return;
+      }
+      email = mapped.email;
+    }
     const res = await supabase.auth.signInWithPassword({
-      email: userIdToEmail(userId.trim().toLowerCase()),
+      email,
       password,
     });
     setPending(false);
     if (res.error) {
-      setError("Username atau password salah.");
+      setError(isOwner ? "Username atau password salah." : "No. HP atau password salah.");
       return;
     }
     router.push(callbackUrl);
@@ -57,8 +71,21 @@ function LoginForm() {
   }
 
   async function onQuickRegister() {
+    if (!regName.trim()) {
+      setError("Isi nama Anda.");
+      return;
+    }
     if (!/^\d{6}$/.test(password)) {
       setError("Password harus 6 digit angka (contoh: 223344)");
+      return;
+    }
+    const mappedPrincipal = customerPrincipalToSyntheticEmail(userId);
+    if ("error" in mappedPrincipal) {
+      setError(mappedPrincipal.error);
+      return;
+    }
+    if (mappedPrincipal.phoneDigits62 === null) {
+      setError("Untuk daftar baru, gunakan no. HP (contoh: 0812…).");
       return;
     }
     setError(null);
@@ -71,13 +98,14 @@ function LoginForm() {
       }
       const trimmedDisplay = regName.trim();
       const res = await supabase.auth.signUp({
-        email: userIdToEmail(userId.trim().toLowerCase()),
+        email: mappedPrincipal.email,
         password,
         options: {
-          data:
-            trimmedDisplay === ""
-              ? {}
-              : { full_name: trimmedDisplay, display_name: trimmedDisplay },
+          data: {
+            full_name: trimmedDisplay,
+            display_name: trimmedDisplay,
+            phone: mappedPrincipal.phoneDigits62,
+          },
         },
       });
       if (res.error) {
@@ -92,8 +120,6 @@ function LoginForm() {
       setRegistering(false);
     }
   }
-
-  const isOwner = mode === "owner";
 
   return (
     <div className="relative flex min-h-dvh flex-col md:flex-row">
@@ -124,23 +150,24 @@ function LoginForm() {
           </h1>
           {!isOwner && (
             <p className="mt-2 text-center text-xs text-zinc-500">
-              Buat username sendiri, password 6 digit angka.
+              Masuk dan daftar memakai no. HP (mulai 08…). Password 6 digit angka. Tidak perlu email.
             </p>
           )}
 
           <form onSubmit={onSubmit} className="mt-6 space-y-4">
             <div>
               <label htmlFor="userId" className="text-xs text-zinc-500">
-                Username
+                {isOwner ? "Username" : "No. HP"}
               </label>
               <input
                 id="userId"
-                name="userId"
-                type="text"
-                autoComplete="username"
+                name={isOwner ? "username" : "phone"}
+                type={isOwner ? "text" : "tel"}
+                autoComplete={isOwner ? "username" : "tel"}
+                inputMode={isOwner ? "text" : "tel"}
                 value={userId}
                 onChange={(e) => setUserId(e.target.value)}
-                placeholder={isOwner ? "mama01" : "contoh: yayan12"}
+                placeholder={isOwner ? "mama01" : "Isi no. HP"}
                 className="mt-1 w-full rounded-xl border border-zinc-700 bg-zinc-900/80 px-3 py-2.5 text-sm text-zinc-100 outline-none focus:border-amber-500"
                 required
               />
@@ -165,7 +192,7 @@ function LoginForm() {
                     setPassword(v);
                   }
                 }}
-                placeholder={isOwner ? "••••••" : "6 digit angka"}
+                placeholder={isOwner ? "••••••" : "Isi password"}
                 className="mt-1 w-full rounded-xl border border-zinc-700 bg-zinc-900/80 px-3 py-2.5 text-sm text-zinc-100 outline-none focus:border-amber-500"
                 required
               />
@@ -173,7 +200,7 @@ function LoginForm() {
             {!isOwner && (
               <div>
                 <label htmlFor="regName" className="text-xs text-zinc-500">
-                  Nama tampilan <span className="text-zinc-600">(opsional)</span>
+                  Nama <span className="text-zinc-600">(untuk daftar baru)</span>
                 </label>
                 <input
                   id="regName"
@@ -182,7 +209,7 @@ function LoginForm() {
                   autoComplete="name"
                   value={regName}
                   onChange={(e) => setRegName(e.target.value)}
-                  placeholder="contoh: Yayan"
+                  placeholder="Isi nama"
                   className="mt-1 w-full rounded-xl border border-zinc-700 bg-zinc-900/80 px-3 py-2.5 text-sm text-zinc-100 outline-none focus:border-amber-500"
                 />
               </div>
