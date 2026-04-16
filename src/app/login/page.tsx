@@ -3,13 +3,34 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useState } from "react";
+import { Suspense, useState, type FormEvent } from "react";
 import { createBrowserClient } from "@supabase/ssr";
 import { MB178_SCHEMA } from "@/lib/mb178/constants";
-import { customerPrincipalToSyntheticEmail, syntheticEmailForMb178LocalPart } from "@/lib/mb178/phone";
+import {
+  customerPrincipalToSyntheticEmail,
+  legacySyntheticEmailForMb178LocalPart,
+  syntheticEmailCandidatesForMb178LocalPart,
+} from "@/lib/mb178/phone";
 
-function ownerPrincipalToEmail(principal: string) {
-  return syntheticEmailForMb178LocalPart(principal.trim().toLowerCase());
+function ownerPrincipalToEmailCandidates(principal: string): string[] {
+  const localPart = principal.trim().toLowerCase();
+  const candidates = syntheticEmailCandidatesForMb178LocalPart(localPart);
+  // Owner accounts may still exist in legacy domain.
+  if (candidates.length === 0) return [];
+  return candidates;
+}
+
+async function signInWithFallback(
+  supabase: ReturnType<typeof createBrowserClient>,
+  params: { emails: string[]; password: string }
+) {
+  let lastError: unknown = null;
+  for (const email of params.emails) {
+    const res = await supabase.auth.signInWithPassword({ email, password: params.password });
+    if (!res.error) return res;
+    lastError = res.error;
+  }
+  return { data: null, error: lastError as any };
 }
 
 function getSupabase() {
@@ -35,7 +56,7 @@ function LoginForm() {
   const [registering, setRegistering] = useState(false);
   const [regName, setRegName] = useState("");
 
-  async function onSubmit(e: React.FormEvent) {
+  async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
     setPending(true);
@@ -47,7 +68,21 @@ function LoginForm() {
     }
     let email: string;
     if (isOwner) {
-      email = ownerPrincipalToEmail(userId);
+      const candidates = ownerPrincipalToEmailCandidates(userId);
+      if (candidates.length === 0) {
+        setPending(false);
+        setError("Username wajib diisi.");
+        return;
+      }
+      const res = await signInWithFallback(supabase, { emails: candidates, password });
+      setPending(false);
+      if (res.error) {
+        setError("Username atau password salah.");
+        return;
+      }
+      router.push(callbackUrl);
+      router.refresh();
+      return;
     } else {
       const mapped = customerPrincipalToSyntheticEmail(userId);
       if ("error" in mapped) {
@@ -57,10 +92,12 @@ function LoginForm() {
       }
       email = mapped.email;
     }
-    const res = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    const localPart = email.split("@")[0] ?? "";
+    const candidates = [
+      ...syntheticEmailCandidatesForMb178LocalPart(localPart),
+      legacySyntheticEmailForMb178LocalPart(localPart),
+    ].filter(Boolean);
+    const res = await signInWithFallback(supabase, { emails: candidates, password });
     setPending(false);
     if (res.error) {
       setError(isOwner ? "Username atau password salah." : "No. HP atau password salah.");
@@ -97,19 +134,28 @@ function LoginForm() {
         return;
       }
       const trimmedDisplay = regName.trim();
-      const res = await supabase.auth.signUp({
-        email: mappedPrincipal.email,
-        password,
-        options: {
-          data: {
-            full_name: trimmedDisplay,
-            display_name: trimmedDisplay,
-            phone: mappedPrincipal.phoneDigits62,
-          },
-        },
+      const regRes = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          phone: userId,
+          password,
+          displayName: trimmedDisplay,
+        }),
       });
-      if (res.error) {
-        setError(res.error.message || "Gagal daftar");
+      const regJson = (await regRes.json().catch(() => null)) as
+        | { ok?: boolean; email?: string; error?: string }
+        | null;
+      if (!regRes.ok || !regJson?.ok || !regJson.email) {
+        setError(regJson?.error || "Gagal daftar");
+        return;
+      }
+      const signInRes = await signInWithFallback(supabase, {
+        emails: [regJson.email],
+        password,
+      });
+      if (signInRes.error) {
+        setError("Berhasil daftar, tapi gagal login otomatis.");
         return;
       }
       router.push(callbackUrl);
@@ -159,18 +205,33 @@ function LoginForm() {
               <label htmlFor="userId" className="text-xs text-zinc-500">
                 {isOwner ? "Username" : "No. HP"}
               </label>
-              <input
-                id="userId"
-                name={isOwner ? "username" : "phone"}
-                type={isOwner ? "text" : "tel"}
-                autoComplete={isOwner ? "username" : "tel"}
-                inputMode={isOwner ? "text" : "tel"}
-                value={userId}
-                onChange={(e) => setUserId(e.target.value)}
-                placeholder={isOwner ? "mama01" : "Isi no. HP"}
-                className="mt-1 w-full rounded-xl border border-zinc-700 bg-zinc-900/80 px-3 py-2.5 text-sm text-zinc-100 outline-none focus:border-amber-500"
-                required
-              />
+              {isOwner ? (
+                <input
+                  id="userId"
+                  name="username"
+                  type="text"
+                  autoComplete="username"
+                  inputMode="text"
+                  value={userId}
+                  onChange={(e) => setUserId(e.target.value)}
+                  placeholder="mama01"
+                  className="mt-1 w-full rounded-xl border border-zinc-700 bg-zinc-900/80 px-3 py-2.5 text-sm text-zinc-100 outline-none focus:border-amber-500"
+                  required
+                />
+              ) : (
+                <input
+                  id="userId"
+                  name="phone"
+                  type="tel"
+                  autoComplete="tel-national"
+                  inputMode="tel"
+                  value={userId}
+                  onChange={(e) => setUserId(e.target.value)}
+                  placeholder="Isi no. HP"
+                  className="mt-1 w-full rounded-xl border border-zinc-700 bg-zinc-900/80 px-3 py-2.5 text-sm text-zinc-100 outline-none focus:border-amber-500"
+                  required
+                />
+              )}
             </div>
             <div>
               <label htmlFor="password" className="text-xs text-zinc-500">

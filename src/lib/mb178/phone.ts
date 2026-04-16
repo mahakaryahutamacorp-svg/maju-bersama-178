@@ -34,8 +34,23 @@ export function isValidIndonesiaMobileNormalized(normalized: string): boolean {
   return /^628\d{8,12}$/.test(normalized);
 }
 
+const MB178_SYNTHETIC_EMAIL_DOMAIN = "local.mb178.id";
+const MB178_LEGACY_SYNTHETIC_EMAIL_DOMAIN = "local.mb178";
+
 export function syntheticEmailForMb178LocalPart(localPart: string): string {
-  return `${localPart}@local.mb178`;
+  return `${localPart}@${MB178_SYNTHETIC_EMAIL_DOMAIN}`;
+}
+
+export function legacySyntheticEmailForMb178LocalPart(localPart: string): string {
+  return `${localPart}@${MB178_LEGACY_SYNTHETIC_EMAIL_DOMAIN}`;
+}
+
+export function syntheticEmailCandidatesForMb178LocalPart(localPart: string): string[] {
+  const t = localPart.trim();
+  if (!t) return [];
+  const primary = syntheticEmailForMb178LocalPart(t);
+  const legacy = legacySyntheticEmailForMb178LocalPart(t);
+  return primary === legacy ? [primary] : [primary, legacy];
 }
 
 /**
