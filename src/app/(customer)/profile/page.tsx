@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createSupabaseServerComponentClient } from "@/lib/supabase/ssr";
-import { resolveMb178DisplayLabel } from "@/lib/mb178/user-display";
+import { mb178UsernameFromEmail, resolveMb178DisplayLabel } from "@/lib/mb178/user-display";
 
 export default async function ProfilePage() {
   const supabase = await createSupabaseServerComponentClient();
@@ -28,7 +28,8 @@ export default async function ProfilePage() {
             <span className="text-zinc-500">Nama:</span> {displayLabel}
           </p>
           <p className="mt-2">
-            <span className="text-zinc-500">Email:</span> {user.email}
+            <span className="text-zinc-500">No. HP / username (masuk):</span>{" "}
+            {mb178UsernameFromEmail(user.email ?? null)}
           </p>
         </div>
       ) : (

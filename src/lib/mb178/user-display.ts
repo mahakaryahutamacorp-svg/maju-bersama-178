@@ -4,7 +4,11 @@ export function mb178UsernameFromEmail(email: string | undefined | null): string
   const at = email.indexOf("@");
   const local = at > 0 ? email.slice(0, at) : email;
   const t = local.trim();
-  return t || email.trim();
+  if (!t) return email.trim();
+  if (/^628\d{8,12}$/.test(t)) {
+    return `0${t.slice(2)}`;
+  }
+  return t;
 }
 
 /** Nama yang ditampilkan: `members.display_name` / metadata, lalu fallback username. */
