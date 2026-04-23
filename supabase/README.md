@@ -66,7 +66,16 @@
 1. **00-setup-database.sql** — Setup lengkap: schema, tables, RLS, functions, seed data
 2. **01-create-auth-users.sql** — Buat akun auth users dan memberships
 3. **02-storage-mb178-assets.sql** — Bucket `mb178_assets` + kebijakan Storage
-4. **03-members-display-name.sql** — Tabel `members` + RLS + trigger menyinkronkan `display_name` (opsional) dari metadata pendaftaran
+4. **03-members-display-name.sql** — Tabel `members` + RLS + trigger `display_name`
+5. **04-members-phone.sql** — Kolom `phone` di `members` + trigger sinkron
+6. **05-master-catalog-pertanian.sql** — DDL tabel `master_catalog_pertanian`
+7. **seed_master_tani.sql** — Seed 10 produk pestisida & pupuk
+8. **06-master-catalog-elektronik.sql** — DDL + Seed 12 produk gadget (Rocell Gadget)
+9. **07-master-catalog-estetika.sql** — DDL + Seed 10 layanan/produk kecantikan (Rosaura)
+10. **08-master-catalog-medis.sql** — DDL + Seed 10 layanan dental (drg. Sona)
+11. **09-master-catalog-pakan.sql** — DDL + Seed 8 produk pakan ternak (Pakan PE'I)
+12. **10-master-catalog-travel.sql** — DDL + Seed 6 paket umroh/haji (Raniah Travel)
+13. **11-master-catalog-fnb.sql** — DDL + Seed 10 menu restoran (Dapurku Seafood)
 
 ## Cara Reset Database
 
