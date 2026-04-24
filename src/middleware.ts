@@ -46,6 +46,7 @@ export async function middleware(req: NextRequest) {
     const { data: roles } = await supabase
       .from("store_memberships")
       .select("role")
+      .eq("user_id", auth.user.id)
       .in("role", ["owner", "super_admin"])
       .limit(1);
 

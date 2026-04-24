@@ -10,6 +10,7 @@ export default async function ProfilePage() {
   const user = auth.user;
 
   let memberDisplayName: string | null = null;
+  let isStoreAdmin = false;
   if (supabase && user) {
     const { data: row } = await supabase
       .from("members")
@@ -18,6 +19,14 @@ export default async function ProfilePage() {
       .maybeSingle();
     memberDisplayName =
       typeof row?.display_name === "string" ? row.display_name : null;
+
+    const { data: adminRows } = await supabase
+      .from("store_memberships")
+      .select("role")
+      .eq("user_id", user.id)
+      .in("role", ["owner", "super_admin"])
+      .limit(1);
+    isStoreAdmin = !!adminRows?.length;
   }
   const displayLabel = resolveMb178DisplayLabel(user, memberDisplayName);
 
@@ -26,9 +35,27 @@ export default async function ProfilePage() {
       <h1 className="font-serif text-2xl text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-400 to-amber-500">
         Akun Saya
       </h1>
-      
+
       {user ? (
         <div className="mt-6 space-y-8">
+          {isStoreAdmin ? (
+            <section>
+              <Link
+                href="/dashboard"
+                className="block rounded-2xl border border-amber-500/35 bg-gradient-to-br from-amber-950/40 via-zinc-900/60 to-zinc-950/90 p-4 shadow-[0_0_28px_rgba(234,179,8,0.12)] transition hover:border-amber-400/55"
+              >
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-amber-200/90">
+                  Admin toko
+                </p>
+                <p className="mt-1 text-sm font-medium text-zinc-100">
+                  Kelola produk, pesanan, dan pengaturan toko
+                </p>
+                <p className="mt-2 text-xs text-amber-400/90">
+                  Buka dashboard →
+                </p>
+              </Link>
+            </section>
+          ) : null}
           <section>
             <h2 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-zinc-600">
               Informasi Masuk

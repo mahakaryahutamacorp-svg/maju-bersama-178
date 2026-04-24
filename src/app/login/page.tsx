@@ -19,6 +19,21 @@ function getSupabase() {
   return createBrowserClient(url, anonKey, { db: { schema: MB178_SCHEMA } });
 }
 
+type Mb178BrowserClient = NonNullable<ReturnType<typeof getSupabase>>;
+
+async function userHasStoreAdminRole(
+  supabase: Mb178BrowserClient,
+  userId: string
+): Promise<boolean> {
+  const { data } = await supabase
+    .from("store_memberships")
+    .select("role")
+    .eq("user_id", userId)
+    .in("role", ["owner", "super_admin"])
+    .limit(1);
+  return !!data?.length;
+}
+
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -66,7 +81,12 @@ function LoginForm() {
       setError(isOwner ? "Username atau password salah." : "No. HP atau password salah.");
       return;
     }
-    router.push(callbackUrl);
+    const uid = res.data.user?.id;
+    const goDashboard =
+      !!uid &&
+      !isOwner &&
+      (await userHasStoreAdminRole(supabase, uid));
+    router.push(goDashboard ? "/dashboard" : callbackUrl);
     router.refresh();
   }
 
@@ -97,19 +117,54 @@ function LoginForm() {
         return;
       }
       const trimmedDisplay = regName.trim();
-      const res = await supabase.auth.signUp({
+      const apiRes = await fetch("/api/auth/register-customer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phone: userId.trim(),
+          password,
+          displayName: trimmedDisplay,
+        }),
+      });
+      const apiJson = (await apiRes.json().catch(() => ({}))) as {
+        error?: string;
+      };
+
+      if (!apiRes.ok) {
+        if (apiRes.status === 503) {
+          const fallback = await supabase.auth.signUp({
+            email: mappedPrincipal.email,
+            password,
+            options: {
+              data: {
+                full_name: trimmedDisplay,
+                display_name: trimmedDisplay,
+                phone: mappedPrincipal.phoneDigits62,
+              },
+            },
+          });
+          if (fallback.error) {
+            setError(fallback.error.message || "Gagal daftar");
+            return;
+          }
+          if (!fallback.data.session) {
+            setError(
+              "Akun dibuat tetapi belum aktif. Pastikan SUPABASE_SERVICE_ROLE_KEY di server terisi, atau nonaktifkan “Confirm email” di Supabase Auth → Email."
+            );
+            return;
+          }
+        } else {
+          setError(apiJson.error || "Gagal daftar");
+          return;
+        }
+      }
+
+      const signed = await supabase.auth.signInWithPassword({
         email: mappedPrincipal.email,
         password,
-        options: {
-          data: {
-            full_name: trimmedDisplay,
-            display_name: trimmedDisplay,
-            phone: mappedPrincipal.phoneDigits62,
-          },
-        },
       });
-      if (res.error) {
-        setError(res.error.message || "Gagal daftar");
+      if (signed.error) {
+        setError(signed.error.message || "Gagal masuk setelah daftar");
         return;
       }
       router.push(callbackUrl);
@@ -150,7 +205,7 @@ function LoginForm() {
           </h1>
           {!isOwner && (
             <p className="mt-2 text-center text-xs text-zinc-500">
-              Masuk dan daftar memakai no. HP (mulai 08…). Password 6 digit angka. Tidak perlu email.
+              Daftar langsung aktif: no. HP (08…), nama, PIN 6 angka. Tanpa email & tanpa verifikasi.
             </p>
           )}
 

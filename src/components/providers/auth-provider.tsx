@@ -1,7 +1,7 @@
 "use client";
 
 import { createBrowserClient } from "@supabase/ssr";
-import type { User } from "@supabase/supabase-js";
+import type { AuthChangeEvent, User } from "@supabase/supabase-js";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { MB178_SCHEMA } from "@/lib/mb178/constants";
 import { resolveMb178DisplayLabel } from "@/lib/mb178/user-display";
@@ -37,39 +37,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     let mounted = true;
-    async function init() {
-      if (!supabase) {
-        if (mounted) {
-          setUser(null);
-          setIsOwner(false);
-          setIsSuperAdmin(false);
-          setLoading(false);
-        }
-        return;
-      }
-      const { data } = await supabase.auth.getUser();
-      if (mounted) {
-        setUser(data.user ?? null);
-        setLoading(false);
-      }
-    }
-    void init();
 
-    if (!supabase) return () => { };
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
-    return () => {
-      mounted = false;
-      sub.subscription.unsubscribe();
-    };
-  }, [supabase]);
-
-  useEffect(() => {
-    let cancelled = false;
-    async function refreshRoles() {
-      if (!supabase || !user) {
+    async function applyRolesForUser(nextUser: User | null) {
+      if (!supabase || !nextUser) {
         setIsOwner(false);
         setIsSuperAdmin(false);
         return;
@@ -77,8 +47,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { data, error } = await supabase
         .from("store_memberships")
         .select("role")
+        .eq("user_id", nextUser.id)
         .in("role", ["owner", "super_admin"]);
-      if (cancelled) return;
+      if (!mounted) return;
       if (error) {
         setIsOwner(false);
         setIsSuperAdmin(false);
@@ -88,11 +59,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setIsSuperAdmin(roles.includes("super_admin"));
       setIsOwner(roles.includes("owner") || roles.includes("super_admin"));
     }
-    void refreshRoles();
+
+    async function hydrateFromSession(sessionUser: User | null) {
+      setUser(sessionUser);
+      await applyRolesForUser(sessionUser);
+      if (mounted) setLoading(false);
+    }
+
+    async function init() {
+      if (!supabase) {
+        setUser(null);
+        setIsOwner(false);
+        setIsSuperAdmin(false);
+        setLoading(false);
+        return;
+      }
+      const { data } = await supabase.auth.getUser();
+      await hydrateFromSession(data.user ?? null);
+    }
+    void init();
+
+    if (!supabase) {
+      return () => {
+        mounted = false;
+      };
+    }
+
+    const { data: sub } = supabase.auth.onAuthStateChange(
+      async (event: AuthChangeEvent, session) => {
+        if (!mounted) return;
+        if (event === "INITIAL_SESSION") return;
+        setLoading(true);
+        await hydrateFromSession(session?.user ?? null);
+      }
+    );
     return () => {
-      cancelled = true;
+      mounted = false;
+      sub.subscription.unsubscribe();
     };
-  }, [supabase, user]);
+  }, [supabase]);
 
   useEffect(() => {
     let cancelled = false;

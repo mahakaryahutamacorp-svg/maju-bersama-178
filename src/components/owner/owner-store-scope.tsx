@@ -82,6 +82,7 @@ export function OwnerStoreScopeProvider({
       const { data, error } = await supabase
         .from("store_memberships")
         .select("store_id")
+        .eq("user_id", user.id)
         .eq("role", "owner")
         .limit(1)
         .maybeSingle();

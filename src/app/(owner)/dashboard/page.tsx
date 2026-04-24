@@ -102,7 +102,17 @@ export default function OwnerDashboardPage() {
   }
 
   if (!user || !isOwner) {
-    return null;
+    return (
+      <div className="px-4 py-16 text-center text-sm text-zinc-500 md:mx-auto md:max-w-lg">
+        <p>Memuat hak akses… atau silakan masuk sebagai admin toko.</p>
+        <Link
+          href="/login?mode=owner"
+          className="mt-3 inline-block font-medium text-amber-400 underline-offset-4 hover:underline"
+        >
+          Masuk admin toko
+        </Link>
+      </div>
+    );
   }
 
   if (!storeReady) {
@@ -147,7 +157,7 @@ export default function OwnerDashboardPage() {
           id="dashboard-add-product-hint"
           className="text-center text-xs leading-relaxed text-zinc-500"
         >
-          Ubah daftar produk lewat menu di bawah bila perlu.
+          Menu bawah: Produk (edit), Toko (alamat & WA), Pesanan. Foto produk bisa dari kamera atau galeri.
         </p>
       </div>
 

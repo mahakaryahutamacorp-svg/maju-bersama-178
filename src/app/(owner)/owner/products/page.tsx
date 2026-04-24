@@ -221,7 +221,7 @@ export default function OwnerProductsPage() {
       fd.set("stock", stock);
       fd.set("unit", KIND_TO_UNIT[productKind]);
       fd.set("description", description);
-      
+
       if (imageFile) {
         try {
           const compressed = await compressImage(imageFile, { maxWidth: 1024, quality: 0.75 });
@@ -427,7 +427,19 @@ export default function OwnerProductsPage() {
   }
 
   if (!user || !isOwner) {
-    return null;
+    return (
+      <div className="px-4 py-16 text-center md:mx-auto md:max-w-lg">
+        <p className="text-sm text-zinc-500">
+          Anda perlu masuk sebagai admin toko untuk mengelola produk.
+        </p>
+        <Link
+          href="/login?mode=owner"
+          className="mt-4 inline-block text-sm font-medium text-amber-400 underline-offset-4 hover:underline"
+        >
+          Masuk admin toko
+        </Link>
+      </div>
+    );
   }
 
   if (!storeReady) {
@@ -455,7 +467,8 @@ export default function OwnerProductsPage() {
         Produk Saya
       </h1>
       <p className="mt-1 text-sm text-zinc-500">
-        Isi bertahap: foto → harga → simpan. Ada bantuan suara untuk deskripsi.
+        Tiga langkah singkat: foto (kamera atau galeri) → detail & harga → simpan.
+        Deskripsi bisa pakai mikrofon.
       </p>
 
       {error ? (
@@ -594,10 +607,13 @@ export default function OwnerProductsPage() {
                   aria-hidden
                 />
                 <span className="text-center text-sm font-semibold">
-                  Ambil dari galeri
+                  Galeri / file foto
                 </span>
               </button>
             </div>
+            <p className="text-center text-[10px] leading-relaxed text-zinc-600">
+              Di HP: kamera membuka lensa; galeri untuk pilih file. Di desktop: galeri = unggah dari folder.
+            </p>
             {imageFile ? (
               <p className="text-center text-xs text-amber-200/90">
                 Foto siap ✓
