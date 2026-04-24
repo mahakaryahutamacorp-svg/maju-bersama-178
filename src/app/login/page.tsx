@@ -167,7 +167,7 @@ function LoginForm() {
                 inputMode={isOwner ? "text" : "tel"}
                 value={userId}
                 onChange={(e) => setUserId(e.target.value)}
-                placeholder={isOwner ? "mama01" : "Isi no. HP"}
+                placeholder={isOwner ? "Ketik username admin (cth: mama01)" : "Ketik no. HP (cth: 0812345678)"}
                 className="mt-1 w-full rounded-xl border border-zinc-700 bg-zinc-900/80 px-3 py-2.5 text-sm text-zinc-100 outline-none focus:border-amber-500"
                 required
               />
@@ -192,7 +192,7 @@ function LoginForm() {
                     setPassword(v);
                   }
                 }}
-                placeholder={isOwner ? "••••••" : "Isi password"}
+                placeholder={isOwner ? "••••••" : "Ketik 6 angka (cth: 123456)"}
                 className="mt-1 w-full rounded-xl border border-zinc-700 bg-zinc-900/80 px-3 py-2.5 text-sm text-zinc-100 outline-none focus:border-amber-500"
                 required
               />
@@ -209,7 +209,7 @@ function LoginForm() {
                   autoComplete="name"
                   value={regName}
                   onChange={(e) => setRegName(e.target.value)}
-                  placeholder="Isi nama"
+                  placeholder="Ketik nama asli/panggilan (cth: Yayan)"
                   className="mt-1 w-full rounded-xl border border-zinc-700 bg-zinc-900/80 px-3 py-2.5 text-sm text-zinc-100 outline-none focus:border-amber-500"
                 />
               </div>

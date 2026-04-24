@@ -35,7 +35,7 @@ export function isValidIndonesiaMobileNormalized(normalized: string): boolean {
 }
 
 export function syntheticEmailForMb178LocalPart(localPart: string): string {
-  return `${localPart}@local.mb178`;
+  return `${localPart}@mb178.online`;
 }
 
 /**

@@ -311,44 +311,32 @@ CREATE POLICY "order_items_delete_block" ON public.order_items FOR DELETE TO aut
 -- ============================================================
 -- 7) Trigger: auto-create profile on auth.users insert
 -- ============================================================
-CREATE OR REPLACE FUNCTION public.profile_display_name_from_user_meta(p_meta jsonb, p_email text) RETURNS text LANGUAGE sql IMMUTABLE
-SET search_path = public AS $$
-SELECT COALESCE(
-    NULLIF(trim(p_meta->>'full_name'), ''),
-    NULLIF(trim(p_meta->>'name'), ''),
-    NULLIF(trim(p_meta->>'display_name'), ''),
-    NULLIF(
-      trim(
-        concat_ws(
-          ' ',
-          NULLIF(trim(p_meta->>'given_name'), ''),
-          NULLIF(trim(p_meta->>'family_name'), '')
-        )
-      ),
-      ''
-    ),
-    NULLIF(trim(p_email), '')
-  );
-$$;
-COMMENT ON FUNCTION public.profile_display_name_from_user_meta(jsonb, text) IS 'Nama tampilan profil dari raw_user_meta_data atau email.';
 CREATE OR REPLACE FUNCTION public.handle_new_auth_user() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER
-SET search_path = public AS $$ BEGIN
-INSERT INTO public.profiles (id, full_name)
-VALUES (
-    NEW.id,
-    public.profile_display_name_from_user_meta(
-      COALESCE(NEW.raw_user_meta_data, '{}'::jsonb),
-      NEW.email
-    )
-  ) ON CONFLICT (id) DO NOTHING;
-RETURN NEW;
+SET search_path = public AS $$
+DECLARE
+  v_name text;
+BEGIN
+  -- Ambil nama dari metadata atau fallback ke email
+  v_name := COALESCE(
+    NULLIF(trim(NEW.raw_user_meta_data->>'full_name'), ''),
+    NULLIF(trim(NEW.raw_user_meta_data->>'name'), ''),
+    NULLIF(trim(NEW.raw_user_meta_data->>'display_name'), ''),
+    NULLIF(trim(concat_ws(' ', NEW.raw_user_meta_data->>'given_name', NEW.raw_user_meta_data->>'family_name')), ''),
+    NULLIF(trim(NEW.email), '')
+  );
+
+  INSERT INTO public.profiles (id, full_name)
+  VALUES (NEW.id, v_name)
+  ON CONFLICT (id) DO NOTHING;
+  
+  RETURN NEW;
 END;
 $$;
-COMMENT ON FUNCTION public.handle_new_auth_user() IS 'Trigger auth.users INSERT: buat public.profiles otomatis.';
+COMMENT ON FUNCTION public.handle_new_auth_user() IS 'Trigger auth.users INSERT: buat public.profiles otomatis dengan aman.';
+
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
-AFTER
-INSERT ON auth.users FOR EACH ROW EXECUTE FUNCTION public.handle_new_auth_user();
+AFTER INSERT ON auth.users FOR EACH ROW EXECUTE FUNCTION public.handle_new_auth_user();
 -- ============================================================
 -- 8) Checkout RPC (atomic transaction)
 -- ============================================================
@@ -495,11 +483,11 @@ INSERT INTO public.stores (
     created_at
   )
 VALUES (
-    'pupuk-maju',
+    'pupuk-majubersama',
     'Maju Bersama Pupuk & Alat Pertanian',
-    'Jl. Contoh No. 178, Jakarta',
-    'https://wa.me/6281211172228',
-    '081211172228',
+    'Jl. nusa indah ujung bk10 belitang okutimur sumatra selatan',
+    'https://wa.me/6282175858585',
+    '082175858585',
     -6.2088,
     106.8456,
     '2026-01-01 00:00:01+07'::timestamptz
@@ -507,9 +495,9 @@ VALUES (
   (
     'rosaura-skin-clinic',
     'Rosaura Skin Clinic',
-    'Jl. Thamrin No. 12, Jakarta',
-    'https://wa.me/6281300002222',
-    '081300002222',
+    'Jl. pasar sidodadi bk9 belitang okutimur sumatra selatan',
+    'https://wa.me/6285235147777',
+    '085235147777',
     -6.1954,
     106.8232,
     '2026-01-01 00:00:02+07'::timestamptz
@@ -517,9 +505,9 @@ VALUES (
   (
     'raniah-travel',
     'Raniah Travel Umroh dan Haji',
-    'Jl. Pahlawan No. 99, Surabaya',
-    'https://wa.me/6281300004444',
-    '081300004444',
+    'Jl. nusa indah ujung bk10 belitang okutimur sumatra selatan',
+    'https://wa.me/6282175858585',
+    '082175858585',
     -7.2575,
     112.7521,
     '2026-01-01 00:00:03+07'::timestamptz
@@ -527,9 +515,9 @@ VALUES (
   (
     'pakan-pei',
     'Pakan PE''I Maju Bersama',
-    'Jl. Sudirman No. 88, Jakarta',
-    'https://wa.me/6281300001111',
-    '081300001111',
+    'Jl. nusa indah ujung bk10 belitang okutimur sumatra selatan',
+    'https://wa.me/6282175858585',
+    '082175858585',
     -6.2146,
     106.8451,
     '2026-01-01 00:00:04+07'::timestamptz
@@ -537,9 +525,9 @@ VALUES (
   (
     'drg-sona',
     'Klinik drg. Sona',
-    'Jl. Gatot Subroto No. 45, Bandung',
-    'https://wa.me/6281300003333',
-    '081300003333',
+    'Jl. puncak 5 bk 10',
+    'https://wa.me/6282175858585',
+    '082175858585',
     -6.9175,
     107.6191,
     '2026-01-01 00:00:05+07'::timestamptz
@@ -547,7 +535,7 @@ VALUES (
   (
     'rocell-gadget',
     'Rocell Gadget',
-    'Jl. Ahmad Yani No. 77, Medan',
+    'Jl. pasar sidodadi bk9 belitang okutimur sumatra selatan',
     'https://wa.me/6281300006666',
     '081300006666',
     3.5952,
@@ -557,9 +545,9 @@ VALUES (
   (
     'pestisida-mbp',
     'Pestisida Maju Bersama',
-    'Jl. Raya Mangga No. 5, Bekasi',
-    'https://wa.me/6281211172228',
-    '081211172228',
+    'Jl. nusa indah ujung bk10 belitang okutimur sumatra selatan',
+    'https://wa.me/6282175858585',
+    '082175858585',
     -6.2416,
     106.9926,
     '2026-01-01 00:00:07+07'::timestamptz
@@ -567,9 +555,9 @@ VALUES (
   (
     'dapurku-seafood',
     'Restoran Seafood Dapurku by Chef Hendra',
-    'Jl. Diponegoro No. 33, Semarang',
-    'https://wa.me/6281300005555',
-    '081300005555',
+    'Jl. raya bk10 sebelah STIE okutimur sumatra selatan',
+    'https://wa.me/6282175858585',
+    '082175858585',
     -6.9932,
     110.4203,
     '2026-01-01 00:00:08+07'::timestamptz

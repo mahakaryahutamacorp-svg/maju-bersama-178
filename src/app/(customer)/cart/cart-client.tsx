@@ -231,6 +231,11 @@ function CheckoutStoreBlock({
             placeholder="Alamat pengiriman, waktu, dll."
           />
         </div>
+        <div className="rounded-xl border border-amber-500/20 bg-amber-950/20 p-3">
+          <p className="text-xs leading-relaxed text-amber-200/90">
+            <strong className="font-semibold text-amber-400">Info Pembayaran:</strong> Pembayaran dan pengiriman menggunakan Cash atau Transfer (via no. rekening yang akan dikirim via WhatsApp), serta opsi COD atau dikirim oleh kurir toko.
+          </p>
+        </div>
         {error ? (
           <p className="text-sm text-red-400" role="alert">
             {error}

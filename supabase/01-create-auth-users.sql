@@ -12,18 +12,18 @@
 --
 -- Akun:
 --   Owner toko (password: 223344):
---     mama01@local.mb178 → pupuk-maju
---     toko02@local.mb178 → pestisida-mbp
---     toko03@local.mb178 → pakan-pei
---     toko04@local.mb178 → rosaura-skin-clinic
---     toko05@local.mb178 → drg-sona
---     toko06@local.mb178 → raniah-travel
---     toko07@local.mb178 → dapurku-seafood
---     toko08@local.mb178 → rocell-gadget
+--     mama01@mb178.online → pupuk-maju
+--     toko02@mb178.online → pestisida-mbp
+--     toko03@mb178.online → pakan-pei
+--     toko04@mb178.online → rosaura-skin-clinic
+--     toko05@mb178.online → drg-sona
+--     toko06@mb178.online → raniah-travel
+--     toko07@mb178.online → dapurku-seafood
+--     toko08@mb178.online → rocell-gadget
 --
 --   Super admin (password: 178178):
---     master@local.mb178
---     mb178@local.mb178
+--     master@mb178.online
+--     mb178@mb178.online
 --
 -- Idempotent: jika email sudah ada, baris itu dilewati.
 -- =============================================================================
@@ -37,61 +37,61 @@ BEGIN FOR rec IN
 SELECT *
 FROM (
     VALUES (
-        'mama01@local.mb178',
+        'mama01@mb178.online',
         '223344',
         'Mama',
-        'pupuk-maju'
+        'pupuk-majubersama'
       ),
       (
-        'toko02@local.mb178',
+        'toko02@mb178.online',
         '223344',
         'Owner MBG',
         'pestisida-mbp'
       ),
       (
-        'toko03@local.mb178',
+        'toko03@mb178.online',
         '223344',
         'Owner Elektronik',
         'pakan-pei'
       ),
       (
-        'toko04@local.mb178',
+        'toko04@mb178.online',
         '223344',
         'Owner Fashion',
         'rosaura-skin-clinic'
       ),
       (
-        'toko05@local.mb178',
+        'toko05@mb178.online',
         '223344',
         'Owner Bangunan',
         'drg-sona'
       ),
       (
-        'toko06@local.mb178',
+        'toko06@mb178.online',
         '223344',
         'Owner Sembako',
         'raniah-travel'
       ),
       (
-        'toko07@local.mb178',
+        'toko07@mb178.online',
         '223344',
         'Owner ATK',
         'dapurku-seafood'
       ),
       (
-        'toko08@local.mb178',
+        'toko08@mb178.online',
         '223344',
         'Owner Kosmetik',
         'rocell-gadget'
       ),
       (
-        'master@local.mb178',
+        'master@mb178.online',
         '178178',
         'Master Admin',
         NULL::text
       ),
       (
-        'mb178@local.mb178',
+        'mb178@mb178.online',
         '178178',
         'Pemilik MB178',
         NULL::text
@@ -197,15 +197,18 @@ SELECT u.id,
   'super_admin'::public.store_role
 FROM auth.users u
   CROSS JOIN public.stores s
-WHERE lower(u.email) IN ('master@local.mb178', 'mb178@local.mb178') ON CONFLICT ON CONSTRAINT store_memberships_unique_user_store DO
+WHERE lower(u.email) IN ('master@mb178.online', 'mb178@mb178.online') ON CONFLICT ON CONSTRAINT store_memberships_unique_user_store DO
 UPDATE
 SET role = EXCLUDED.role;
 -- Sync profiles for membership users
 INSERT INTO public.profiles (id, full_name)
 SELECT DISTINCT u.id,
-  public.profile_display_name_from_user_meta(
-    COALESCE(u.raw_user_meta_data, '{}'::jsonb),
-    u.email
+  COALESCE(
+    NULLIF(trim(u.raw_user_meta_data->>'full_name'), ''),
+    NULLIF(trim(u.raw_user_meta_data->>'name'), ''),
+    NULLIF(trim(u.raw_user_meta_data->>'display_name'), ''),
+    NULLIF(trim(concat_ws(' ', u.raw_user_meta_data->>'given_name', u.raw_user_meta_data->>'family_name')), ''),
+    NULLIF(trim(u.email), '')
   )
 FROM auth.users u
   INNER JOIN public.store_memberships m ON m.user_id = u.id
@@ -219,9 +222,12 @@ UPDATE public.profiles p
 SET full_name = synced.full_name
 FROM (
     SELECT DISTINCT u.id,
-      public.profile_display_name_from_user_meta(
-        COALESCE(u.raw_user_meta_data, '{}'::jsonb),
-        u.email
+      COALESCE(
+        NULLIF(trim(u.raw_user_meta_data->>'full_name'), ''),
+        NULLIF(trim(u.raw_user_meta_data->>'name'), ''),
+        NULLIF(trim(u.raw_user_meta_data->>'display_name'), ''),
+        NULLIF(trim(concat_ws(' ', u.raw_user_meta_data->>'given_name', u.raw_user_meta_data->>'family_name')), ''),
+        NULLIF(trim(u.email), '')
       ) AS full_name
     FROM auth.users u
       INNER JOIN public.store_memberships m ON m.user_id = u.id
@@ -233,6 +239,6 @@ WHERE p.id = synced.id
   );
 -- =============================================================================
 -- Verifikasi (opsional):
--- SELECT id, email, email_confirmed_at FROM auth.users WHERE email LIKE '%@local.mb178' ORDER BY email;
+-- SELECT id, email, email_confirmed_at FROM auth.users WHERE email LIKE '%@mb178.online' ORDER BY email;
 -- SELECT u.email, s.slug, m.role FROM public.store_memberships m JOIN auth.users u ON u.id = m.user_id JOIN public.stores s ON s.id = m.store_id ORDER BY u.email, s.slug;
 -- =============================================================================

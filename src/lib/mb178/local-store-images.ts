@@ -6,12 +6,12 @@ import { safeCatalogImageUrl } from "@/lib/mb178/safe-remote-image";
  */
 const STORE_SLUG_TO_IMAGE_FILE: Record<string, string> = {
   "rocell-gadget": "rocell gadget.jpg",
-  "pestisida-mbp": "pestisida maju bersama.jpg",
+  "pestisida-mbp": "pestisida MajubersamaPrimakarya.jpg",
   "pakan-pei": "pakan PE'I maju bersama.jpg",
   "rosaura-skin-clinic": "rosauraskinclinic.jpg",
   "drg-sona": "klinik drg.Sona.jpg",
   "raniah-travel": "Raniah travel umroh dan haji.jpg",
-  "pupuk-maju": "maju bersama pupuk&alat pertanian.jpg",
+  "pupuk-majubersama": "maju bersama pupuk&alat pertanian.jpg",
   "dapurku-seafood": "restoran seafood dapurku by cheff HENDRA.jpg",
 };
 
