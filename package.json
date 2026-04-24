@@ -9,6 +9,8 @@
     "start": "next start",
     "lint": "eslint",
     "test:unit": "vitest run",
+    "test:smoke:online": "node scripts/verify-mb178-online.mjs",
+    "test:all": "npm run lint && npm run build && npm run test:unit && npm run test:smoke:online",
     "test": "npm run lint && npm run build"
   },
   "dependencies": {
