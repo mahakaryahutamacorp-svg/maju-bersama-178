@@ -140,6 +140,14 @@ CREATE TABLE public.profiles (
   full_name text,
   created_at timestamptz NOT NULL DEFAULT now()
 );
+-- Tabel members (1:1 dengan auth.users) untuk data pelanggan
+CREATE TABLE public.members (
+  id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  display_name text,
+  phone text UNIQUE,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+COMMENT ON TABLE public.members IS 'Profil ringkas pelanggan; display_name boleh NULL. phone: Nomor ternormalisasi 62...';
 -- Tabel store_memberships (relasi user-store dengan role)
 CREATE TABLE public.store_memberships (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -166,6 +174,8 @@ GRANT USAGE ON ALL SEQUENCES IN SCHEMA public TO anon,
   service_role;
 GRANT SELECT,
   UPDATE ON public.profiles TO authenticated;
+GRANT SELECT,
+  UPDATE ON public.members TO authenticated;
 GRANT SELECT ON public.store_memberships TO authenticated;
 -- ============================================================
 -- 4) Enable RLS
@@ -177,6 +187,7 @@ ALTER TABLE public.order_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.banners ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.app_users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.members ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.store_memberships ENABLE ROW LEVEL SECURITY;
 -- ============================================================
 -- 5) Helper function: has_store_role
@@ -241,6 +252,14 @@ UPDATE TO authenticated USING (id = auth.uid()) WITH CHECK (id = auth.uid());
 CREATE POLICY "profiles_insert_block" ON public.profiles FOR
 INSERT TO authenticated WITH CHECK (false);
 CREATE POLICY "profiles_delete_block" ON public.profiles FOR DELETE TO authenticated USING (false);
+-- members: user hanya bisa baca/update row sendiri
+CREATE POLICY "members_select_own" ON public.members FOR
+SELECT TO authenticated USING (id = auth.uid());
+CREATE POLICY "members_update_own" ON public.members FOR
+UPDATE TO authenticated USING (id = auth.uid()) WITH CHECK (id = auth.uid());
+CREATE POLICY "members_insert_block" ON public.members FOR
+INSERT TO authenticated WITH CHECK (false);
+CREATE POLICY "members_delete_block" ON public.members FOR DELETE TO authenticated USING (false);
 -- store_memberships: baca baris sendiri; tulis via server
 CREATE POLICY "store_memberships_select_own" ON public.store_memberships FOR
 SELECT TO authenticated USING (user_id = auth.uid());
@@ -469,6 +488,47 @@ REVOKE ALL ON FUNCTION public.mb178_checkout(uuid, uuid, text, text, text, text,
 FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.mb178_checkout(uuid, uuid, text, text, text, text, text, jsonb) TO service_role;
 COMMENT ON FUNCTION public.mb178_checkout(uuid, uuid, text, text, text, text, text, jsonb) IS 'Atomic checkout: insert order + order_items and decrement stock. Invoke only from trusted server (service_role).';
+-- ============================================================
+-- 8) Trigger: Sinkronisasi auth.users ke profiles & members
+-- ============================================================
+CREATE OR REPLACE FUNCTION public.handle_new_auth_user() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = public AS $$ BEGIN
+INSERT INTO public.profiles (id, full_name)
+VALUES (
+    NEW.id,
+    COALESCE(
+      NULLIF(trim(NEW.raw_user_meta_data->>'full_name'), ''),
+      NULLIF(trim(NEW.raw_user_meta_data->>'name'), ''),
+      NULLIF(trim(NEW.raw_user_meta_data->>'display_name'), ''),
+      NULLIF(trim(concat_ws(' ', NEW.raw_user_meta_data->>'given_name', NEW.raw_user_meta_data->>'family_name')), ''),
+      NULLIF(trim(NEW.email), '')
+    )
+  ) ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.members (id, display_name, phone)
+VALUES (
+    NEW.id,
+    NULLIF(
+      trim(
+        COALESCE(
+          NEW.raw_user_meta_data->>'display_name',
+          NEW.raw_user_meta_data->>'full_name',
+          ''
+        )
+      ),
+      ''
+    ),
+    NULLIF(
+      trim(COALESCE(NEW.raw_user_meta_data->>'phone', '')),
+      ''
+    )
+  ) ON CONFLICT (id) DO NOTHING;
+RETURN NEW;
+END;
+$$;
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_auth_user();
 -- ============================================================
 -- 9) Seed 8 Toko Kanonis
 -- ============================================================

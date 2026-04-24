@@ -39,21 +39,21 @@
 
 | Email | Toko |
 |-------|------|
-| mama01@local.mb178 | Maju Bersama Pupuk & Alat Pertanian |
-| toko02@local.mb178 | Pestisida Maju Bersama |
-| toko03@local.mb178 | Pakan PE'I Maju Bersama |
-| toko04@local.mb178 | Rosaura Skin Clinic |
-| toko05@local.mb178 | Klinik drg. Sona |
-| toko06@local.mb178 | Raniah Travel Umroh dan Haji |
-| toko07@local.mb178 | Restoran Seafood Dapurku by Chef Hendra |
-| toko08@local.mb178 | Rocell Gadget |
+| mama01@mb178.online | Maju Bersama Pupuk & Alat Pertanian |
+| toko02@mb178.online | Pestisida Maju Bersama |
+| toko03@mb178.online | Pakan PE'I Maju Bersama |
+| toko04@mb178.online | Rosaura Skin Clinic |
+| toko05@mb178.online | Klinik drg. Sona |
+| toko06@mb178.online | Raniah Travel Umroh dan Haji |
+| toko07@mb178.online | Restoran Seafood Dapurku by Chef Hendra |
+| toko08@mb178.online | Rocell Gadget |
 
 ### Super Admin (password: `178178`)
 
 | Email | Role |
 |-------|------|
-| master@local.mb178 | Super Admin (akses semua toko) |
-| mb178@local.mb178 | Super Admin (akses semua toko) |
+| master@mb178.online | Master Admin |
+| mb178@mb178.online | Pemilik MB178 |
 
 ## Storage (foto produk)
 

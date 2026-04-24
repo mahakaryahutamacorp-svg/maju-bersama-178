@@ -45,43 +45,43 @@ FROM (
       (
         'toko02@mb178.online',
         '223344',
-        'Owner MBG',
+        'Owner toko Pestisida',
         'pestisida-mbp'
       ),
       (
         'toko03@mb178.online',
         '223344',
-        'Owner Elektronik',
+        'Owner toko pakan',
         'pakan-pei'
       ),
       (
         'toko04@mb178.online',
         '223344',
-        'Owner Fashion',
+        'Owner klinik kecantikan',
         'rosaura-skin-clinic'
       ),
       (
         'toko05@mb178.online',
         '223344',
-        'Owner Bangunan',
+        'Owner klinik gigi',
         'drg-sona'
       ),
       (
         'toko06@mb178.online',
         '223344',
-        'Owner Sembako',
+        'Owner agen travel',
         'raniah-travel'
       ),
       (
         'toko07@mb178.online',
         '223344',
-        'Owner ATK',
+        'Owner restoran seafood',
         'dapurku-seafood'
       ),
       (
         'toko08@mb178.online',
         '223344',
-        'Owner Kosmetik',
+        'Owner toko handphone',
         'rocell-gadget'
       ),
       (
