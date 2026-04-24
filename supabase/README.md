@@ -31,7 +31,9 @@ Jalankan skrip SQL di Supabase SQL Editor sesuai urutan berikut:
 
 ### Owner Toko (password: `223344`)
 
-| Email | Toko |
+Di **`/login?mode=owner`** ketik **hanya bagian sebelum `@`** (mis. `toko01`), bukan alamat email lengkap — aplikasi memetakannya ke baris di bawah.
+
+| Email (di Supabase Auth) | Toko |
 |-------|------|
 | <toko01@mb178.online> | Maju Bersama Pupuk & Alat Pertanian |
 | <toko02@mb178.online> | Pestisida Maju Bersama |
