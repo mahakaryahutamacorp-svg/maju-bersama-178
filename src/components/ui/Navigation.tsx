@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   HomeIcon,
+  MagnifyingGlassIcon,
   ShoppingCartIcon,
   ClipboardDocumentListIcon,
   UserIcon,
@@ -11,6 +12,7 @@ import {
 
 const items = [
   { href: "/", label: "Beranda", Icon: HomeIcon },
+  { href: "/search", label: "Cari", Icon: MagnifyingGlassIcon },
   { href: "/cart", label: "Keranjang", Icon: ShoppingCartIcon },
   { href: "/orders", label: "Pesanan", Icon: ClipboardDocumentListIcon },
   { href: "/profile", label: "Profil", Icon: UserIcon },

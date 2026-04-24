@@ -20,6 +20,7 @@ import type { Mb178StoreRow } from "@/lib/mb178/types";
 import { useOwnerStoreScope } from "@/components/owner/owner-store-scope";
 import { useAuth } from "@/components/providers/auth-provider";
 import { formatRp } from "@/lib/mb178/format";
+import { compressImage } from "@/lib/mb178/image-compress";
 
 type ProductKind = "pupuk" | "alat" | "pestisida" | "benih" | "lainnya";
 
@@ -220,7 +221,16 @@ export default function OwnerProductsPage() {
       fd.set("stock", stock);
       fd.set("unit", KIND_TO_UNIT[productKind]);
       fd.set("description", description);
-      if (imageFile) fd.set("image", imageFile);
+      
+      if (imageFile) {
+        try {
+          const compressed = await compressImage(imageFile, { maxWidth: 1024, quality: 0.75 });
+          fd.set("image", compressed, "product.jpg");
+        } catch (err) {
+          console.error("Compression failed, using original:", err);
+          fd.set("image", imageFile);
+        }
+      }
       const res = await fetch(appendApiUrl("/api/owner/products"), {
         method: "POST",
         body: fd,

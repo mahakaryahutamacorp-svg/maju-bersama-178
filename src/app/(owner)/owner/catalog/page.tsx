@@ -234,6 +234,7 @@ export default function MasterCatalogPage() {
         formData.append("stock", "0");
         formData.append("unit", item.default_unit);
         formData.append("description", item.description);
+        formData.append("category", item.category);
 
         const res = await fetch(appendApiUrl("/api/owner/products"), {
           method: "POST",

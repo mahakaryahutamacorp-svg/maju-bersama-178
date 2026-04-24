@@ -70,6 +70,7 @@ export default async function StoreCatalogPage({ params }: Props) {
     stock: p.stock,
     unit: p.unit || "pcs",
     description: p.description ?? null,
+    category: p.category ?? null,
     imageSrc: p.image_url
       ? safeCatalogImageUrl(p.image_url, supabaseOrigin)
       : null,

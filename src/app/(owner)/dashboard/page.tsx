@@ -10,6 +10,7 @@ import {
   PencilSquareIcon,
   ClipboardDocumentListIcon,
   Cog6ToothIcon,
+  ChartBarIcon,
 } from "@heroicons/react/24/outline";
 import { OwnerRadar } from "@/components/owner/owner-radar";
 import { useOwnerStoreScope } from "@/components/owner/owner-store-scope";
@@ -25,6 +26,11 @@ const menuItems = [
     href: "/owner/orders",
     label: "Kelola Pesanan",
     Icon: ClipboardDocumentListIcon,
+  },
+  {
+    href: "/owner/reports/finance",
+    label: "Laporan Keuangan",
+    Icon: ChartBarIcon,
   },
   {
     href: "/settings",
@@ -169,13 +175,19 @@ export default function OwnerDashboardPage() {
           </p>
           <p className="text-xs text-zinc-500">Total Produk</p>
         </div>
-        <div className="rounded-2xl border border-yellow-600/15 bg-zinc-900/50 p-4">
+        <Link
+          href="/owner/reports/finance"
+          className="rounded-2xl border border-yellow-600/15 bg-zinc-900/50 p-4 transition hover:bg-zinc-800/50"
+        >
           <WalletIcon className="h-8 w-8 text-amber-400" aria-hidden />
           <p className="mt-2 text-2xl font-semibold text-zinc-100">
             {metricsReady && revenue !== undefined ? formatRp(revenue) : "—"}
           </p>
-          <p className="text-xs text-zinc-500">Pendapatan (non-batal)</p>
-        </div>
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-zinc-500">Pendapatan</p>
+            <span className="text-[10px] text-amber-500/80">Detail →</span>
+          </div>
+        </Link>
       </section>
 
       <section className="mt-10 rounded-3xl border border-yellow-600/10 bg-white/[0.03] p-4 pb-6 backdrop-blur-md">

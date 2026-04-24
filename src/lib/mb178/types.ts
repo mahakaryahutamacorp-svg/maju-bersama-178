@@ -35,6 +35,7 @@ export interface Mb178ProductRow {
   image_url: string | null;
   /** Kolom DB; bisa tidak ada sebelum migrasi `add-product-description.sql`. */
   description?: string | null;
+  category?: string | null;
   created_at: string;
 }
 

@@ -63,6 +63,7 @@ export async function POST(request: Request) {
   let price: number;
   let stock: number;
   let description: string | null = null;
+  let category: string | null = null;
   let imageFile: File | null = null;
   let imageUrl: string | null = null;
 
@@ -85,6 +86,11 @@ export async function POST(request: Request) {
       const t = descRaw.trim();
       description = t.length > 0 ? t : null;
     }
+    const catRaw = form.get("category");
+    if (typeof catRaw === "string") {
+      const t = catRaw.trim();
+      category = t.length > 0 ? t : null;
+    }
     const f = form.get("image");
     if (f && f instanceof File && f.size > 0) imageFile = f;
   } else {
@@ -104,6 +110,12 @@ export async function POST(request: Request) {
       description = t.length > 0 ? t : null;
     } else if (body.description === null) {
       description = null;
+    }
+    if (typeof body.category === "string") {
+      const t = body.category.trim();
+      category = t.length > 0 ? t : null;
+    } else if (body.category === null) {
+      category = null;
     }
   }
 
@@ -162,6 +174,7 @@ export async function POST(request: Request) {
       unit,
       image_url: imageUrl,
       description,
+      category,
     })
     .select("*")
     .single();

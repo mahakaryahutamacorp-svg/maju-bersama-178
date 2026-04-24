@@ -4,7 +4,7 @@ export function formatRp(n: number): string {
     style: "currency",
     currency: "IDR",
     maximumFractionDigits: 0,
-  }).format(n);
+  }).format(n).replace(/\u00A0/g, "");
 }
 
 /** Format tanggal ISO ke id-ID: "24 Apr 2026, 15.30" */
