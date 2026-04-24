@@ -54,6 +54,7 @@ export function ProfileForm({ initialDisplayName }: ProfileFormProps) {
           value={displayName}
           onChange={(e) => setDisplayName(e.target.value)}
           required
+          id="profile-name"
         />
         <div className="space-y-1">
           <FloatingLabelInput
@@ -62,6 +63,7 @@ export function ProfileForm({ initialDisplayName }: ProfileFormProps) {
             value={pin}
             onChange={(e) => setPin(e.target.value)}
             minLength={4}
+            id="profile-pin"
           />
           <p className="text-[10px] text-zinc-500 px-1">Minimal 4 digit angka/karakter.</p>
         </div>

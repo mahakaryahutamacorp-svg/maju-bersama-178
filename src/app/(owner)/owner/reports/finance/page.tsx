@@ -13,7 +13,7 @@ import {
 } from "recharts";
 import { useOwnerStoreScope } from "@/components/owner/owner-store-scope";
 import { formatRp } from "@/lib/mb178/format";
-import { WalletIcon, ShoppingBagIcon, TrendingUpIcon } from "@heroicons/react/24/outline";
+import { WalletIcon, ShoppingBagIcon, ArrowTrendingUpIcon } from "@heroicons/react/24/outline";
 
 interface FinanceData {
   summary: {
@@ -122,7 +122,7 @@ export default function FinanceReportPage() {
         <div className="rounded-2xl border border-white/5 bg-white/[0.02] p-4">
           <div className="flex items-center gap-3">
             <div className="rounded-xl bg-blue-500/10 p-2 text-blue-500">
-              <TrendingUpIcon className="h-5 w-5" />
+              <ArrowTrendingUpIcon className="h-5 w-5" />
             </div>
             <p className="text-xs text-zinc-500">Rata-rata / Order</p>
           </div>
@@ -160,7 +160,7 @@ export default function FinanceReportPage() {
                   fontSize: "12px"
                 }}
                 itemStyle={{ color: "#fbbf24" }}
-                formatter={(val: number) => [formatRp(val), "Revenue"]}
+                formatter={(val: unknown) => [formatRp(Number(val)), "Revenue"]}
                 labelStyle={{ color: "#71717a", marginBottom: "4px" }}
               />
               <Bar dataKey="revenue" radius={[4, 4, 0, 0]}>
