@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createSupabaseRouteClient } from "@/lib/supabase/ssr";
+import { createMb178Client } from "@/lib/supabase/admin";
 
 export interface CheckoutCartLineInput {
   productId: string;
@@ -31,6 +32,7 @@ export async function checkoutCartAction(input: {
   notes?: string;
   lines: CheckoutCartLineInput[];
 }): Promise<CheckoutCartResult> {
+  /* Verifikasi auth via cookie-based client */
   const supabase = await createSupabaseRouteClient();
   if (!supabase) {
     return { ok: false, error: "Supabase belum dikonfigurasi." };
@@ -49,7 +51,17 @@ export async function checkoutCartAction(input: {
     return { ok: false, error: "Keranjang kosong." };
   }
 
-  const { data, error } = await supabase.rpc("mb178_checkout", {
+  /*
+   * RPC mb178_checkout hanya bisa dipanggil oleh service_role (SECURITY DEFINER).
+   * Kita sudah verifikasi identitas user di atas, lalu jalankan via admin client.
+   */
+  const admin = createMb178Client();
+  if (!admin) {
+    return { ok: false, error: "Service role belum dikonfigurasi." };
+  }
+
+  const { data, error } = await admin.rpc("mb178_checkout", {
+    p_customer_id: auth.user.id,
     p_store_id: input.storeId,
     p_channel: "online",
     p_payment_method: input.paymentMethod,

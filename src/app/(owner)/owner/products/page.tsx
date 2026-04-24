@@ -19,14 +19,7 @@ import type { Mb178ProductRow } from "@/lib/mb178/types";
 import type { Mb178StoreRow } from "@/lib/mb178/types";
 import { useOwnerStoreScope } from "@/components/owner/owner-store-scope";
 import { useAuth } from "@/components/providers/auth-provider";
-
-function formatRp(n: number) {
-  return new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
-    maximumFractionDigits: 0,
-  }).format(n);
-}
+import { formatRp } from "@/lib/mb178/format";
 
 type ProductKind = "pupuk" | "alat" | "pestisida" | "benih" | "lainnya";
 

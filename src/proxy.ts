@@ -3,6 +3,11 @@ import type { NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { MB178_SCHEMA } from "@/lib/mb178/constants";
 
+/**
+ * Auth guard proxy — melindungi rute owner/dashboard/settings.
+ * Redirect ke /login jika belum login atau bukan owner/super_admin.
+ * Next.js 16: file convention = "proxy" (bukan "middleware").
+ */
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
   if (
@@ -34,6 +39,7 @@ export async function proxy(req: NextRequest) {
     const { data: auth } = await supabase.auth.getUser();
     if (!auth.user) {
       const login = new URL("/login", req.url);
+      login.searchParams.set("mode", "owner");
       login.searchParams.set("callbackUrl", pathname);
       return NextResponse.redirect(login, { headers: res.headers });
     }

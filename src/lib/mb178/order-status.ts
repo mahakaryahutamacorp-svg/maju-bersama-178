@@ -2,6 +2,7 @@ import type { Mb178OrderStatus } from "@/lib/mb178/types";
 
 export function labelOrderStatus(status: string): string {
   const map: Record<Mb178OrderStatus, string> = {
+    pending: "Menunggu konfirmasi",
     pending_payment: "Menunggu pembayaran",
     processing: "Diproses",
     shipped: "Dikirim",

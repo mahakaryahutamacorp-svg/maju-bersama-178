@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useCallback, useState } from "react";
 import { addOrMergeCartLine } from "@/lib/mb178/cart-storage";
+import { formatRp } from "@/lib/mb178/format";
 
 export interface StoreCatalogProduct {
   id: string;
@@ -12,14 +13,6 @@ export interface StoreCatalogProduct {
   unit: string;
   imageSrc: string | null;
   description: string | null;
-}
-
-function formatRp(n: number) {
-  return new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
-    maximumFractionDigits: 0,
-  }).format(n);
 }
 
 interface Props {

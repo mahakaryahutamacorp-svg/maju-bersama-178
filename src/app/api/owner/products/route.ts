@@ -23,10 +23,10 @@ export async function GET(request: Request) {
   }
 
   const { data, error } = await supabase
-    .from("v_etalase_toko") // Menggunakan View Pintar kita
+    .from("products")
     .select("*")
     .eq("store_id", storeIdOrErr)
-    .order("product_name", { ascending: true }); // Diurutkan berdasarkan nama produk agar rapi
+    .order("name", { ascending: true });
 
   if (error) {
     return NextResponse.json(

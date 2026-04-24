@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  BookOpenIcon,
   ClipboardDocumentListIcon,
   Cog6ToothIcon,
   CubeIcon,
@@ -12,6 +13,7 @@ import {
 const navItems = [
   { href: "/dashboard", label: "Dashboard", Icon: Squares2X2Icon },
   { href: "/owner/products", label: "Produk", Icon: CubeIcon },
+  { href: "/owner/catalog", label: "Katalog", Icon: BookOpenIcon },
   { href: "/owner/orders", label: "Pesanan", Icon: ClipboardDocumentListIcon },
   { href: "/settings", label: "Toko", Icon: Cog6ToothIcon },
 ] as const;

@@ -15,13 +15,5 @@ export function createMb178Client() {
   });
 }
 
-/** Khusus server: wajib SERVICE ROLE (untuk auth/seed/ops owner yang diblok RLS). */
-export function createMb178ServiceClient() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url?.trim() || !serviceKey?.trim()) return null;
-  return createClient(url, serviceKey.trim(), {
-    db: { schema: MB178_SCHEMA },
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
-}
+/** Alias — backward compat. */
+export const createMb178ServiceClient = createMb178Client;

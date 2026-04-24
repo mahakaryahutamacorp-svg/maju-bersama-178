@@ -62,7 +62,7 @@ export async function GET(request: Request) {
   const totalProducts = products.length;
   const orderCount = orders.length;
   const revenue = orders
-    .filter((o) => o.status !== "cancelled" && o.status !== "pending_payment")
+    .filter((o) => o.status !== "cancelled" && o.status !== "pending_payment" && o.status !== "pending")
     .reduce((s, o) => s + Number(o.total), 0);
   const rating05 = Number(storeRes.data?.average_rating ?? 4.5);
 

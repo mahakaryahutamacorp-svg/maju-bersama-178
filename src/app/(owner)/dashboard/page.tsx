@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { formatRp } from "@/lib/mb178/format";
 import {
   CubeIcon,
   WalletIcon,
@@ -41,13 +42,7 @@ type Stats = {
   radar: { stok: number; pesanan: number; rating: number };
 };
 
-function formatRp(n: number) {
-  return new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
-    maximumFractionDigits: 0,
-  }).format(n);
-}
+
 
 export default function OwnerDashboardPage() {
   const { user, loading, isOwner } = useAuth();

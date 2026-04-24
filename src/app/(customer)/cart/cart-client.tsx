@@ -16,15 +16,8 @@ import {
   type CartSnapshot,
 } from "@/lib/mb178/cart-storage";
 import { safeCatalogImageUrl } from "@/lib/mb178/safe-remote-image";
+import { formatRp } from "@/lib/mb178/format";
 import { checkoutCartAction } from "./checkout-action";
-
-function formatRp(n: number) {
-  return new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
-    maximumFractionDigits: 0,
-  }).format(n);
-}
 
 interface StoreGroup {
   storeId: string;
@@ -97,6 +90,52 @@ function CheckoutStoreBlock({
     }
     clearCartStore(group.storeId);
     onCartChanged();
+
+    /* Notifikasi WhatsApp ke pemilik toko */
+    try {
+      const storeRes = await fetch(`/api/owner/store?store_id=${encodeURIComponent(group.storeId)}`);
+      const storeJson = (await storeRes.json()) as { store?: { whatsapp_link?: string; name?: string } };
+      const waRaw = storeJson.store?.whatsapp_link?.trim();
+      const storeName = storeJson.store?.name ?? group.storeSlug;
+
+      if (waRaw) {
+        const waNumber = waRaw.startsWith("http")
+          ? new URL(waRaw).pathname.replace(/\D/g, "")
+          : waRaw.replace(/\D/g, "");
+
+        if (waNumber) {
+          const itemList = group.lines
+            .map((l) => `• ${l.name} x${l.qty} (${formatRp(l.price * l.qty)})`)
+            .join("\n");
+          const total = group.lines.reduce((s, l) => s + l.price * l.qty, 0);
+          const msg = [
+            `🛒 *Pesanan Baru — ${storeName}*`,
+            ``,
+            `Nama: ${customerName.trim()}`,
+            `Telepon: ${customerPhone.trim()}`,
+            `Pembayaran: ${paymentMethod.toUpperCase()}`,
+            notes.trim() ? `Catatan: ${notes.trim()}` : "",
+            ``,
+            itemList,
+            ``,
+            `*Total: ${formatRp(total)}*`,
+            ``,
+            `ID Pesanan: ${res.orderId.slice(0, 8)}`,
+          ]
+            .filter(Boolean)
+            .join("\n");
+
+          window.open(
+            `https://wa.me/${waNumber}?text=${encodeURIComponent(msg)}`,
+            "_blank",
+            "noopener,noreferrer",
+          );
+        }
+      }
+    } catch {
+      /* Gagal ambil data toko — tidak apa, tetap lanjut ke halaman pesanan */
+    }
+
     router.push("/orders");
     router.refresh();
   }

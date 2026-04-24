@@ -1,5 +1,6 @@
-/** Status pesanan — selaraskan dengan constraint `orders_status_check` (migrasi 20260415103000). */
+/** Status pesanan — selaraskan dengan tabel orders dan RPC mb178_checkout. */
 export type Mb178OrderStatus =
+  | "pending"
   | "pending_payment"
   | "processing"
   | "shipped"

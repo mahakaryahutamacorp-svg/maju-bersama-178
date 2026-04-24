@@ -1,26 +1,9 @@
 import Link from "next/link";
 import { labelOrderStatus } from "@/lib/mb178/order-status";
+import { formatRp, formatDateId } from "@/lib/mb178/format";
 import type { Mb178OrderRow } from "@/lib/mb178/types";
 import { createSupabaseServerComponentClient } from "@/lib/supabase/ssr";
 
-function formatRp(n: number) {
-  return new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
-    maximumFractionDigits: 0,
-  }).format(n);
-}
-
-function formatDate(iso: string) {
-  try {
-    return new Intl.DateTimeFormat("id-ID", {
-      dateStyle: "medium",
-      timeStyle: "short",
-    }).format(new Date(iso));
-  } catch {
-    return iso;
-  }
-}
 
 export default async function OrdersPage() {
   const supabase = await createSupabaseServerComponentClient();
@@ -107,7 +90,7 @@ export default async function OrdersPage() {
               </p>
               <p className="mt-1 text-amber-200/90">{formatRp(Number(o.total))}</p>
               <p className="mt-1 text-xs text-zinc-500">{labelOrderStatus(o.status)}</p>
-              <p className="mt-1 text-[11px] text-zinc-600">{formatDate(o.created_at)}</p>
+              <p className="mt-1 text-[11px] text-zinc-600">{formatDateId(o.created_at)}</p>
             </li>
           ))}
         </ul>
