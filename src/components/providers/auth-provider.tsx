@@ -4,6 +4,7 @@ import { createBrowserClient } from "@supabase/ssr";
 import type { AuthChangeEvent, User } from "@supabase/supabase-js";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { MB178_SCHEMA } from "@/lib/mb178/constants";
+import { isMb178SeedStaffEmail } from "@/lib/mb178/staff-account";
 import { resolveMb178DisplayLabel } from "@/lib/mb178/user-display";
 
 interface AuthContextValue {
@@ -12,6 +13,11 @@ interface AuthContextValue {
   displayLabel: string;
   isOwner: boolean;
   isSuperAdmin: boolean;
+  /**
+   * Email cocok pola akun staff seed (toko01…, master, mb178) — tombol admin
+   * tetap ditampilkan walau baris `store_memberships` belum ada di DB.
+   */
+  likelySeedStaffEmail: boolean;
   loading: boolean;
   signOut: () => Promise<void>;
 }
@@ -131,19 +137,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [user, memberDisplayName]
   );
 
+  const likelySeedStaffEmail = useMemo(
+    () => isMb178SeedStaffEmail(user?.email ?? null),
+    [user?.email]
+  );
+
   const value: AuthContextValue = useMemo(
     () => ({
       user,
       displayLabel,
       isOwner,
       isSuperAdmin,
+      likelySeedStaffEmail,
       loading,
       signOut: async () => {
         if (!supabase) return;
         await supabase.auth.signOut();
       },
     }),
-    [supabase, user, displayLabel, isOwner, isSuperAdmin, loading]
+    [supabase, user, displayLabel, isOwner, isSuperAdmin, likelySeedStaffEmail, loading]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

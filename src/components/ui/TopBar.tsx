@@ -17,9 +17,11 @@ export function TopBar({
   backHref,
   backLabel = "← Kembali",
 }: Props) {
-  const { user, loading, isOwner, displayLabel, signOut } = useAuth();
+  const { user, loading, isOwner, likelySeedStaffEmail, displayLabel, signOut } =
+    useAuth();
 
   const loggedIn = !loading && !!user;
+  const showOwnerLinks = !!user && (isOwner || likelySeedStaffEmail);
 
   return (
     <div className="mb-4 flex items-center justify-between gap-3">
@@ -39,7 +41,7 @@ export function TopBar({
       <div className="flex shrink-0 flex-wrap items-center justify-end gap-2 sm:gap-3">
         {loggedIn ? (
           <>
-            {isOwner ? (
+            {showOwnerLinks ? (
               <>
                 <Link
                   href="/dashboard"

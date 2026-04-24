@@ -9,6 +9,8 @@ import {
   ClipboardDocumentListIcon,
   UserIcon,
 } from "@heroicons/react/24/solid";
+import { CubeIcon } from "@heroicons/react/24/outline";
+import { useAuth } from "@/components/providers/auth-provider";
 
 const items = [
   { href: "/", label: "Beranda", Icon: HomeIcon },
@@ -26,8 +28,20 @@ function navClass(active: boolean) {
 
 export function Navigation() {
   const pathname = usePathname();
+  const { user, isOwner, likelySeedStaffEmail } = useAuth();
+  const showOwnerFab = !!user && (isOwner || likelySeedStaffEmail);
 
   return (
+    <>
+      {showOwnerFab ? (
+        <Link
+          href="/owner/products#owner-product-form"
+          className="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] right-3 z-[60] flex h-14 w-14 items-center justify-center rounded-full border border-amber-500/40 bg-gradient-to-br from-amber-500 to-yellow-500 text-zinc-950 shadow-[0_8px_28px_rgba(234,179,8,0.45)] transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-300"
+          aria-label="Tambah produk (admin toko)"
+        >
+          <CubeIcon className="h-7 w-7" aria-hidden />
+        </Link>
+      ) : null}
     <nav
       className="fixed bottom-0 left-0 right-0 z-50 border-t border-white/10 bg-zinc-950/85 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl"
       aria-label="Navigasi utama"
@@ -52,5 +66,6 @@ export function Navigation() {
         })}
       </ul>
     </nav>
+    </>
   );
 }

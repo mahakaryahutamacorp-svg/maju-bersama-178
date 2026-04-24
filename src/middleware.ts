@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { MB178_SCHEMA } from "./lib/mb178/constants";
+import { isMb178SeedStaffEmail } from "./lib/mb178/staff-account";
 
 /**
  * Auth guard middleware — melindungi rute owner/dashboard/settings.
@@ -51,7 +52,12 @@ export async function middleware(req: NextRequest) {
       .limit(1);
 
     if (!roles?.length) {
-      return NextResponse.redirect(new URL("/", req.url), { headers: res.headers });
+      const fallback = isMb178SeedStaffEmail(auth.user.email)
+        ? "/profile?admin_setup=1"
+        : "/";
+      return NextResponse.redirect(new URL(fallback, req.url), {
+        headers: res.headers,
+      });
     }
 
     return res;

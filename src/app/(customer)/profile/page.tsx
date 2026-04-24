@@ -1,6 +1,9 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { createSupabaseServerComponentClient } from "@/lib/supabase/ssr";
+import { isMb178SeedStaffEmail } from "@/lib/mb178/staff-account";
 import { mb178UsernameFromEmail, resolveMb178DisplayLabel } from "@/lib/mb178/user-display";
+import { ProfileAdminSetupBanner } from "./profile-admin-setup-banner";
 import { ProfileForm } from "./profile-form";
 import { LogoutButton } from "@/components/auth/logout-button";
 
@@ -29,12 +32,22 @@ export default async function ProfilePage() {
     isStoreAdmin = !!adminRows?.length;
   }
   const displayLabel = resolveMb178DisplayLabel(user, memberDisplayName);
+  const staffEmailNoRow =
+    !!user &&
+    isMb178SeedStaffEmail(user.email ?? null) &&
+    !isStoreAdmin;
 
   return (
     <div className="px-4 py-10 md:mx-auto md:max-w-lg">
       <h1 className="font-serif text-2xl text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-400 to-amber-500">
         Akun Saya
       </h1>
+
+      <Suspense fallback={null}>
+        <div className="mt-4">
+          <ProfileAdminSetupBanner />
+        </div>
+      </Suspense>
 
       {user ? (
         <div className="mt-6 space-y-8">
@@ -54,6 +67,34 @@ export default async function ProfilePage() {
                   Buka dashboard →
                 </p>
               </Link>
+            </section>
+          ) : staffEmailNoRow ? (
+            <section className="rounded-2xl border border-amber-500/30 bg-zinc-900/50 p-4">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-amber-200/80">
+                Akun admin (email staff)
+              </p>
+              <p className="mt-2 text-sm text-zinc-300">
+                Database belum menautkan akun ini ke toko — tombol kelola bisa
+                muncul di atas setelah baris{" "}
+                <code className="text-amber-200/90">store_memberships</code>{" "}
+                dibuat (skrip{" "}
+                <code className="text-amber-200/90">02-create-auth-users.sql</code>
+                ).
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Link
+                  href="/dashboard"
+                  className="rounded-xl bg-amber-500 px-3 py-2 text-xs font-semibold text-zinc-950 hover:bg-amber-400"
+                >
+                  Coba dashboard
+                </Link>
+                <Link
+                  href="/owner/products#owner-product-form"
+                  className="rounded-xl border border-amber-500/50 px-3 py-2 text-xs font-semibold text-amber-200 hover:bg-amber-500/10"
+                >
+                  + Produk
+                </Link>
+              </div>
             </section>
           ) : null}
           <section>
