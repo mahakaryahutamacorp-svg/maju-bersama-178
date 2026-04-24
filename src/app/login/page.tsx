@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import { createBrowserClient } from "@supabase/ssr";
 import { MB178_SCHEMA } from "@/lib/mb178/constants";
+import { mb178SupabaseAuthMessage } from "@/lib/mb178/auth-error-message";
 import { customerPrincipalToSyntheticEmail, syntheticEmailForMb178LocalPart } from "@/lib/mb178/phone";
 
 function ownerPrincipalToEmail(principal: string) {
@@ -78,7 +79,12 @@ function LoginForm() {
     });
     setPending(false);
     if (res.error) {
-      setError(isOwner ? "Username atau password salah." : "No. HP atau password salah.");
+      setError(
+        mb178SupabaseAuthMessage(
+          res.error.message,
+          isOwner ? "owner_login" : "customer_login"
+        )
+      );
       return;
     }
     const uid = res.data.user?.id;
@@ -144,7 +150,9 @@ function LoginForm() {
             },
           });
           if (fallback.error) {
-            setError(fallback.error.message || "Gagal daftar");
+            setError(
+              mb178SupabaseAuthMessage(fallback.error.message, "register")
+            );
             return;
           }
           if (!fallback.data.session) {
@@ -154,7 +162,7 @@ function LoginForm() {
             return;
           }
         } else {
-          setError(apiJson.error || "Gagal daftar");
+          setError(mb178SupabaseAuthMessage(apiJson.error, "register"));
           return;
         }
       }
@@ -164,7 +172,9 @@ function LoginForm() {
         password,
       });
       if (signed.error) {
-        setError(signed.error.message || "Gagal masuk setelah daftar");
+        setError(
+          mb178SupabaseAuthMessage(signed.error.message, "customer_login")
+        );
         return;
       }
       router.push(callbackUrl);

@@ -5,6 +5,19 @@
 - **Project ID**: `tinfsqdvuxnquentbned`
 - **URL**: `https://tinfsqdvuxnquentbned.supabase.co`
 
+## Wajib: provider Email aktif (login & daftar)
+
+Aplikasi memetakan **no. HP** dan **username admin** ke alamat sintetis `...@mb178.online`, lalu memakai **Email + password** di Supabase Auth.
+
+Jika di layar login muncul **`Email logins are disabled`** (atau daftar/masuk selalu gagal):
+
+1. Buka **Supabase Dashboard** → **Authentication** → **Providers** → **Email**.
+2. Pastikan **Email provider / Enable Email provider** dalam keadaan **aktif (ON)**.
+3. Untuk **Daftar Baru** pelanggan: aktifkan juga **Allow new users to sign up** (nama menu bisa sedikit berbeda tergantung versi dashboard) — kalau dinonaktifkan, `signUp` dari anon key akan ditolak.
+4. Setelah itu, jalankan **`02-create-auth-users.sql`** jika akun owner (`toko01` …) belum ada di **Authentication → Users**.
+
+Tanpa langkah 1–2, **login admin dan daftar pelanggan tidak akan pernah berhasil**, walau kode aplikasi sudah benar.
+
 ## Execution Order
 
 Jalankan skrip SQL di Supabase SQL Editor sesuai urutan berikut:
@@ -43,6 +56,7 @@ Jalankan skrip SQL di Supabase SQL Editor sesuai urutan berikut:
 
 ## Daftar pelanggan (tanpa verifikasi email)
 
-Tombol **Daftar Baru** di `/login` memakai route server `POST /api/auth/register-customer` yang membuat user Auth dengan email sintetis **langsung terkonfirmasi**. Pastikan **`SUPABASE_SERVICE_ROLE_KEY`** terisi di `.env.local` / Vercel (server-only).
+Setelah **provider Email aktif** (lihat bagian di atas):
 
-Jika service role belum ada, aplikasi akan mencoba `signUp` biasa; agar tetap langsung aktif, di Supabase Dashboard → **Authentication → Providers → Email** nonaktifkan **Confirm email**.
+- Tombol **Daftar Baru** memanggil `POST /api/auth/register-customer` (perlu **`SUPABASE_SERVICE_ROLE_KEY`** di server) agar akun **langsung terkonfirmasi** tanpa e-mail verifikasi.
+- Jika service role belum terisi, aplikasi fallback ke `signUp` biasa; supaya session langsung ada, di pengaturan Email Auth bisa **menonaktifkan “Confirm email”** (opsional, setelah keamanan Anda pertimbangkan).
