@@ -5,14 +5,14 @@ import { safeCatalogImageUrl } from "@/lib/mb178/safe-remote-image";
  * Key = `stores.slug` dari Supabase.
  */
 const STORE_SLUG_TO_IMAGE_FILE: Record<string, string> = {
-  "rocell-gadget": "rocell gadget.jpg",
-  "pestisida-mbp": "pestisida MajubersamaPrimakarya.jpg",
-  "pakan-pei": "pakan PE'I maju bersama.jpg",
-  "rosaura-skin-clinic": "rosauraskinclinic.jpg",
-  "drg-sona": "klinik drg.Sona.jpg",
-  "raniah-travel": "Raniah travel umroh dan haji.jpg",
-  "pupuk-majubersama": "maju bersama pupuk&alat pertanian.jpg",
-  "dapurku-seafood": "restoran seafood dapurku by cheff HENDRA.jpg",
+  "rocell-gadget": "rocell-gadget.jpg",
+  "pestisida-mbp": "pestisida-mbp.jpg",
+  "pakan-pei": "pakan-pei.jpg",
+  "rosaura-skin-clinic": "rosaura-skin-clinic.jpg",
+  "drg-sona": "drg-sona.jpg",
+  "raniah-travel": "raniah-travel.jpg",
+  "pupuk-majubersama": "pupuk-majubersama.jpg",
+  "dapurku-seafood": "dapurku-seafood.jpg",
 };
 
 export function localTokoImagePublicPath(filename: string): string {
