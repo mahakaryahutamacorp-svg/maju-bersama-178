@@ -4,11 +4,10 @@ import { createServerClient } from "@supabase/ssr";
 import { MB178_SCHEMA } from "./lib/mb178/constants";
 
 /**
- * Auth guard proxy — melindungi rute owner/dashboard/settings.
+ * Auth guard middleware — melindungi rute owner/dashboard/settings.
  * Redirect ke /login jika belum login atau bukan owner/super_admin.
- * Next.js 16: file convention = "proxy.ts" (deprecates "middleware.ts").
  */
-export async function proxy(req: NextRequest) {
+export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   if (
     pathname.startsWith("/dashboard") ||

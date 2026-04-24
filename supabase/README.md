@@ -2,36 +2,17 @@
 
 ## Project Info
 
-- **Project Name**: mahakaryahutama's Project
 - **Project ID**: `tinfsqdvuxnquentbned`
 - **URL**: `https://tinfsqdvuxnquentbned.supabase.co`
-- **Region**: ap-northeast-2
 
-## Database Schema
+## Execution Order
 
-### Tables (public schema)
+Jalankan skrip SQL di Supabase SQL Editor sesuai urutan berikut:
 
-| Table | Description | RLS |
-|-------|-------------|-----|
-| `stores` | Katalog 8 toko kanonis | ✓ |
-| `products` | Produk per toko | ✓ |
-| `orders` | Pesanan customer | ✓ |
-| `order_items` | Item dalam pesanan | ✓ |
-| `banners` | Slider promosi homepage | ✓ |
-| `profiles` | Profil user (1:1 auth.users) | ✓ |
-| `members` | Nama tampilan opsional pelanggan (1:1 auth.users) | ✓ |
-| `store_memberships` | Relasi user-store dengan role | ✓ |
-| `app_users` | LEGACY - tidak dipakai | ✓ |
-
-### Enum Types
-
-- `store_role`: `'customer'`, `'owner'`, `'super_admin'`
-
-### Functions
-
-- `has_store_role(store_id, roles[])` — Cek apakah user punya role tertentu di toko
-- `handle_new_auth_user()` — Trigger: auto-create `profiles` + `members` saat user signup
-- `mb178_checkout(...)` — Atomic checkout (service_role only)
+1.  **`01-setup-database.sql`** — Reset schema, buat tabel, view, fungsi, trigger, dan data toko dasar.
+2.  **`02-create-auth-users.sql`** — Buat akun login Owner & Super Admin.
+3.  **`03-storage-mb178-assets.sql`** — Setup Storage Bucket & Policies.
+4.  **`05` s/d `11`** — (Opsional) Load Master Catalog per kategori.
 
 ## Akun Login
 
@@ -39,7 +20,7 @@
 
 | Email | Toko |
 |-------|------|
-| mama01@mb178.online | Maju Bersama Pupuk & Alat Pertanian |
+| toko01@mb178.online | Maju Bersama Pupuk & Alat Pertanian |
 | toko02@mb178.online | Pestisida Maju Bersama |
 | toko03@mb178.online | Pakan PE'I Maju Bersama |
 | toko04@mb178.online | Rosaura Skin Clinic |
@@ -55,39 +36,6 @@
 | master@mb178.online | Master Admin |
 | mb178@mb178.online | Pemilik MB178 |
 
-## Storage (foto produk)
-
-- Bucket: **`mb178_assets`** (publik baca).
-- Path per toko: **`stores/{slug}/products/{timestamp}-{file}`** (slug dari `public.stores`).
-- Jalankan **`02-storage-mb178-assets.sql`** sekali setelah database ada (membuat bucket + policy). Tanpa bucket, unggah gambar dari dashboard owner akan gagal.
-
-## SQL Files
-
-1. **00-setup-database.sql** — Setup lengkap: schema, tables, RLS, functions, seed data
-2. **01-create-auth-users.sql** — Buat akun auth users dan memberships
-3. **02-storage-mb178-assets.sql** — Bucket `mb178_assets` + kebijakan Storage
-4. **03-members-display-name.sql** — Tabel `members` + RLS + trigger `display_name`
-5. **04-members-phone.sql** — Kolom `phone` di `members` + trigger sinkron
-6. **05-master-catalog-pertanian.sql** — DDL tabel `master_catalog_pertanian`
-7. **seed_master_tani.sql** — Seed 10 produk pestisida & pupuk
-8. **06-master-catalog-elektronik.sql** — DDL + Seed 12 produk gadget (Rocell Gadget)
-9. **07-master-catalog-estetika.sql** — DDL + Seed 10 layanan/produk kecantikan (Rosaura)
-10. **08-master-catalog-medis.sql** — DDL + Seed 10 layanan dental (drg. Sona)
-11. **09-master-catalog-pakan.sql** — DDL + Seed 8 produk pakan ternak (Pakan PE'I)
-12. **10-master-catalog-travel.sql** — DDL + Seed 6 paket umroh/haji (Raniah Travel)
-13. **11-master-catalog-fnb.sql** — DDL + Seed 10 menu restoran (Dapurku Seafood)
-
-## Cara Reset Database
-
-1. Buka Supabase Dashboard → SQL Editor
-2. Jalankan `00-setup-database.sql` (reset penuh)
-3. Jalankan `01-create-auth-users.sql` (buat akun)
-4. Jalankan `03-members-display-name.sql` jika belum (tabel `members` + trigger gabungan)
-
-## Environment Variables
-
-```env
-NEXT_PUBLIC_SUPABASE_URL="https://tinfsqdvuxnquentbned.supabase.co"
-NEXT_PUBLIC_SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-SUPABASE_SERVICE_ROLE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-```
+## Catatan Penting
+- Menjalankan `01-setup-database.sql` akan menghapus semua data di schema `public`.
+- Pastikan variabel lingkungan `.env.local` sudah terisi dengan benar sebelum menjalankan aplikasi.

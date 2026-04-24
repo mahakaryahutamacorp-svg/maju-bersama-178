@@ -15,5 +15,3 @@ export function createMb178Client() {
   });
 }
 
-/** Alias — backward compat. */
-export const createMb178ServiceClient = createMb178Client;
