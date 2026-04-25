@@ -12,19 +12,19 @@ export interface BannerSlideItem {
 /** Urutan mengikuti file di `public/banners/`. */
 export const LOCAL_BANNER_ITEMS: BannerSlideItem[] = [
   {
-    id: "local-banner-1",
-    imageUrl: "/banners/banners01.jpg",
-    title: "Maju Bersama 178",
-  },
-  {
     id: "local-banner-2",
     imageUrl: "/banners/banners02.jpg",
-    title: null,
+    title: "Rosaura Skin Clinic",
   },
   {
     id: "local-banner-3",
     imageUrl: "/banners/banners03.jpg",
-    title: null,
+    title: "Maju Bersama 178",
+  },
+  {
+    id: "local-banner-1",
+    imageUrl: "/banners/banners01.jpg",
+    title: "Grand Opening",
   },
 ];
 

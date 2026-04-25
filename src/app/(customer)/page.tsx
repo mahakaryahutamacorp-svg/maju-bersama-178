@@ -52,9 +52,8 @@ export default async function CustomerHomePage() {
     }
   }
 
-  if (bannerItems.length === 0) {
-    bannerItems = LOCAL_BANNER_ITEMS;
-  }
+  // Gunakan banner lokal sesuai permintaan user untuk mengganti dummy
+  bannerItems = LOCAL_BANNER_ITEMS;
 
   return (
     <div className="px-4 pb-8 pt-8 md:mx-auto md:max-w-4xl">
@@ -89,7 +88,7 @@ export default async function CustomerHomePage() {
               imageAlt={`Toko ${store.name}`}
               darkened={false}
             >
-              <div className="flex flex-col gap-2 sm:flex-row">
+              <div className="flex gap-2">
                 <Link
                   href={`/store/${store.slug}`}
                   className={`${buttonClass("toko")} h-9 flex-1 text-[11px] font-bold sm:h-11 sm:text-sm`}
