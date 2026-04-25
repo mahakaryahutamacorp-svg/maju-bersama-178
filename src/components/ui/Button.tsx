@@ -7,15 +7,15 @@ type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 };
 
 const variants: Record<ButtonVariant, string> = {
-  toko: "bg-gradient-to-r from-amber-600 via-yellow-500 to-amber-600 text-zinc-950 font-semibold shadow-[0_0_24px_rgba(212,175,55,0.35)] hover:brightness-110 active:scale-[0.98]",
+  toko: "bg-gradient-to-r from-[#f59e0b] via-[#fbbf24] to-[#f59e0b] text-zinc-950 font-bold shadow-[0_4px_16px_rgba(245,158,11,0.4)] hover:brightness-110 active:scale-[0.96]",
   whatsapp:
-    "bg-gradient-to-r from-emerald-600 to-lime-400 text-zinc-950 font-semibold shadow-[0_0_20px_rgba(52,211,153,0.35)] hover:brightness-110 active:scale-[0.98]",
+    "bg-gradient-to-r from-[#059669] to-[#84cc16] text-white font-bold shadow-[0_4px_16px_rgba(5,150,105,0.4)] hover:brightness-110 active:scale-[0.96]",
   ghost:
     "border border-white/10 bg-white/5 text-zinc-200 hover:bg-white/10",
 };
 
 const base =
-  "inline-flex min-h-11 w-full items-center justify-center rounded-2xl px-4 py-2.5 text-sm transition";
+  "inline-flex items-center justify-center rounded-xl transition-all duration-200";
 
 export function buttonClass(
   variant: ButtonVariant = "toko",

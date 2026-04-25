@@ -17,24 +17,24 @@ export function Card({
   children,
 }: CardProps) {
   return (
-    <article className="group relative overflow-hidden rounded-3xl border border-yellow-600/20 bg-white/5 shadow-[0_8px_32px_rgba(0,0,0,0.4)] backdrop-blur-md transition hover:border-yellow-500/30">
+    <article className="group relative overflow-hidden rounded-[24px] border border-white/10 bg-zinc-900/50 shadow-[0_8px_32px_rgba(0,0,0,0.6)] backdrop-blur-md transition hover:border-yellow-500/30">
       <div className="relative aspect-[4/3] w-full overflow-hidden">
         <Image
           src={imageSrc}
           alt={imageAlt}
           fill
-          className={`object-cover transition duration-500 group-hover:scale-105 ${darkened ? "brightness-[0.45]" : "brightness-90"}`}
-          sizes="(max-width: 768px) 100vw, 50vw"
+          className={`object-cover transition duration-700 group-hover:scale-110 ${darkened ? "brightness-[0.35]" : "brightness-95"}`}
+          sizes="(max-width: 768px) 50vw, 33vw"
         />
         <div
-          className={`pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent ${darkened ? "bg-black/30" : ""}`}
+          className={`pointer-events-none absolute inset-0 bg-gradient-to-t from-black/95 via-black/30 to-transparent ${darkened ? "bg-black/40" : ""}`}
         />
-        <h3 className="font-serif absolute bottom-3 left-3 right-3 text-lg font-semibold tracking-wide text-white drop-shadow-md md:text-xl">
+        <h3 className="absolute bottom-2 left-3 right-3 text-[13px] font-bold leading-tight tracking-tight text-white drop-shadow-lg sm:bottom-3 sm:left-4 sm:text-xl">
           {title}
         </h3>
       </div>
       {children ? (
-        <div className="flex flex-col gap-3 p-4">{children}</div>
+        <div className="p-2 sm:p-4">{children}</div>
       ) : null}
     </article>
   );

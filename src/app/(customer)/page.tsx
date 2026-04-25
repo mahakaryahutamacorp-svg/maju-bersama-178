@@ -58,15 +58,15 @@ export default async function CustomerHomePage() {
 
   return (
     <div className="px-4 pb-8 pt-8 md:mx-auto md:max-w-4xl">
-      <header className="mb-8">
+      <header className="mb-6">
         <div className="text-center">
-          <p className="font-serif text-3xl font-semibold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-400 to-amber-600 md:text-4xl">
+          <h1 className="font-serif text-3xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-amber-200 via-yellow-400 to-amber-600 md:text-5xl">
             Maju Bersama 178
-          </p>
-          <p className="mt-2 font-serif text-lg text-zinc-400 md:text-xl">
+          </h1>
+          <p className="mt-1 font-serif text-lg font-medium text-zinc-400 md:text-2xl">
             Pilih Toko
           </p>
-          <p className="mx-auto mt-3 max-w-md text-xs leading-relaxed text-zinc-500">
+          <p className="mx-auto mt-2 max-w-[280px] text-[10px] leading-relaxed text-zinc-500 md:max-w-md md:text-xs">
             Marketplace multi-toko — belanja per katalog, hubungi penjual via WhatsApp.
           </p>
         </div>
@@ -80,7 +80,7 @@ export default async function CustomerHomePage() {
           <code className="text-zinc-300">supabase/00-setup-database.sql</code> di Supabase SQL Editor.
         </p>
       ) : (
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+        <div className="grid grid-cols-2 gap-3 sm:gap-6">
           {stores.map((store) => (
             <Card
               key={store.slug}
@@ -92,13 +92,13 @@ export default async function CustomerHomePage() {
               <div className="flex flex-col gap-2 sm:flex-row">
                 <Link
                   href={`/store/${store.slug}`}
-                  className={`${buttonClass("toko")} flex-1 text-center`}
+                  className={`${buttonClass("toko")} h-9 flex-1 text-[11px] font-bold sm:h-11 sm:text-sm`}
                 >
                   Toko
                 </Link>
                 {store.whatsapp && (
                   <a
-                    className={`${buttonClass("whatsapp")} flex-1 text-center`}
+                    className={`${buttonClass("whatsapp")} h-9 flex-1 text-[11px] font-bold sm:h-11 sm:text-sm`}
                     href={`https://wa.me/${store.whatsapp}`}
                     target="_blank"
                     rel="noopener noreferrer"
