@@ -224,8 +224,8 @@ export default function OwnerProductsPage() {
 
       if (imageFile) {
         try {
-          const compressed = await compressImage(imageFile, { maxWidth: 1024, quality: 0.75 });
-          fd.set("image", compressed, "product.jpg");
+          const compressed = await compressImage(imageFile, { maxWidth: 1024, quality: 0.8 });
+          fd.set("image", compressed, "product.webp");
         } catch (err) {
           console.error("Compression failed, using original:", err);
           fd.set("image", imageFile);
@@ -401,7 +401,13 @@ export default function OwnerProductsPage() {
   async function onReplaceImage(id: string, file: File) {
     setError(null);
     const fd = new FormData();
-    fd.set("image", file);
+    try {
+      const compressed = await compressImage(file, { maxWidth: 1024, quality: 0.8 });
+      fd.set("image", compressed, "product.webp");
+    } catch (err) {
+      console.error("Compression failed, using original:", err);
+      fd.set("image", file);
+    }
     try {
       const res = await fetch(appendApiUrl(`/api/owner/products/${id}`), {
         method: "PATCH",
