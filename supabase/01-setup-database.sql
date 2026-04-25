@@ -179,14 +179,24 @@ BEGIN
     ) ON CONFLICT (id) DO NOTHING;
 
     -- Populate Members (Mapping for Login)
-    INSERT INTO public.members (id, username, email, display_name, phone)
-    VALUES (
-        NEW.id,
-        COALESCE(NEW.raw_user_meta_data->>'username', split_part(NEW.email, '@', 1)),
-        COALESCE(NEW.raw_user_meta_data->>'email', NEW.email),
-        NULLIF(trim(COALESCE(NEW.raw_user_meta_data->>'display_name', NEW.raw_user_meta_data->>'full_name', '')), ''),
-        NULLIF(trim(COALESCE(NEW.raw_user_meta_data->>'phone', '')), '')
-    ) ON CONFLICT (id) DO NOTHING;
+    BEGIN
+        INSERT INTO public.members (id, username, email, display_name, phone)
+        VALUES (
+            NEW.id,
+            COALESCE(NEW.raw_user_meta_data->>'username', split_part(NEW.email, '@', 1)),
+            COALESCE(NEW.raw_user_meta_data->>'email', NEW.email),
+            NULLIF(trim(COALESCE(NEW.raw_user_meta_data->>'display_name', NEW.raw_user_meta_data->>'full_name', '')), ''),
+            NULLIF(trim(COALESCE(NEW.raw_user_meta_data->>'phone', '')), '')
+        ) 
+        ON CONFLICT (id) DO UPDATE SET
+            username = EXCLUDED.username,
+            email = EXCLUDED.email,
+            display_name = EXCLUDED.display_name,
+            phone = EXCLUDED.phone;
+    EXCEPTION WHEN unique_violation THEN
+        -- Jika username sudah dipakai ID lain, biarkan (tidak crash)
+        NULL;
+    END;
 
     RETURN NEW;
 END;

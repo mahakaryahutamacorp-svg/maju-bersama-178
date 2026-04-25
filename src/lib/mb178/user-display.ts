@@ -1,4 +1,4 @@
-/** Bagian lokal email sintetis MB178, mis. `yayan12` dari `yayan12@local.mb178`. */
+/** Bagian lokal email sintetis MB178, mis. `raniah06` dari `raniah06@mb178.online`. */
 export function mb178UsernameFromEmail(email: string | undefined | null): string {
   if (!email || typeof email !== "string") return "";
   const at = email.indexOf("@");

@@ -33,16 +33,16 @@ Jalankan skrip SQL di Supabase SQL Editor sesuai urutan berikut:
 
 Di **`/login?mode=owner`** ketik **hanya bagian sebelum `@`** (mis. `toko01`), bukan alamat email lengkap — aplikasi memetakannya ke baris di bawah.
 
-| Email (di Supabase Auth) | Toko |
-|-------|------|
-| <toko01@mb178.online> | Maju Bersama Pupuk & Alat Pertanian |
-| <toko02@mb178.online> | Pestisida Maju Bersama |
-| <toko03@mb178.online> | Pakan PE'I Maju Bersama |
-| <toko04@mb178.online> | Rosaura Skin Clinic |
-| <toko05@mb178.online> | Klinik drg. Sona |
-| <toko06@mb178.online> | Raniah Travel Umroh dan Haji |
-| <toko07@mb178.online> | Restoran Seafood Dapurku by Chef Hendra |
-| <toko08@mb178.online> | Rocell Gadget |
+| Email | Store Name |
+|-------|------------|
+| <pupuk01@mb178.online> | Maju Bersama Pupuk |
+| <pesti02@mb178.online> | Pestisida MBP |
+| <pakan03@mb178.online> | Pakan PE'I |
+| <gita04@mb178.online> | Rosaura Skin Clinic |
+| <sona05@mb178.online> | Klinik drg. Sona |
+| <raniah06@mb178.online> | Raniah Travel |
+| <dapurku07@mb178.online> | Dapurku Seafood |
+| <rocell08@mb178.online> | Rocell Gadget |
 
 ### Super Admin (password: `178178`)
 
