@@ -115,14 +115,16 @@ CREATE TABLE public.profiles (
     created_at timestamptz NOT NULL DEFAULT now()
 );
 
--- Tabel members (1:1 auth.users) - Data Pelanggan
+-- Tabel members (1:1 auth.users) - Data Pelanggan & Identitas
 CREATE TABLE public.members (
     id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+    username text UNIQUE,
+    email text, -- Real email (aktif)
     display_name text,
-    phone text UNIQUE,
+    phone text,
     created_at timestamptz NOT NULL DEFAULT now()
 );
-COMMENT ON TABLE public.members IS 'Profil ringkas pelanggan; phone ternormalisasi 62...';
+COMMENT ON TABLE public.members IS 'Profil lengkap user (owner/customer); username untuk login id.';
 
 -- Tabel store_memberships (RBAC)
 CREATE TABLE public.store_memberships (
@@ -169,15 +171,19 @@ $$;
 CREATE OR REPLACE FUNCTION public.handle_new_auth_user()
 RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 BEGIN
+    -- Populate Profiles
     INSERT INTO public.profiles (id, full_name)
     VALUES (
         NEW.id,
         public.profile_display_name_from_user_meta(COALESCE(NEW.raw_user_meta_data, '{}'::jsonb), NEW.email)
     ) ON CONFLICT (id) DO NOTHING;
 
-    INSERT INTO public.members (id, display_name, phone)
+    -- Populate Members (Mapping for Login)
+    INSERT INTO public.members (id, username, email, display_name, phone)
     VALUES (
         NEW.id,
+        COALESCE(NEW.raw_user_meta_data->>'username', split_part(NEW.email, '@', 1)),
+        COALESCE(NEW.raw_user_meta_data->>'email', NEW.email),
         NULLIF(trim(COALESCE(NEW.raw_user_meta_data->>'display_name', NEW.raw_user_meta_data->>'full_name', '')), ''),
         NULLIF(trim(COALESCE(NEW.raw_user_meta_data->>'phone', '')), '')
     ) ON CONFLICT (id) DO NOTHING;
@@ -219,37 +225,42 @@ ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.members ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.store_memberships ENABLE ROW LEVEL SECURITY;
 
+-- ============================================================
+-- Relaxed Security Policies (Testing Mode)
+-- ============================================================
+
 -- Stores: Public Read
-CREATE POLICY "stores_read_all" ON public.stores FOR SELECT TO anon, authenticated USING (true);
+CREATE POLICY "stores_read_all" ON public.stores FOR SELECT USING (true);
 
--- Products: Public Read
-CREATE POLICY "products_read_all" ON public.products FOR SELECT TO anon, authenticated USING (true);
-
--- Banners: Public Read Active
-CREATE POLICY "banners_read_active" ON public.banners FOR SELECT TO anon, authenticated USING (is_active = true);
-
--- Profiles: Own Profile Only
-CREATE POLICY "profiles_own" ON public.profiles FOR ALL TO authenticated USING (id = auth.uid()) WITH CHECK (id = auth.uid());
-
--- Members: Own Data Only
-CREATE POLICY "members_own" ON public.members FOR ALL TO authenticated USING (id = auth.uid()) WITH CHECK (id = auth.uid());
-
--- Memberships: Own Only
-CREATE POLICY "memberships_own" ON public.store_memberships FOR SELECT TO authenticated USING (user_id = auth.uid());
-
--- Orders: Customer (Own) or Owner (Store)
-CREATE POLICY "orders_customer_own" ON public.orders FOR SELECT TO authenticated USING (customer_id = auth.uid());
-CREATE POLICY "orders_customer_insert" ON public.orders FOR INSERT TO authenticated WITH CHECK (customer_id = auth.uid());
-CREATE POLICY "orders_owner_store" ON public.orders FOR ALL TO authenticated 
+-- Products: Public Read, Owner Manage Own Store
+CREATE POLICY "products_read_all" ON public.products FOR SELECT USING (true);
+CREATE POLICY "products_owner_manage" ON public.products FOR ALL TO authenticated 
 USING (public.has_store_role(store_id, ARRAY['owner', 'super_admin']::public.store_role[]))
 WITH CHECK (public.has_store_role(store_id, ARRAY['owner', 'super_admin']::public.store_role[]));
+
+-- Banners: Public Read
+CREATE POLICY "banners_read_all" ON public.banners FOR SELECT USING (true);
+
+-- Profiles & Members: Relaxed for testing (Authenticated can see all)
+CREATE POLICY "profiles_read_all" ON public.profiles FOR SELECT TO authenticated USING (true);
+CREATE POLICY "profiles_own_manage" ON public.profiles FOR UPDATE TO authenticated USING (id = auth.uid());
+
+CREATE POLICY "members_read_all" ON public.members FOR SELECT TO authenticated USING (true);
+CREATE POLICY "members_own_manage" ON public.members FOR ALL TO authenticated USING (id = auth.uid());
+
+-- Memberships: Own or Store Owner
+CREATE POLICY "memberships_read_access" ON public.store_memberships FOR SELECT TO authenticated 
+USING (user_id = auth.uid() OR public.has_store_role(store_id, ARRAY['owner', 'super_admin']::public.store_role[]));
+
+-- Orders: Owner sees store data, Customer sees own
+CREATE POLICY "orders_access" ON public.orders FOR SELECT TO authenticated 
+USING (customer_id = auth.uid() OR public.has_store_role(store_id, ARRAY['owner', 'super_admin']::public.store_role[]));
+
+CREATE POLICY "orders_insert" ON public.orders FOR INSERT TO authenticated WITH CHECK (customer_id = auth.uid());
 
 -- Order Items: Follow Order Access
 CREATE POLICY "order_items_access" ON public.order_items FOR SELECT TO authenticated USING (
     EXISTS (SELECT 1 FROM public.orders o WHERE o.id = order_id AND (o.customer_id = auth.uid() OR public.has_store_role(o.store_id, ARRAY['owner', 'super_admin']::public.store_role[])))
-);
-CREATE POLICY "order_items_customer_insert" ON public.order_items FOR INSERT TO authenticated WITH CHECK (
-    EXISTS (SELECT 1 FROM public.orders o WHERE o.id = order_id AND o.customer_id = auth.uid())
 );
 
 -- ============================================================

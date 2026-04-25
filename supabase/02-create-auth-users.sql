@@ -16,16 +16,15 @@ BEGIN
     FOR rec IN
         SELECT * FROM (
             VALUES 
-                ('toko01@mb178.online', '223344', 'Owner Pupuk & Alat', 'pupuk-majubersama'),
-                ('toko02@mb178.online', '223344', 'Owner Pestisida', 'pestisida-mbp'),
-                ('toko03@mb178.online', '223344', 'Owner Pakan PEI', 'pakan-pei'),
-                ('toko04@mb178.online', '223344', 'Owner Rosaura Clinic', 'rosaura-skin-clinic'),
-                ('toko05@mb178.online', '223344', 'Owner Klinik drg. Sona', 'drg-sona'),
-                ('toko06@mb178.online', '223344', 'Owner Raniah Travel', 'raniah-travel'),
-                ('toko07@mb178.online', '223344', 'Owner Dapurku Seafood', 'dapurku-seafood'),
-                ('toko08@mb178.online', '223344', 'Owner Rocell Gadget', 'rocell-gadget'),
-                ('master@mb178.online', '178178', 'Master Admin', NULL::text),
-                ('mb178@mb178.online', '178178', 'Pemilik MB178', NULL::text)
+                ('pupuk01@local.mb178', '223344', 'Owner Pupuk & Alat', 'pupuk-majubersama'),
+                ('pesti02@local.mb178', '223344', 'Owner Pestisida', 'pestisida-mbp'),
+                ('pakan03@local.mb178', '223344', 'Owner Pakan PEI', 'pakan-pei'),
+                ('gita04@local.mb178', '223344', 'Owner Rosaura Clinic', 'rosaura-skin-clinic'),
+                ('sona05@local.mb178', '223344', 'Owner Klinik drg. Sona', 'drg-sona'),
+                ('raniah06@local.mb178', '223344', 'Owner Raniah Travel', 'raniah-travel'),
+                ('dapurku07@local.mb178', '223344', 'Owner Dapurku Seafood', 'dapurku-seafood'),
+                ('rocell08@local.mb178', '223344', 'Owner Rocell Gadget', 'rocell-gadget'),
+                ('master178@local.mb178', '178178', 'Master Admin', NULL::text)
         ) AS t(email, password_plain, display_name, store_slug) 
     LOOP
         -- Skip if user already exists
@@ -76,7 +75,7 @@ END $$;
 INSERT INTO public.store_memberships (user_id, store_id, role)
 SELECT u.id, s.id, 'super_admin'::public.store_role
 FROM auth.users u CROSS JOIN public.stores s
-WHERE lower(u.email) IN ('master@mb178.online', 'mb178@mb178.online')
+WHERE lower(u.email) IN ('master178@local.mb178')
 ON CONFLICT ON CONSTRAINT store_memberships_unique_user_store DO UPDATE SET role = EXCLUDED.role;
 
 -- Sync profiles
