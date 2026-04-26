@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter, Playfair_Display } from "next/font/google";
 import { AuthProvider } from "@/components/providers/auth-provider";
 import { PwaRegistration } from "@/components/providers/pwa-registration";
+import { FloatingActions } from "@/components/ui/FloatingActions";
 import "./globals.css";
 
 const inter = Inter({
@@ -72,7 +73,10 @@ export default function RootLayout({
     >
       <body className="min-h-dvh bg-[var(--charcoal)] font-sans text-zinc-100">
         <PwaRegistration />
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          {children}
+          <FloatingActions />
+        </AuthProvider>
       </body>
     </html>
   );
