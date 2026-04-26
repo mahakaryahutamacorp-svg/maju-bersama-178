@@ -19,7 +19,7 @@ import type { Mb178ProductRow } from "@/lib/mb178/types";
 import type { Mb178StoreRow } from "@/lib/mb178/types";
 import { useOwnerStoreScope } from "@/components/owner/owner-store-scope";
 import { useAuth } from "@/components/providers/auth-provider";
-import { formatRp } from "@/lib/mb178/format";
+import { formatRp, formatQty } from "@/lib/mb178/format";
 import { compressImage } from "@/lib/mb178/image-compress";
 
 type ProductKind = "pupuk" | "alat" | "pestisida" | "benih" | "lainnya";
@@ -703,7 +703,7 @@ export default function OwnerProductsPage() {
               label="Stok"
               type="number"
               min={0}
-              step={1}
+              step="0.001"
               value={stock}
               onChange={(e) => setStock(e.target.value)}
             />
@@ -844,7 +844,7 @@ export default function OwnerProductsPage() {
                           label="Stok"
                           type="number"
                           min={0}
-                          step={1}
+                          step="0.001"
                           value={editStock}
                           onChange={(e) => setEditStock(e.target.value)}
                         />
@@ -889,7 +889,7 @@ export default function OwnerProductsPage() {
                         <p className="text-sm text-amber-200/80">
                           {formatRp(p.price)}
                         </p>
-                        <p className="text-xs text-zinc-500">Stok: {p.stock}</p>
+                        <p className="text-xs text-zinc-500">Stok: {formatQty(p.stock)}</p>
                         {p.description ? (
                           <p className="mt-2 line-clamp-2 text-xs text-zinc-500">
                             {p.description}

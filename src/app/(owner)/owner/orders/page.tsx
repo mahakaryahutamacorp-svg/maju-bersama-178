@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useOwnerStoreScope } from "@/components/owner/owner-store-scope";
 import { labelOrderStatus } from "@/lib/mb178/order-status";
-import { formatRp, formatDateId } from "@/lib/mb178/format";
+import { formatRp, formatDateId, formatQty } from "@/lib/mb178/format";
 import type { Mb178OrderRow, Mb178OrderItemRow, Mb178OrderStatus } from "@/lib/mb178/types";
 
 /* ──────────────────── Status Flow Config ──────────────────── */
@@ -202,7 +202,7 @@ function OrderDetailRow({
                           ({it.unit_snapshot})
                         </span>
                       </td>
-                      <td className="py-1.5 text-right">{it.qty}</td>
+                      <td className="py-1.5 text-right">{formatQty(it.qty)}</td>
                       <td className="py-1.5 text-right">
                         {formatRp(Number(it.price_snapshot))}
                       </td>

@@ -108,13 +108,6 @@ CREATE TABLE public.banners (
     created_at timestamptz NOT NULL DEFAULT now()
 );
 
--- Tabel profiles (1:1 auth.users)
-CREATE TABLE public.profiles (
-    id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-    full_name text,
-    created_at timestamptz NOT NULL DEFAULT now()
-);
-
 -- Tabel members (1:1 auth.users) - Data Pelanggan & Identitas
 CREATE TABLE public.members (
     id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -125,6 +118,62 @@ CREATE TABLE public.members (
     created_at timestamptz NOT NULL DEFAULT now()
 );
 COMMENT ON TABLE public.members IS 'Profil lengkap user (owner/customer); username untuk login id.';
+
+-- Tabel products (Produk Per Toko)
+CREATE TABLE public.products (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    store_id uuid NOT NULL REFERENCES public.stores(id) ON DELETE CASCADE,
+    name text NOT NULL,
+    price numeric(14, 2) NOT NULL CHECK (price >= 0),
+    stock numeric(14, 3) NOT NULL DEFAULT 0 CHECK (stock >= 0),
+    unit text NOT NULL DEFAULT 'pcs',
+    image_url text,
+    description text,
+    category text,
+    created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX products_store_id_idx ON public.products(store_id);
+CREATE INDEX products_category_idx ON public.products(category);
+
+-- Tabel orders (Pesanan)
+CREATE TABLE public.orders (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    store_id uuid NOT NULL REFERENCES public.stores(id) ON DELETE CASCADE,
+    customer_id uuid REFERENCES auth.users(id) ON DELETE SET NULL,
+    channel text NOT NULL DEFAULT 'online',
+    payment_method text NOT NULL DEFAULT 'transfer',
+    status text NOT NULL DEFAULT 'pending', -- 'pending', 'pending_payment', 'processing', 'shipped', 'completed', 'cancelled'
+    customer_name text,
+    customer_phone text,
+    notes text,
+    total numeric(14, 2) NOT NULL DEFAULT 0 CHECK (total >= 0),
+    created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX orders_customer_id_idx ON public.orders(customer_id);
+CREATE INDEX orders_store_id_idx ON public.orders(store_id);
+
+-- Tabel order_items (Detail Pesanan)
+CREATE TABLE public.order_items (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    order_id uuid NOT NULL REFERENCES public.orders(id) ON DELETE CASCADE,
+    product_id uuid NOT NULL REFERENCES public.products(id) ON DELETE RESTRICT,
+    name_snapshot text NOT NULL,
+    unit_snapshot text NOT NULL,
+    price_snapshot numeric(14, 2) NOT NULL CHECK (price_snapshot >= 0),
+    qty numeric(14, 3) NOT NULL CHECK (qty > 0),
+    line_total numeric(14, 2) NOT NULL CHECK (line_total >= 0),
+    created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX order_items_order_id_idx ON public.order_items(order_id);
+
+-- Tabel banners (Slider Promosi)
+CREATE TABLE public.banners (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    image_url text NOT NULL,
+    title text,
+    is_active boolean NOT NULL DEFAULT true,
+    created_at timestamptz NOT NULL DEFAULT now()
+);
 
 -- Tabel store_memberships (RBAC)
 CREATE TABLE public.store_memberships (
@@ -171,21 +220,14 @@ $$;
 CREATE OR REPLACE FUNCTION public.handle_new_auth_user()
 RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 BEGIN
-    -- Populate Profiles
-    INSERT INTO public.profiles (id, full_name)
-    VALUES (
-        NEW.id,
-        public.profile_display_name_from_user_meta(COALESCE(NEW.raw_user_meta_data, '{}'::jsonb), NEW.email)
-    ) ON CONFLICT (id) DO NOTHING;
-
-    -- Populate Members (Mapping for Login)
+    -- Populate Members (Mapping for Login & Display)
     BEGIN
         INSERT INTO public.members (id, username, email, display_name, phone)
         VALUES (
             NEW.id,
             COALESCE(NEW.raw_user_meta_data->>'username', split_part(NEW.email, '@', 1)),
             COALESCE(NEW.raw_user_meta_data->>'email', NEW.email),
-            NULLIF(trim(COALESCE(NEW.raw_user_meta_data->>'display_name', NEW.raw_user_meta_data->>'full_name', '')), ''),
+            public.profile_display_name_from_user_meta(COALESCE(NEW.raw_user_meta_data, '{}'::jsonb), NEW.email),
             NULLIF(trim(COALESCE(NEW.raw_user_meta_data->>'phone', '')), '')
         ) 
         ON CONFLICT (id) DO UPDATE SET
@@ -231,7 +273,6 @@ ALTER TABLE public.products ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.order_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.banners ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.members ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.store_memberships ENABLE ROW LEVEL SECURITY;
 
@@ -251,10 +292,7 @@ WITH CHECK (public.has_store_role(store_id, ARRAY['owner', 'super_admin']::publi
 -- Banners: Public Read
 CREATE POLICY "banners_read_all" ON public.banners FOR SELECT USING (true);
 
--- Profiles & Members: Relaxed for testing (Authenticated can see all)
-CREATE POLICY "profiles_read_all" ON public.profiles FOR SELECT TO authenticated USING (true);
-CREATE POLICY "profiles_own_manage" ON public.profiles FOR UPDATE TO authenticated USING (id = auth.uid());
-
+-- Members: Relaxed for testing (Authenticated can see all)
 CREATE POLICY "members_read_all" ON public.members FOR SELECT TO authenticated USING (true);
 CREATE POLICY "members_own_manage" ON public.members FOR ALL TO authenticated USING (id = auth.uid());
 
@@ -295,7 +333,7 @@ DECLARE
     v_name text;
     v_unit text;
     v_price numeric;
-    v_stock integer;
+    v_stock numeric;
     v_total numeric := 0;
 BEGIN
     IF p_customer_id IS NULL THEN RAISE EXCEPTION 'customer_id required'; END IF;
@@ -310,7 +348,7 @@ BEGIN
         FROM public.products WHERE id = v_product_id AND store_id = p_store_id FOR UPDATE;
         
         IF NOT FOUND THEN RAISE EXCEPTION 'Product % not found in store', v_product_id; END IF;
-        IF v_stock < v_qty THEN RAISE EXCEPTION 'Insufficient stock for %', v_name; END IF;
+        IF v_stock < v_qty THEN RAISE EXCEPTION 'Insufficient stock for % (requested %, available %)', v_name, v_qty, v_stock; END IF;
         
         v_total := v_total + (v_price * v_qty);
     END LOOP;
@@ -331,7 +369,7 @@ BEGIN
         INSERT INTO public.order_items (order_id, product_id, name_snapshot, unit_snapshot, price_snapshot, qty, line_total)
         VALUES (v_order_id, v_product_id, v_name, v_unit, v_price, v_qty, v_price * v_qty);
         
-        UPDATE public.products SET stock = stock - v_qty::integer WHERE id = v_product_id;
+        UPDATE public.products SET stock = stock - v_qty WHERE id = v_product_id;
     END LOOP;
 
     RETURN v_order_id;

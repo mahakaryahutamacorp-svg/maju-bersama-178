@@ -18,3 +18,8 @@ export function formatDateId(iso: string): string {
     return iso;
   }
 }
+
+/** Format jumlah (qty/stok): hilangkan desimal jika .000, mis. 1.500 -> 1.5, 1.000 -> 1 */
+export function formatQty(n: number): string {
+  return Number(n.toFixed(3)).toString();
+}

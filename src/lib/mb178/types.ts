@@ -29,7 +29,7 @@ export interface Mb178ProductRow {
   name: string;
   /** Postgres `numeric(14,2)` — PostgREST mengembalikan number */
   price: number;
-  /** Postgres `integer` */
+  /** Postgres `numeric(14,3)` — Mendukung desimal (mis. 1.5 kg) */
   stock: number;
   unit: string;
   image_url: string | null;

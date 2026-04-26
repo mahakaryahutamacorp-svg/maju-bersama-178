@@ -80,12 +80,5 @@ END $$;
 INSERT INTO public.store_memberships (user_id, store_id, role)
 SELECT u.id, s.id, 'super_admin'::public.store_role
 FROM auth.users u CROSS JOIN public.stores s
-WHERE lower(u.email) IN ('master178@local.mb178')
+WHERE lower(u.email) IN ('master@mb178.online', 'mb178@mb178.online')
 ON CONFLICT ON CONSTRAINT store_memberships_unique_user_store DO UPDATE SET role = EXCLUDED.role;
-
--- Sync profiles
-INSERT INTO public.profiles (id, full_name)
-SELECT u.id, public.profile_display_name_from_user_meta(u.raw_user_meta_data, u.email)
-FROM auth.users u
-WHERE NOT EXISTS (SELECT 1 FROM public.profiles p WHERE p.id = u.id)
-ON CONFLICT (id) DO NOTHING;
