@@ -10,7 +10,7 @@ export default function CustomerLayout({
   return (
     <div className="relative flex min-h-dvh flex-col pb-[calc(5rem+env(safe-area-inset-bottom))]">
       <AppShellDecoration />
-      <main className="relative z-0 flex-1 px-4 pt-4 md:mx-auto md:w-full md:max-w-4xl">
+      <main className="relative z-0 flex-1 px-4 pt-4 md:mx-auto md:w-full md:max-w-5xl lg:max-w-6xl 2xl:max-w-7xl">
         <TopBar />
         <div className="-mx-4 md:mx-0">{children}</div>
       </main>

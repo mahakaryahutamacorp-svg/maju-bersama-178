@@ -29,7 +29,7 @@ export function Card({
           alt={imageAlt}
           fill
           className={`object-cover transition duration-700 group-hover:scale-110 ${darkened ? "brightness-[0.35]" : "brightness-95"}`}
-          sizes="(max-width: 768px) 50vw, 33vw"
+          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, (max-width: 1536px) 25vw, 20vw"
         />
         {operationalStatus ? (
           <span

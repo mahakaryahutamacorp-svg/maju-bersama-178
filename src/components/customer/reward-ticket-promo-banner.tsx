@@ -3,7 +3,7 @@ import { GiftIcon } from "@heroicons/react/24/outline";
 export function RewardTicketPromoBanner() {
   return (
     <section className="mt-4">
-      <div className="mx-auto w-full max-w-md md:max-w-2xl">
+      <div className="mx-auto w-full max-w-md md:max-w-3xl lg:max-w-4xl xl:max-w-5xl">
         <div className="relative overflow-hidden rounded-3xl border border-amber-500/25 bg-gradient-to-br from-zinc-950 via-[#17110a] to-amber-950/40 p-4 shadow-[0_0_40px_rgba(212,175,55,0.10)] backdrop-blur-md sm:p-5">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_20%_0%,rgba(212,175,55,0.18),transparent_60%)]" />
           <div className="pointer-events-none absolute -right-12 -top-12 h-44 w-44 rounded-full bg-amber-500/10 blur-2xl" />
