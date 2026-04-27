@@ -9,18 +9,13 @@ import { HomeCategoryChips } from "@/components/customer/home-category-chips";
 import { RewardTicketPromoBanner } from "@/components/customer/reward-ticket-promo-banner";
 import type { Mb178BannerRow, Mb178StoreRow } from "@/lib/mb178/types";
 import { createSupabaseServerComponentClient } from "@/lib/supabase/ssr";
-import Image from "next/image";
-import { StoreCarousel } from "@/components/customer/store-carousel";
+import {
+  RecommendedProductMiniStrip,
+  type RecommendedProductMiniItem,
+} from "@/components/customer/recommended-product-mini-strip";
+import { StorePickGrid } from "@/components/customer/store-pick-grid";
 
-interface RecommendedProductMock {
-  id: string;
-  name: string;
-  priceLabel: string;
-  storeName: string;
-  imageSrc: string | null;
-}
-
-const RECOMMENDED_PRODUCTS: RecommendedProductMock[] = [
+const RECOMMENDED_PRODUCTS: RecommendedProductMiniItem[] = [
   {
     id: "mock-1",
     name: "Paket Hemat — Produk Unggulan Minggu Ini dengan Nama Panjang Agar Terlihat Truncate",
@@ -138,49 +133,17 @@ export default async function CustomerHomePage() {
       ) : (
         <>
           <section className="mt-8">
-            <div className="mb-3 flex items-end justify-between">
+            <div className="mb-2">
               <h2 className="font-serif text-lg font-semibold tracking-tight text-zinc-200 md:text-xl">
                 Rekomendasi Produk
               </h2>
-              <p className="text-[10px] text-zinc-500 md:text-xs">UI mock-up</p>
+              <p className="mt-0.5 text-[10px] text-zinc-500 md:text-xs">UI mock-up</p>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4 lg:grid-cols-5">
-              {RECOMMENDED_PRODUCTS.map((p) => (
-                <article
-                  key={p.id}
-                  className="group overflow-hidden rounded-[24px] border border-white/10 bg-zinc-900/50 shadow-[0_8px_32px_rgba(0,0,0,0.6)] backdrop-blur-md transition hover:border-yellow-500/30"
-                >
-                  <div className="relative aspect-[4/3] w-full overflow-hidden bg-zinc-950">
-                    {p.imageSrc ? (
-                      <Image
-                        src={p.imageSrc}
-                        alt={p.name}
-                        fill
-                        className="object-cover brightness-95 transition duration-700 group-hover:scale-110"
-                        sizes="(max-width: 768px) 50vw, 20vw"
-                      />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center px-3 text-center text-[10px] text-zinc-700">
-                        Tanpa Foto
-                      </div>
-                    )}
-                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
-                  </div>
-
-                  <div className="p-3">
-                    <p className="line-clamp-2 min-h-[2.5rem] text-[12px] font-semibold leading-snug text-zinc-100">
-                      {p.name}
-                    </p>
-                    <p className="mt-1 text-[12px] font-bold text-[#D4AF37]">{p.priceLabel}</p>
-                    <p className="mt-1 text-[9px] leading-snug text-zinc-500">{p.storeName}</p>
-                  </div>
-                </article>
-              ))}
-            </div>
+            <RecommendedProductMiniStrip products={RECOMMENDED_PRODUCTS} />
           </section>
 
-          <StoreCarousel stores={stores} supabaseOrigin={supabaseOrigin} />
+          <StorePickGrid stores={stores} supabaseOrigin={supabaseOrigin} />
         </>
       )}
     </div>
