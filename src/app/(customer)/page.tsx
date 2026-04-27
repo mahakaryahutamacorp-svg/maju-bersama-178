@@ -1,12 +1,8 @@
-import Link from "next/link";
 import {
   BannerSlider,
   LOCAL_BANNER_ITEMS,
   type BannerSlideItem,
 } from "@/components/customer/banner-slider";
-import { Card } from "@/components/ui/Card";
-import { buttonClass } from "@/components/ui/Button";
-import { resolveStoreFrontImage } from "@/lib/mb178/local-store-images";
 import { safeCatalogImageUrl } from "@/lib/mb178/safe-remote-image";
 import { HomeSearchBar } from "@/components/customer/home-search-bar";
 import { HomeCategoryChips } from "@/components/customer/home-category-chips";
@@ -14,6 +10,7 @@ import { RewardTicketPromoBanner } from "@/components/customer/reward-ticket-pro
 import type { Mb178BannerRow, Mb178StoreRow } from "@/lib/mb178/types";
 import { createSupabaseServerComponentClient } from "@/lib/supabase/ssr";
 import Image from "next/image";
+import { StoreCarousel } from "@/components/customer/store-carousel";
 
 interface RecommendedProductMock {
   id: string;
@@ -140,39 +137,6 @@ export default async function CustomerHomePage() {
         </p>
       ) : (
         <>
-          <div className="grid grid-cols-2 gap-3 sm:gap-6">
-            {stores.map((store) => (
-              <Card
-                key={store.slug}
-                title={store.name}
-                imageSrc={resolveStoreFrontImage(store.slug, store.image, supabaseOrigin)}
-                imageAlt={`Toko ${store.name}`}
-                darkened={false}
-                operationalStatus="open"
-                description="Belanja per katalog, chat cepat via WhatsApp."
-              >
-                <div className="flex gap-2">
-                  <Link
-                    href={`/store/${store.slug}`}
-                    className={`${buttonClass("toko")} h-9 flex-1 text-[11px] font-bold sm:h-11 sm:text-sm`}
-                  >
-                    Toko
-                  </Link>
-                  {store.whatsapp && (
-                    <a
-                      className={`${buttonClass("whatsapp")} h-9 flex-1 text-[11px] font-bold sm:h-11 sm:text-sm`}
-                      href={`https://wa.me/${store.whatsapp}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      WhatsApp
-                    </a>
-                  )}
-                </div>
-              </Card>
-            ))}
-          </div>
-
           <section className="mt-8">
             <div className="mb-3 flex items-end justify-between">
               <h2 className="font-serif text-lg font-semibold tracking-tight text-zinc-200 md:text-xl">
@@ -215,6 +179,8 @@ export default async function CustomerHomePage() {
               ))}
             </div>
           </section>
+
+          <StoreCarousel stores={stores} supabaseOrigin={supabaseOrigin} />
         </>
       )}
     </div>
