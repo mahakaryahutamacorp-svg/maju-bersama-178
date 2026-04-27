@@ -13,7 +13,7 @@ import {
   RecommendedProductMiniStrip,
   type RecommendedProductMiniItem,
 } from "@/components/customer/recommended-product-mini-strip";
-import { StorePickGrid } from "@/components/customer/store-pick-grid";
+import { StoreCarousel } from "@/components/customer/store-carousel";
 
 const RECOMMENDED_PRODUCTS: RecommendedProductMiniItem[] = [
   {
@@ -142,7 +142,7 @@ export default async function CustomerHomePage() {
           <code className="text-zinc-300">supabase/00-setup-database.sql</code> di Supabase SQL Editor.
         </p>
       ) : (
-        <StorePickGrid stores={stores} supabaseOrigin={supabaseOrigin} />
+        <StoreCarousel stores={stores} supabaseOrigin={supabaseOrigin} />
       )}
     </div>
   );
