@@ -9,6 +9,7 @@ import { buttonClass } from "@/components/ui/Button";
 import { resolveStoreFrontImage } from "@/lib/mb178/local-store-images";
 import { safeCatalogImageUrl } from "@/lib/mb178/safe-remote-image";
 import { HomeSearchBar } from "@/components/customer/home-search-bar";
+import { HomeCategoryChips } from "@/components/customer/home-category-chips";
 import type { Mb178BannerRow, Mb178StoreRow } from "@/lib/mb178/types";
 import { createSupabaseServerComponentClient } from "@/lib/supabase/ssr";
 
@@ -70,6 +71,7 @@ export default async function CustomerHomePage() {
             Marketplace multi-toko — belanja per katalog, hubungi penjual via WhatsApp.
           </p>
           <HomeSearchBar />
+          <HomeCategoryChips />
         </div>
       </header>
 

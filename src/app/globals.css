@@ -24,3 +24,16 @@ body {
   background: rgba(212, 175, 55, 0.35);
   color: #fafafa;
 }
+
+/* Hide scrollbars (horizontal chip rows, etc.) */
+.no-scrollbar {
+  scrollbar-width: none;
+  /* Firefox */
+  -ms-overflow-style: none;
+  /* IE/Edge legacy */
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+  /* Chrome/Safari */
+}
