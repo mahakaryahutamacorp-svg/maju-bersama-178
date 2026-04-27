@@ -105,16 +105,16 @@ export default async function CustomerHomePage() {
   bannerItems = LOCAL_BANNER_ITEMS;
 
   return (
-    <div className="px-4 pb-8 pt-8 md:mx-auto md:max-w-4xl">
-      <header className="mb-6">
+    <div className="px-4 pb-8 pt-8 md:mx-auto md:max-w-5xl lg:max-w-6xl 2xl:max-w-7xl">
+      <header className="mb-6 md:mb-8">
         <div className="text-center">
-          <h1 className="font-serif text-3xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-amber-200 via-yellow-400 to-amber-600 md:text-5xl">
+          <h1 className="font-serif text-3xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-amber-200 via-yellow-400 to-amber-600 md:text-5xl lg:text-6xl">
             Maju Bersama 178
           </h1>
-          <p className="mt-1 font-serif text-lg font-medium text-zinc-400 md:text-2xl">
+          <p className="mt-1 font-serif text-lg font-medium text-zinc-400 md:text-2xl lg:text-3xl">
             Pilih Toko
           </p>
-          <p className="mx-auto mt-2 max-w-[280px] text-[10px] leading-relaxed text-zinc-500 md:max-w-md md:text-xs">
+          <p className="mx-auto mt-2 max-w-[280px] text-[10px] leading-relaxed text-zinc-500 md:max-w-lg md:text-xs lg:max-w-2xl lg:text-sm">
             Marketplace multi-toko — belanja per katalog, hubungi penjual via WhatsApp.
           </p>
           <HomeSearchBar />
@@ -132,9 +132,9 @@ export default async function CustomerHomePage() {
         </p>
       ) : (
         <>
-          <section className="mt-8">
-            <div className="mb-2">
-              <h2 className="font-serif text-lg font-semibold tracking-tight text-zinc-200 md:text-xl">
+          <section className="mt-8 md:mt-10">
+            <div className="mb-2 md:mb-3">
+              <h2 className="font-serif text-lg font-semibold tracking-tight text-zinc-200 md:text-xl lg:text-2xl">
                 Rekomendasi Produk
               </h2>
               <p className="mt-0.5 text-[10px] text-zinc-500 md:text-xs">UI mock-up</p>

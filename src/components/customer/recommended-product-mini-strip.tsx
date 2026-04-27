@@ -21,35 +21,41 @@ interface RecommendedProductMiniStripProps {
 export function RecommendedProductMiniStrip({ products }: RecommendedProductMiniStripProps) {
   return (
     <div
-      className="-mx-4 flex snap-x snap-mandatory gap-2 overflow-x-auto overflow-y-hidden px-4 pb-1 pt-0.5 no-scrollbar"
+      className="-mx-4 flex snap-x snap-mandatory gap-2 overflow-x-auto overflow-y-hidden px-4 pb-1 pt-0.5 no-scrollbar md:gap-3 lg:gap-3.5"
       role="region"
       aria-label="Rekomendasi produk, gulir horizontal"
     >
       {products.map((p) => (
         <article
           key={p.id}
-          className="w-[min(44vw,132px)] shrink-0 snap-start overflow-hidden rounded-xl border border-white/10 bg-zinc-900/60 shadow-[0_4px_16px_rgba(0,0,0,0.45)] backdrop-blur-sm"
+          className="w-[min(44vw,132px)] shrink-0 snap-start overflow-hidden rounded-xl border border-white/10 bg-zinc-900/60 shadow-[0_4px_16px_rgba(0,0,0,0.45)] backdrop-blur-sm md:w-[148px] lg:w-[160px] xl:w-[168px]"
         >
-          <div className="relative h-[52px] w-full overflow-hidden bg-zinc-950">
+          <div className="relative h-[52px] w-full overflow-hidden bg-zinc-950 md:h-[58px] lg:h-[62px] xl:h-[66px]">
             {p.imageSrc ? (
               <Image
                 src={p.imageSrc}
                 alt={p.name}
                 fill
                 className="object-cover brightness-95"
-                sizes="132px"
+                sizes="(max-width: 768px) 132px, 168px"
               />
             ) : (
-              <div className="flex h-full items-center justify-center text-[8px] text-zinc-600">Tanpa foto</div>
+              <div className="flex h-full items-center justify-center text-[8px] text-zinc-600 md:text-[9px]">
+                Tanpa foto
+              </div>
             )}
             <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
           </div>
-          <div className="space-y-0.5 px-1.5 py-1.5">
-            <p className="line-clamp-2 min-h-[1.75rem] text-[8px] font-semibold leading-tight text-zinc-100">
+          <div className="space-y-0.5 px-1.5 py-1.5 md:px-2 md:py-2">
+            <p className="line-clamp-2 min-h-[1.75rem] text-[8px] font-semibold leading-tight text-zinc-100 md:min-h-[2rem] md:text-[10px] lg:text-[11px]">
               {p.name}
             </p>
-            <p className="text-[9px] font-bold leading-none text-[#D4AF37]">{p.priceLabel}</p>
-            <p className="line-clamp-1 text-[7px] leading-tight text-zinc-500">{p.storeName}</p>
+            <p className="text-[9px] font-bold leading-none text-[#D4AF37] md:text-[10px] lg:text-[11px]">
+              {p.priceLabel}
+            </p>
+            <p className="line-clamp-1 text-[7px] leading-tight text-zinc-500 md:text-[8px] lg:text-[9px]">
+              {p.storeName}
+            </p>
           </div>
         </article>
       ))}

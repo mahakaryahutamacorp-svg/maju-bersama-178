@@ -28,7 +28,7 @@ export function HomeCategoryChips({
 
   return (
     <div className="mt-3">
-      <div className="mx-auto w-full max-w-md md:max-w-2xl">
+      <div className="mx-auto w-full max-w-md md:max-w-3xl lg:max-w-4xl xl:max-w-5xl">
         <div
           className="no-scrollbar flex gap-2 overflow-x-auto pb-1"
           aria-label="Kategori toko"

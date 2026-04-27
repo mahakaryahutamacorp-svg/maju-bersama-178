@@ -17,18 +17,18 @@ interface StorePickGridProps {
 
 const DEFAULT_STORE_BLURB = "Belanja per katalog, chat cepat via WhatsApp.";
 
-/** Grid statis toko: 2 kolom mobile, 4 kolom tablet besar, 5 kolom desktop lebar. */
+/** Grid statis toko: 2 kolom mobile, bertahap ke 3–5 kolom di layar lebar agar kartu tidak membesar tidak wajar. */
 export function StorePickGrid({ stores, supabaseOrigin }: StorePickGridProps) {
   return (
-    <section className="mt-8">
-      <div className="mb-3">
-        <h2 className="font-serif text-lg font-semibold tracking-tight text-zinc-200 md:text-xl">
+    <section className="mt-8 md:mt-10 lg:mt-12">
+      <div className="mb-3 md:mb-4">
+        <h2 className="font-serif text-lg font-semibold tracking-tight text-zinc-200 md:text-xl lg:text-2xl">
           Pilih Toko
         </h2>
         <p className="mt-0.5 text-[10px] text-zinc-500 md:text-xs">Semua toko mitra dalam satu layar.</p>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4 xl:grid-cols-5">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 md:gap-5 lg:grid-cols-4 lg:gap-6 xl:grid-cols-5">
         {stores.map((store) => (
           <div key={store.slug} className="min-w-0">
             <Card

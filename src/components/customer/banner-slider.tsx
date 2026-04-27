@@ -62,7 +62,7 @@ export function BannerSlider({
       aria-roledescription="carousel"
       aria-label="Promo dan banner"
     >
-      <div className="relative aspect-[21/9] w-full min-h-[140px] sm:aspect-[2.4/1] sm:min-h-[180px]">
+      <div className="relative w-full min-h-[140px] aspect-[21/9] sm:min-h-[180px] sm:aspect-[2.4/1] md:min-h-[200px] md:aspect-[2.55/1] lg:min-h-[220px] lg:aspect-[2.85/1] xl:min-h-[240px] xl:aspect-[3/1] 2xl:min-h-[260px] 2xl:aspect-[3.15/1]">
         {items.map((item, i) => (
           <div
             key={item.id}
@@ -75,7 +75,7 @@ export function BannerSlider({
               alt={item.title?.trim() || "Banner promosi"}
               fill
               className="object-cover"
-              sizes="(max-width: 768px) 100vw, 896px"
+              sizes="(max-width: 768px) 100vw, (max-width: 1536px) 90vw, 1280px"
               priority={i === 0}
             />
             <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent" />

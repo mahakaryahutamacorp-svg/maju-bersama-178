@@ -9,7 +9,7 @@ export function HomeSearchBar({
 }: HomeSearchBarProps) {
   return (
     <div className="mt-4">
-      <div className="mx-auto w-full max-w-md md:max-w-2xl">
+      <div className="mx-auto w-full max-w-md md:max-w-3xl lg:max-w-4xl xl:max-w-5xl">
         <label className="group relative block">
           <span className="sr-only">Cari</span>
           <MagnifyingGlassIcon
