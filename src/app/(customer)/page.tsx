@@ -125,26 +125,24 @@ export default async function CustomerHomePage() {
 
       <BannerSlider items={bannerItems} />
 
+      <section className="mt-8 md:mt-10">
+        <div className="mb-2 md:mb-3">
+          <h2 className="font-serif text-lg font-semibold tracking-tight text-zinc-200 md:text-xl lg:text-2xl">
+            Rekomendasi Produk
+          </h2>
+          <p className="mt-0.5 text-[10px] text-zinc-500 md:text-xs">UI mock-up</p>
+        </div>
+
+        <RecommendedProductMiniStrip products={RECOMMENDED_PRODUCTS} />
+      </section>
+
       {stores.length === 0 ? (
-        <p className="rounded-3xl border border-white/10 bg-white/5 px-5 py-8 text-center text-sm text-zinc-400">
+        <p className="mt-8 rounded-3xl border border-white/10 bg-white/5 px-5 py-8 text-center text-sm text-zinc-400">
           Belum ada toko di katalog. Pastikan variabel lingkungan Supabase terisi, lalu jalankan skrip{" "}
           <code className="text-zinc-300">supabase/00-setup-database.sql</code> di Supabase SQL Editor.
         </p>
       ) : (
-        <>
-          <section className="mt-8 md:mt-10">
-            <div className="mb-2 md:mb-3">
-              <h2 className="font-serif text-lg font-semibold tracking-tight text-zinc-200 md:text-xl lg:text-2xl">
-                Rekomendasi Produk
-              </h2>
-              <p className="mt-0.5 text-[10px] text-zinc-500 md:text-xs">UI mock-up</p>
-            </div>
-
-            <RecommendedProductMiniStrip products={RECOMMENDED_PRODUCTS} />
-          </section>
-
-          <StorePickGrid stores={stores} supabaseOrigin={supabaseOrigin} />
-        </>
+        <StorePickGrid stores={stores} supabaseOrigin={supabaseOrigin} />
       )}
     </div>
   );
