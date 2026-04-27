@@ -6,6 +6,9 @@ type CardProps = {
   imageSrc: string;
   imageAlt: string;
   darkened?: boolean;
+  description?: string;
+  /** Status operasional (UI saja; data real menyusul). */
+  operationalStatus?: "open" | "closed";
   children?: ReactNode;
 };
 
@@ -14,6 +17,8 @@ export function Card({
   imageSrc,
   imageAlt,
   darkened = false,
+  description,
+  operationalStatus,
   children,
 }: CardProps) {
   return (
@@ -26,15 +31,30 @@ export function Card({
           className={`object-cover transition duration-700 group-hover:scale-110 ${darkened ? "brightness-[0.35]" : "brightness-95"}`}
           sizes="(max-width: 768px) 50vw, 33vw"
         />
+        {operationalStatus ? (
+          <span
+            className={`absolute left-3 top-3 rounded-full px-2.5 py-1 text-[10px] font-semibold tracking-wide text-white shadow-sm ${operationalStatus === "open" ? "bg-emerald-500" : "bg-red-500"
+              }`}
+          >
+            {operationalStatus === "open" ? "Buka" : "Tutup"}
+          </span>
+        ) : null}
         <div
-          className={`pointer-events-none absolute inset-0 bg-gradient-to-t from-black/95 via-black/30 to-transparent ${darkened ? "bg-black/40" : ""}`}
+          className={`pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent ${darkened ? "bg-black/40" : ""}`}
         />
-        <h3 className="absolute bottom-2 left-3 right-3 text-[13px] font-bold leading-tight tracking-tight text-white drop-shadow-lg sm:bottom-3 sm:left-4 sm:text-xl">
+        <h3 className="absolute bottom-3 left-3 right-3 text-[13px] font-bold leading-tight tracking-tight text-white drop-shadow-lg sm:bottom-4 sm:left-4 sm:text-xl">
           {title}
         </h3>
       </div>
       {children ? (
-        <div className="p-2 sm:p-4">{children}</div>
+        <div className="p-2 sm:p-4">
+          {description ? (
+            <p className="mb-2 line-clamp-1 text-xs text-gray-300">
+              {description}
+            </p>
+          ) : null}
+          {children}
+        </div>
       ) : null}
     </article>
   );

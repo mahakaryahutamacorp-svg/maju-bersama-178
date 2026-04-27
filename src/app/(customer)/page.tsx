@@ -91,6 +91,8 @@ export default async function CustomerHomePage() {
               imageSrc={resolveStoreFrontImage(store.slug, store.image, supabaseOrigin)}
               imageAlt={`Toko ${store.name}`}
               darkened={false}
+              operationalStatus="open"
+              description="Belanja per katalog, chat cepat via WhatsApp."
             >
               <div className="flex gap-2">
                 <Link
