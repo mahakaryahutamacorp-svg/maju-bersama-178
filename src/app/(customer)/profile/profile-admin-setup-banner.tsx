@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useTransition, useState } from "react";
 import { linkStaffMembershipAction } from "./membership-actions";
