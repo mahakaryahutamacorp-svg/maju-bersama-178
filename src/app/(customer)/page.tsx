@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/Card";
 import { buttonClass } from "@/components/ui/Button";
 import { resolveStoreFrontImage } from "@/lib/mb178/local-store-images";
 import { safeCatalogImageUrl } from "@/lib/mb178/safe-remote-image";
+import { HomeSearchBar } from "@/components/customer/home-search-bar";
 import type { Mb178BannerRow, Mb178StoreRow } from "@/lib/mb178/types";
 import { createSupabaseServerComponentClient } from "@/lib/supabase/ssr";
 
@@ -68,6 +69,7 @@ export default async function CustomerHomePage() {
           <p className="mx-auto mt-2 max-w-[280px] text-[10px] leading-relaxed text-zinc-500 md:max-w-md md:text-xs">
             Marketplace multi-toko — belanja per katalog, hubungi penjual via WhatsApp.
           </p>
+          <HomeSearchBar />
         </div>
       </header>
 
