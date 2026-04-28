@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 export interface BannerSlideItem {
   id: string;
@@ -36,7 +36,9 @@ export function BannerSlider({
   items?: BannerSlideItem[];
 }) {
   const [index, setIndex] = useState(0);
+  const [paused, setPaused] = useState(false);
   const count = items.length;
+  const touchStartX = useRef<number | null>(null);
 
   const go = useCallback(
     (next: number) => {
@@ -47,12 +49,12 @@ export function BannerSlider({
   );
 
   useEffect(() => {
-    if (count <= 1) return;
+    if (count <= 1 || paused) return;
     const t = window.setInterval(() => {
       setIndex((i) => (i + 1) % count);
     }, INTERVAL_MS);
     return () => window.clearInterval(t);
-  }, [count]);
+  }, [count, paused]);
 
   if (count === 0) return null;
 
@@ -61,6 +63,23 @@ export function BannerSlider({
       className="relative mb-8 overflow-hidden rounded-3xl border border-amber-500/25 bg-zinc-950/80 shadow-[0_0_48px_rgba(212,175,55,0.12)] backdrop-blur-md"
       aria-roledescription="carousel"
       aria-label="Promo dan banner"
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+      onFocusCapture={() => setPaused(true)}
+      onBlurCapture={() => setPaused(false)}
+      onTouchStart={(event) => {
+        touchStartX.current = event.touches[0]?.clientX ?? null;
+      }}
+      onTouchEnd={(event) => {
+        const start = touchStartX.current;
+        const end = event.changedTouches[0]?.clientX;
+        touchStartX.current = null;
+        if (start == null || end == null) return;
+        const delta = end - start;
+        if (Math.abs(delta) < 48) return;
+        if (delta < 0) go(index + 1);
+        if (delta > 0) go(index - 1);
+      }}
     >
       <div className="relative w-full min-h-[140px] aspect-[21/9] sm:min-h-[180px] sm:aspect-[2.4/1] md:min-h-[200px] md:aspect-[2.55/1] lg:min-h-[220px] lg:aspect-[2.85/1] xl:min-h-[240px] xl:aspect-[3/1] 2xl:min-h-[260px] 2xl:aspect-[3.15/1]">
         {items.map((item, i) => (
@@ -87,6 +106,14 @@ export function BannerSlider({
           </div>
         ))}
       </div>
+      {count > 1 ? (
+        <div className="absolute left-0 right-0 top-0 z-[2] h-1 bg-white/10">
+          <div
+            className="h-full bg-gradient-to-r from-amber-300/90 via-yellow-400 to-amber-300 transition-[width] duration-500 ease-out"
+            style={{ width: `${((index + 1) / count) * 100}%` }}
+          />
+        </div>
+      ) : null}
 
       {count > 1 ? (
         <>

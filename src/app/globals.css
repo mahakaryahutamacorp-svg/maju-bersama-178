@@ -20,6 +20,18 @@ body {
   color: var(--foreground);
 }
 
+@keyframes fadeSlide {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 ::selection {
   background: rgba(212, 175, 55, 0.35);
   color: #fafafa;
