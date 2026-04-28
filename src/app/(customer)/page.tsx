@@ -7,6 +7,7 @@ import { safeCatalogImageUrl } from "@/lib/mb178/safe-remote-image";
 import { HomeSearchBar } from "@/components/customer/home-search-bar";
 import { HomeCategoryChips } from "@/components/customer/home-category-chips";
 import { RewardTicketPromoBanner } from "@/components/customer/reward-ticket-promo-banner";
+import { LiveMarketPulse } from "@/components/customer/live-market-pulse";
 import type { Mb178BannerRow, Mb178StoreRow } from "@/lib/mb178/types";
 import { createSupabaseServerComponentClient } from "@/lib/supabase/ssr";
 import {
@@ -117,6 +118,7 @@ export default async function CustomerHomePage() {
           <p className="mx-auto mt-2 max-w-[280px] text-[10px] leading-relaxed text-zinc-500 md:max-w-lg md:text-xs lg:max-w-2xl lg:text-sm">
             Marketplace multi-toko — belanja per katalog, hubungi penjual via WhatsApp.
           </p>
+          <LiveMarketPulse />
           <HomeSearchBar />
           <HomeCategoryChips />
           <RewardTicketPromoBanner />
